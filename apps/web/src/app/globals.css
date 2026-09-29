@@ -1,0 +1,63 @@
+@import "tailwindcss";
+
+:root {
+  --bg: #ecefe9;
+  --surface: #ffffff;
+  --surface-2: #eef2ec;
+  --ink: #0f1f1a;
+  --ink-2: #52625a;
+  --line: #d7ded5;
+  --brand: #0b5d3b;
+  --on-brand: #ffffff;
+  --brand-soft: #ddebe2;
+  --accent: #f5b700;
+  --on-accent: #1e1600;
+  --accent-soft: #fbedbf;
+  --up: #0f8a5e;
+  --down: #c8352b;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #0a120f;
+    --surface: #16241e;
+    --surface-2: #1b2c25;
+    --ink: #e8f0ea;
+    --ink-2: #9bb0a5;
+    --line: #27392f;
+    --brand: #3dba82;
+    --on-brand: #062418;
+    --brand-soft: #173427;
+    --accent: #f5b700;
+    --on-accent: #1e1600;
+    --accent-soft: #3a2f0a;
+    --up: #4cc98f;
+    --down: #f0685d;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-on-brand: var(--on-brand);
+  --color-brand-soft: var(--brand-soft);
+  --color-accent: var(--accent);
+  --color-on-accent: var(--on-accent);
+  --color-accent-soft: var(--accent-soft);
+  --color-up: var(--up);
+  --color-down: var(--down);
+  --font-display: var(--font-bricolage), system-ui, sans-serif;
+  --font-body: var(--font-hanken), system-ui, sans-serif;
+  --font-mono: var(--font-plex-mono), ui-monospace, monospace;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-body);
+}

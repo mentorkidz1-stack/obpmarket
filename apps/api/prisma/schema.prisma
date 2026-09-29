@@ -1,0 +1,484 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+// PostgreSQL — voir docs/decisions/0001-sqlite-dev.md (développement initial en SQLite)
+// et docs/decisions/0009-deploiement-gratuit.md (bascule PostgreSQL + déploiement).
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+/// Bannière promotionnelle affichée en haut de l'accueil (carrousel) — CAT-05.
+/// Photo en data URI, même schéma que Product.photos.
+model Banner {
+  id        String   @id @default(cuid())
+  imageUrl  String
+  title     String
+  subtitle  String?
+  /// Lien optionnel (ex. une catégorie : "/?categorie=xxx" ou un produit : "/produits/xxx").
+  linkUrl   String?
+  position  Int      @default(0)
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  @@index([active, position])
+}
+
+/// Rôles du cahier des charges, §3. L'authentification n'est pas encore implémentée :
+/// ce champ sert à préparer les permissions du back-office.
+enum Role {
+  CLIENT
+  AGENT
+  AGENT_MAGASIN
+  GESTIONNAIRE_PRIX
+  GESTIONNAIRE_LIQUIDITE
+  MODERATEUR
+  ADMIN
+}
+
+/// Statut d'un relevé — PRI-02, PRI-03, BO-04.
+enum ReadingStatus {
+  VALIDE
+  A_CONTROLER
+  REJETE
+}
+
+model User {
+  id           String   @id @default(cuid())
+  phone        String   @unique
+  email        String?  @unique
+  fullName     String
+  role         Role     @default(CLIENT)
+  /// Connexion des rôles internes (0006-connexion-interne.md). Les clients n'ont pas
+  /// de mot de passe : ils se connectent par OTP (CPT-01), ce champ reste nul pour eux.
+  passwordHash String?
+  createdAt    DateTime @default(now())
+
+  readings          PriceReading[]    @relation("AgentReadings")
+  reviewedReadings  PriceReading[]    @relation("ReviewedBy")
+  marketAssignments MarketAssignment[]
+  orders            Order[]
+  stockHoldings     StockHolding[]
+  stockMovements    StockMovement[]
+  walletTransactions WalletTransaction[]
+  liquidityRequests LiquidityRequest[] @relation("LiquidityClient")
+  liquidityOffers   LiquidityRequest[] @relation("LiquidityOfferedBy")
+  resaleListings    ResaleListing[]
+  vendorProfile     VendorProfile?
+  reviewedVendorListings VendorListing[] @relation("VendorListingReviewedBy")
+  confirmedOrders   Order[]            @relation("OrderConfirmedBy")
+}
+
+/// Code de vérification envoyé par SMS (CPT-01). Pas de passerelle SMS configurée pour
+/// l'instant : voir docs/decisions/0002-otp-dev-mode.md.
+model OtpCode {
+  id         String    @id @default(cuid())
+  phone      String
+  code       String
+  expiresAt  DateTime
+  consumedAt DateTime?
+  createdAt  DateTime  @default(now())
+
+  @@index([phone])
+}
+
+model Market {
+  id           String   @id @default(cuid())
+  name         String
+  city         String
+  latitude     Float
+  longitude    Float
+  /// Rayon (COL-05) au-delà duquel un relevé est jugé hors zone.
+  radiusMeters Int      @default(300)
+  createdAt    DateTime @default(now())
+
+  assignments MarketAssignment[]
+  readings    PriceReading[]
+
+  @@unique([name, city])
+}
+
+/// Affectation d'un agent à un marché (§3, COL-01).
+model MarketAssignment {
+  id       String @id @default(cuid())
+  agentId  String
+  marketId String
+
+  agent  User   @relation(fields: [agentId], references: [id], onDelete: Cascade)
+  market Market @relation(fields: [marketId], references: [id], onDelete: Cascade)
+
+  @@unique([agentId, marketId])
+}
+
+model Category {
+  id       String    @id @default(cuid())
+  name     String    @unique
+  products Product[]
+}
+
+model Product {
+  id           String   @id @default(cuid())
+  name         String
+  categoryId   String
+  /// Unité de référence — RG-02 (ex. "sac 100 kg", "bidon 20 L").
+  unitLabel    String
+  /// RG-06 : seuls les produits stockables sont éligibles au dépôt et à la revente.
+  isPerishable Boolean  @default(false)
+  isStockable  Boolean  @default(true)
+  /// Unités disponibles à la vente au magasin OBP (simplification V1 : pas encore le
+  /// registre de stock du module « Mon stock », voir docs/decisions/0003-boutique-v1.md).
+  stockQuantity Int     @default(0)
+  /// Photos réelles du produit (data URI, JSON.stringify d'un tableau — même schéma que
+  /// VendorListing.photos). Vide par défaut : la vignette illustrée sert alors de repli.
+  photos       String   @default("[]")
+  createdAt    DateTime @default(now())
+
+  category        Category         @relation(fields: [categoryId], references: [id])
+  readings        PriceReading[]
+  referencePrices ReferencePrice[]
+  orderItems      OrderItem[]
+  stockHoldings   StockHolding[]
+  stockMovements  StockMovement[]
+  liquidityRequests LiquidityRequest[]
+  resaleListings  ResaleListing[]
+  vendorListings  VendorListing[]
+
+  @@unique([name, unitLabel])
+}
+
+/// Mode de retrait choisi à la commande — CMD-02. DEPOT n'est proposé que pour les
+/// produits stockables non périssables (RG-06), et seulement une fois payé.
+enum FulfillmentMode {
+  RETRAIT
+  DEPOT
+}
+
+/// Stock qu'un client détient chez OBP après un dépôt — module 4.7, RG-04.
+/// Solde courant ; la traçabilité complète vit dans StockMovement.
+model StockHolding {
+  id          String   @id @default(cuid())
+  ownerId     String
+  productId   String
+  quantity    Int      @default(0)
+  /// Prix d'achat moyen pondéré, pour calculer la plus-value latente (STK-01).
+  avgUnitCost Float    @default(0)
+  updatedAt   DateTime @updatedAt
+
+  owner   User    @relation(fields: [ownerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@unique([ownerId, productId])
+}
+
+enum StockMovementKind {
+  DEPOT
+  LIQUIDITE
+  REVENTE
+}
+
+/// Écriture immuable de mouvement de stock — RG-04 (« chaque mouvement est une écriture »).
+model StockMovement {
+  id        String            @id @default(cuid())
+  ownerId   String
+  productId String
+  kind      StockMovementKind
+  quantity  Int
+  unitValue Float
+  createdAt DateTime          @default(now())
+
+  owner   User    @relation(fields: [ownerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+}
+
+enum LiquidityRequestStatus {
+  EN_ATTENTE
+  OFFRE_ENVOYEE
+  ACCEPTEE
+  REFUSEE
+}
+
+/// Demande de vente en liquidité — module 4.9 (LIQ-01 à LIQ-07).
+model LiquidityRequest {
+  id               String                 @id @default(cuid())
+  clientId         String
+  productId        String
+  quantity         Int
+  status           LiquidityRequestStatus @default(EN_ATTENTE)
+  /// Prix par unité proposé manuellement par un gestionnaire — RG-08.
+  offeredUnitPrice Float?
+  offeredById      String?
+  offeredAt        DateTime?
+  expiresAt        DateTime?
+  decidedAt        DateTime?
+  createdAt        DateTime               @default(now())
+
+  client     User    @relation("LiquidityClient", fields: [clientId], references: [id])
+  offeredBy  User?   @relation("LiquidityOfferedBy", fields: [offeredById], references: [id])
+  product    Product @relation(fields: [productId], references: [id])
+}
+
+enum ResaleListingStatus {
+  EN_VENTE
+  VENDU
+  ANNULE
+}
+
+/// Ordre de revente entre clients — module 4.8 (REV-01 à REV-07). Le prix n'est pas figé
+/// ici : RG-05 fixe le prix de revente au prix de référence en vigueur au moment de la
+/// vente, appliqué quand un acheteur consomme cette annonce (OrdersService.create).
+model ResaleListing {
+  id          String              @id @default(cuid())
+  sellerId    String
+  productId   String
+  /// Quantité restant à vendre ; diminue à chaque achat, jusqu'à VENDU.
+  quantity    Int
+  status      ResaleListingStatus @default(EN_VENTE)
+  createdAt   DateTime            @default(now())
+  cancelledAt DateTime?
+
+  seller  User    @relation(fields: [sellerId], references: [id])
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, status, createdAt])
+}
+
+/// Solde du client — module 4.7 (STK-03). Le solde est la somme des transactions :
+/// pas de champ "balance" dénormalisé, pour éviter tout désaccord avec l'historique.
+model WalletTransaction {
+  id        String   @id @default(cuid())
+  ownerId   String
+  /// Positif = crédit, négatif = débit.
+  amount    Float
+  reason    String
+  createdAt DateTime @default(now())
+
+  owner User @relation(fields: [ownerId], references: [id])
+
+  @@index([ownerId])
+}
+
+enum OrderStatus {
+  EN_ATTENTE_PAIEMENT
+  EN_VERIFICATION
+  PAYEE
+  RETIREE
+  ANNULEE
+}
+
+/// Opérateur Mobile Money utilisé par le client — pour le flux manuel de secours
+/// (docs/decisions/0007-paiement-momo-manuel.md).
+enum PaymentMethod {
+  MTN_MOMO
+  MOOV_MONEY
+}
+
+/// Comment la commande a été (ou sera) payée — MANUEL est le flux de secours 0007,
+/// NYOLE est la passerelle intégrée en 0008 (docs/decisions/0008-nyole.md).
+enum PaymentProvider {
+  MANUEL
+  NYOLE
+}
+
+/// Une commande client — module 4.5 (Commande et paiement).
+model Order {
+  id          String      @id @default(cuid())
+  clientId    String
+  status      OrderStatus @default(EN_ATTENTE_PAIEMENT)
+  totalAmount Float
+  createdAt   DateTime    @default(now())
+
+  /// Passerelle utilisée pour cette commande — nul tant que le client n'a pas choisi.
+  paymentProvider PaymentProvider?
+
+  /// Renseigné par le client une fois l'envoi Mobile Money effectué de son côté (flux
+  /// manuel de secours, paymentProvider = MANUEL).
+  paymentMethod      PaymentMethod?
+  paymentReference   String?
+  paymentSubmittedAt DateTime?
+
+  /// Session de paiement Nyole (paymentProvider = NYOLE) — docs/decisions/0008-nyole.md.
+  nyoleSessionId String? @unique
+
+  /// Qui a confirmé/rejeté le paiement : un gestionnaire (flux manuel), ou nul si
+  /// confirmé automatiquement par le webhook Nyole.
+  confirmedById   String?
+  paidAt          DateTime?
+  rejectionReason String?
+
+  client      User        @relation(fields: [clientId], references: [id])
+  confirmedBy User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
+  items       OrderItem[]
+
+  @@index([clientId])
+  @@index([status])
+}
+
+model OrderItem {
+  id             String          @id @default(cuid())
+  orderId        String
+  productId      String
+  quantity       Int
+  /// Prix verrouillé au moment de la commande, indépendant des variations ultérieures
+  /// du prix de référence — CMD-03.
+  unitPrice      Float
+  fulfillment    FulfillmentMode @default(RETRAIT)
+  /// Bon de retrait à usage unique — RET-01. Généré à la confirmation du paiement.
+  withdrawalCode String?
+  withdrawnAt    DateTime?
+
+  order   Order       @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product Product     @relation(fields: [productId], references: [id])
+  fills   OrderFill[]
+}
+
+enum OrderFillSource {
+  REVENTE
+  VENDEUR
+  STOCK_OBP
+}
+
+/// Trace, pour chaque ligne de commande, d'où vient le stock réservé (RG-05, RG-17) —
+/// nécessaire pour ne créditer le vendeur qu'à la confirmation du paiement (et non à la
+/// création de la commande), et pour pouvoir libérer le stock si le paiement échoue ou
+/// est rejeté. docs/decisions/0007-paiement-momo-manuel.md.
+model OrderFill {
+  id          String          @id @default(cuid())
+  orderItemId String
+  source      OrderFillSource
+  /// Id de la ResaleListing ou VendorListing d'origine ; nul pour le stock propre d'OBP.
+  sourceId    String?
+  /// Vendeur à créditer (client en revente ou utilisateur du vendeur partenaire) ; nul pour OBP.
+  sellerId    String?
+  quantity    Int
+  /// Prix de référence verrouillé à la commande, pour calculer la commission au règlement.
+  unitPrice   Float
+  /// Renseigné quand le vendeur a été crédité (paiement confirmé).
+  settledAt   DateTime?
+  /// Renseigné quand le stock a été rendu à sa source (paiement rejeté/annulé).
+  releasedAt  DateTime?
+
+  orderItem OrderItem @relation(fields: [orderItemId], references: [id], onDelete: Cascade)
+}
+
+/// Un relevé de prix par un agent terrain — module 4.1 du cahier des charges.
+model PriceReading {
+  id       String @id @default(cuid())
+  productId String
+  marketId  String
+  agentId   String
+
+  // Float plutôt que Decimal, y compris sur PostgreSQL : le FCFA (XOF) n'a pas de
+  // subdivision (pas de centimes), tous les montants de l'app sont des entiers — un
+  // Float64 les représente exactement jusqu'à 2^53, donc pas de perte d'arrondi
+  // (docs/decisions/0009-deploiement-gratuit.md revient sur ce choix).
+  price   Float
+  quality String?
+  photoUrl String?
+
+  latitude  Float?
+  longitude Float?
+  /// Distance au centre du marché en mètres, calculée à l'enregistrement (COL-05).
+  distanceToMarketMeters Float?
+
+  status ReadingStatus @default(VALIDE)
+  /// Pourquoi le relevé a été mis de côté (écart de prix, hors zone…) — PRI-02.
+  flagReason String?
+  reviewNote String?
+  reviewedById String?
+  reviewedAt   DateTime?
+
+  recordedAt DateTime @default(now())
+
+  product    Product @relation(fields: [productId], references: [id])
+  market     Market  @relation(fields: [marketId], references: [id])
+  agent      User    @relation("AgentReadings", fields: [agentId], references: [id])
+  reviewedBy User?   @relation("ReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([productId, recordedAt])
+  @@index([status])
+}
+
+/// Prix moyen publié pour un produit — module 4.2, RG-01.
+model ReferencePrice {
+  id            String   @id @default(cuid())
+  productId     String
+  value         Float
+  readingsCount Int
+  marketsCount  Int
+  windowHours   Int
+  computedAt    DateTime @default(now())
+
+  product Product @relation(fields: [productId], references: [id])
+
+  @@index([productId, computedAt])
+}
+
+/// Module 4.12 — Vendeurs partenaires. Simplification V1 (docs/decisions/0005-vendeurs-v1.md) :
+/// les annonces portent sur un produit déjà au catalogue, pas sur un nouveau produit.
+enum VendorType {
+  PARTICULIER
+  PROFESSIONNEL
+  COOPERATIVE
+}
+
+enum VendorStatus {
+  EN_ATTENTE
+  ACTIF
+  SUSPENDU
+  REFUSE
+}
+
+model VendorProfile {
+  id              String       @id @default(cuid())
+  userId          String       @unique
+  type            VendorType
+  zone            String
+  /// Texte libre pour l'instant (ex. « MTN MoMo · 01 xx xx 47 ») — pas d'intégration
+  /// de paiement réelle, voir docs/decisions/0003-boutique-v1.md.
+  paymentInfo     String
+  status          VendorStatus @default(EN_ATTENTE)
+  rejectionReason String?
+  createdAt       DateTime     @default(now())
+  reviewedAt      DateTime?
+
+  user     User            @relation(fields: [userId], references: [id])
+  listings VendorListing[]
+}
+
+enum VendorListingStatus {
+  EN_ATTENTE
+  A_CORRIGER
+  VALIDEE
+  EN_VENTE
+  EPUISEE
+  REFUSEE
+}
+
+/// Une annonce vendeur — VEN-04 à VEN-13. `quantity` est la quantité annoncée à la
+/// création ; `receivedQuantity` (RG-14) n'est décomptée comme disponible à la vente
+/// qu'après réception au magasin, et diminue ensuite à chaque vente (comme ResaleListing).
+model VendorListing {
+  id               String               @id @default(cuid())
+  vendorId         String
+  productId        String
+  quantity         Int
+  receivedQuantity Int                  @default(0)
+  /// Prix proposé par le vendeur — comparé au prix de référence à l'affichage (RG-16),
+  /// jamais intégré au calcul du prix de référence (RG-17).
+  unitPrice        Float
+  /// Data URI (voir docs/decisions/0005-vendeurs-v1.md) ; JSON.stringify d'un tableau de chaînes.
+  photos           String               @default("[]")
+  status           VendorListingStatus  @default(EN_ATTENTE)
+  rejectionReason  String?
+  createdAt        DateTime             @default(now())
+  reviewedAt       DateTime?
+  reviewedById     String?
+  receivedAt       DateTime?
+
+  vendor     VendorProfile @relation(fields: [vendorId], references: [id])
+  product    Product       @relation(fields: [productId], references: [id])
+  reviewedBy User?         @relation("VendorListingReviewedBy", fields: [reviewedById], references: [id])
+
+  @@index([productId, status])
+}
