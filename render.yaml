@@ -9,7 +9,9 @@ services:
     runtime: node
     plan: free
     rootDir: apps/api
-    buildCommand: npm install && npx prisma generate && npx prisma migrate deploy && npm run build
+    # --include=dev : NODE_ENV=production ferait sinon ignorer les devDependencies,
+    # dont prisma (le CLI) — sans lui, npx va chercher une version au hasard sur npm.
+    buildCommand: npm install --include=dev && npx prisma generate && npx prisma migrate deploy && npm run build
     startCommand: npm run start:prod
     envVars:
       - key: NODE_ENV
