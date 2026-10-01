@@ -53,7 +53,7 @@ const NAME_ICON: Array<[RegExp, string]> = [
   [/tomate/i, "pi-tomato"],
 ];
 
-const CATEGORY_ICON: Record<string, string> = {
+export const CATEGORY_ICON: Record<string, string> = {
   "Céréales": "pi-grain",
   "Tubercules": "pi-bowl",
   "Huiles": "pi-jerrycan",

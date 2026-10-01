@@ -3,6 +3,8 @@ import { formatRelativeTime } from "@/lib/format";
 import { ShopGrid } from "@/components/shop-grid";
 import { TrendPanel } from "@/components/trend-panel";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { CategoryStrip } from "@/components/category-strip";
+import { TrustStrip } from "@/components/trust-strip";
 
 export const revalidate = 30;
 
@@ -34,27 +36,37 @@ export default async function Home(props: PageProps<"/">) {
     .map((p) => p.computedAt)
     .sort()
     .at(-1);
-  const categoryCount = new Set(products.map((p) => p.categoryId)).size;
+
+  const categoryCounts = new Map<string, { id: string; name: string; count: number }>();
+  for (const p of products) {
+    const entry = categoryCounts.get(p.category.id);
+    if (entry) entry.count += 1;
+    else categoryCounts.set(p.category.id, { id: p.category.id, name: p.category.name, count: 1 });
+  }
+  const categories = [...categoryCounts.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
   const stats = [
     { label: "Produits", value: products.length },
     { label: "Marchés suivis", value: markets.length },
-    { label: "Catégories", value: categoryCount },
+    { label: "Catégories", value: categories.length },
   ];
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 sm:px-6">
-      <section className="grid gap-5 py-8 sm:grid-cols-[1.4fr_1fr] sm:items-center sm:py-12">
-        <div className="grid gap-3">
-          <h1 className="max-w-md font-display text-3xl font-bold leading-tight sm:text-4xl">
+      <section className="pt-5 sm:pt-7">
+        <BannerCarousel banners={banners} />
+      </section>
+
+      <section className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <h1 className="font-display text-2xl font-bold leading-tight sm:text-[28px]">
             Le prix du marché, au jour le jour.
           </h1>
-          <p className="max-w-md text-sm text-ink-2">
-            Prix moyen calculé à partir des relevés de nos agents sur les marchés du Bénin. Achetez au prix juste,
-            retirez au magasin ou laissez en dépôt.
+          <p className="mt-1 max-w-lg text-sm text-ink-2">
+            Prix moyen calculé à partir des relevés de nos agents sur les marchés du Bénin.
           </p>
           {lastUpdate && (
-            <div className="flex items-center gap-2 text-[13px] text-ink-2">
+            <div className="mt-2 flex items-center gap-2 text-[13px] text-ink-2">
               <span className="size-2 rounded-full bg-accent shadow-[0_0_0_4px_var(--color-accent-soft)]" />
               <span>
                 Prix mis à jour <span className="font-semibold text-ink">{formatRelativeTime(lastUpdate)}</span>
@@ -63,17 +75,18 @@ export default async function Home(props: PageProps<"/">) {
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-3 text-center sm:py-4">
-              <p className="font-display text-2xl font-bold tabular-nums sm:text-3xl">{s.value}</p>
-              <p className="text-[11px] text-ink-2 sm:text-xs">{s.label}</p>
+            <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-2.5 text-center sm:min-w-20">
+              <p className="font-display text-xl font-bold tabular-nums sm:text-2xl">{s.value}</p>
+              <p className="text-[11px] text-ink-2">{s.label}</p>
             </div>
           ))}
         </div>
       </section>
 
-      <BannerCarousel banners={banners} />
+      <CategoryStrip categories={categories} />
+      <TrustStrip />
 
       {products.length === 0 ? (
         <p className="py-16 text-center text-sm text-ink-2">
@@ -82,13 +95,21 @@ export default async function Home(props: PageProps<"/">) {
         </p>
       ) : (
         <>
-          <TrendPanel
-            items={products.flatMap((product) => {
-              const price = priceByProduct.get(product.id);
-              return price ? [{ product, price }] : [];
-            })}
-          />
-          <ShopGrid products={products} prices={priceByProduct} initialCategoryId={categoryParam} />
+          <div className="mt-8">
+            <TrendPanel
+              items={products.flatMap((product) => {
+                const price = priceByProduct.get(product.id);
+                return price ? [{ product, price }] : [];
+              })}
+            />
+          </div>
+
+          <section id="produits" className="scroll-mt-20 pt-2">
+            <h2 className="font-display text-xl font-bold">Tous les produits</h2>
+            <div className="mt-4">
+              <ShopGrid products={products} prices={priceByProduct} initialCategoryId={categoryParam} />
+            </div>
+          </section>
         </>
       )}
     </main>
