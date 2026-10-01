@@ -7,7 +7,11 @@ import type { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { StaffLoginDto } from './dto/staff-login.dto.js';
 
 const OTP_TTL_MINUTES = Number(process.env.OTP_TTL_MINUTES ?? 5);
-const isDev = process.env.NODE_ENV !== 'production';
+/// Indépendant de NODE_ENV : tant qu'aucune passerelle SMS réelle n'est branchée
+/// (docs/decisions/0002-otp-dev-mode.md), le code doit rester visible même en
+/// production déployée, sinon personne ne peut se connecter. Mettre OTP_DEV_MODE=false
+/// uniquement une fois une vraie passerelle SMS intégrée.
+const otpDevMode = process.env.OTP_DEV_MODE !== 'false';
 
 /** Ne jamais renvoyer le hash du mot de passe au client, même pour les comptes de démo. */
 function sanitizeUser<T extends { passwordHash: string | null }>(user: T) {
@@ -36,7 +40,7 @@ export class AuthService {
     return {
       sent: true,
       expiresInMinutes: OTP_TTL_MINUTES,
-      devCode: isDev ? code : undefined,
+      devCode: otpDevMode ? code : undefined,
     };
   }
 
