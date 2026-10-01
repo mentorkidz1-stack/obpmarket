@@ -8,8 +8,6 @@ import { CategoryTiles } from "@/components/category-tiles";
 import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
-export const revalidate = 30;
-
 export default async function Home(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
   const categoryParam = typeof searchParams.categorie === "string" ? searchParams.categorie : undefined;

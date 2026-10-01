@@ -30,7 +30,9 @@ export interface Banner {
 }
 
 async function apiFetch<T>(path: string): Promise<T> {
-  const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 30 } });
+  // no-store : prix, photos et bannières sont modifiés régulièrement par le back-office
+  // et doivent toujours refléter l'état réel de la base, pas un instantané mis en cache.
+  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
   if (!res.ok) {
     throw new Error(`Appel API ${path} en échec (${res.status})`);
   }
