@@ -26,6 +26,12 @@ export function SiteHeader() {
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface/85 backdrop-blur supports-[backdrop-filter]:bg-surface/70">
+      <div className="bg-ink px-4 py-1.5 text-center text-[11px] font-semibold text-app sm:px-6">
+        Paiement sécurisé par Mobile Money et carte bancaire ·{" "}
+        <Link href="/vendeur" className="underline underline-offset-2">
+          Devenez vendeur sur OBP Market
+        </Link>
+      </div>
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
         <Link href="/" className="flex flex-none items-center gap-2">
           <div className="grid size-9 place-items-center rounded-[10px] bg-brand font-display text-sm font-extrabold tracking-tight text-on-brand">

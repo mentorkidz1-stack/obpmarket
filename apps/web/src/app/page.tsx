@@ -3,7 +3,9 @@ import { formatRelativeTime } from "@/lib/format";
 import { ShopGrid } from "@/components/shop-grid";
 import { TrendPanel } from "@/components/trend-panel";
 import { BannerCarousel } from "@/components/banner-carousel";
-import { CategoryStrip } from "@/components/category-strip";
+import { CategorySidebar } from "@/components/category-sidebar";
+import { CategoryTiles } from "@/components/category-tiles";
+import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
 export const revalidate = 30;
@@ -53,9 +55,14 @@ export default async function Home(props: PageProps<"/">) {
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 sm:px-6">
-      <section className="pt-5 sm:pt-7">
-        <BannerCarousel banners={banners} />
-      </section>
+      {banners.length > 0 ? (
+        <section className="grid gap-4 pt-5 sm:pt-7 lg:grid-cols-[240px_1fr]">
+          <CategorySidebar categories={categories} />
+          <BannerCarousel banners={banners} />
+        </section>
+      ) : (
+        <div className="pt-5 sm:pt-7" />
+      )}
 
       <section className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div>
@@ -85,7 +92,7 @@ export default async function Home(props: PageProps<"/">) {
         </div>
       </section>
 
-      <CategoryStrip categories={categories} />
+      <CategoryTiles categories={categories} />
       <TrustStrip />
 
       {products.length === 0 ? (
@@ -104,7 +111,9 @@ export default async function Home(props: PageProps<"/">) {
             />
           </div>
 
-          <section id="produits" className="scroll-mt-20 pt-2">
+          <MarketStrip markets={markets} />
+
+          <section id="produits" className="scroll-mt-20 pt-8">
             <h2 className="font-display text-xl font-bold">Tous les produits</h2>
             <div className="mt-4">
               <ShopGrid products={products} prices={priceByProduct} initialCategoryId={categoryParam} />
