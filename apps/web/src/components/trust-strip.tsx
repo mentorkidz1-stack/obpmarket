@@ -1,8 +1,6 @@
 const ITEMS = [
   {
-    icon: (
-      <path d="M12 2.5l2.3 5.6 6 .5-4.6 4 1.4 5.9L12 15.7l-5.1 2.8 1.4-5.9-4.6-4 6-.5z" />
-    ),
+    icon: <path d="M12 2.5l2.3 5.6 6 .5-4.6 4 1.4 5.9L12 15.7l-5.1 2.8 1.4-5.9-4.6-4 6-.5z" />,
     title: "Prix juste",
     text: "Calculé sur les relevés terrain",
   },
@@ -40,15 +38,17 @@ const ITEMS = [
 
 export function TrustStrip() {
   return (
-    <section className="mt-6 grid grid-cols-2 gap-2.5 sm:grid-cols-4 sm:gap-3">
+    <section className="mt-10 grid grid-cols-1 gap-px overflow-hidden rounded-2xl border border-line bg-line sm:grid-cols-2 lg:grid-cols-4">
       {ITEMS.map((item) => (
-        <div key={item.title} className="flex items-center gap-2.5 rounded-2xl border border-line bg-surface px-3 py-3">
-          <svg viewBox="0 0 24 24" className="size-7 flex-none text-brand" fill="none" stroke="currentColor" strokeWidth="1.7">
-            {item.icon}
-          </svg>
+        <div key={item.title} className="flex items-center gap-3 bg-surface px-4 py-4">
+          <span className="grid size-11 flex-none place-items-center rounded-full bg-brand-soft text-brand">
+            <svg viewBox="0 0 24 24" className="size-5.5" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              {item.icon}
+            </svg>
+          </span>
           <div className="min-w-0">
-            <p className="truncate text-xs font-bold">{item.title}</p>
-            <p className="truncate text-[11px] text-ink-2">{item.text}</p>
+            <p className="text-sm font-bold">{item.title}</p>
+            <p className="text-xs text-ink-2">{item.text}</p>
           </div>
         </div>
       ))}

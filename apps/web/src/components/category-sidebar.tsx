@@ -3,23 +3,26 @@ import { categoryGradient } from "@/lib/format";
 import { CATEGORY_ICON } from "@/components/product-icons";
 import type { CategoryCount } from "@/components/category-tiles";
 
-/** Liste de navigation par catégorie, à côté du carrousel de bannières sur desktop. */
+/** Navigation par catégorie à côté de la bannière, sur desktop. */
 export function CategorySidebar({ categories }: { categories: CategoryCount[] }) {
   return (
-    <nav className="hidden rounded-2xl border border-line bg-surface p-2 lg:block">
-      <Link
-        href="#produits"
-        className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm font-semibold hover:bg-surface-2"
-      >
-        <span className="grid size-7 flex-none place-items-center rounded-full bg-ink text-app">
-          <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="3" width="7" height="7" rx="1.5" />
-            <rect x="14" y="3" width="7" height="7" rx="1.5" />
-            <rect x="3" y="14" width="7" height="7" rx="1.5" />
-            <rect x="14" y="14" width="7" height="7" rx="1.5" />
+    <nav className="hidden flex-col rounded-2xl border border-line bg-surface p-2.5 lg:flex">
+      <p className="flex items-center gap-2 px-2.5 pb-2 pt-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2">
+        <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <rect x="3" y="3" width="7" height="7" rx="1.5" />
+          <rect x="14" y="3" width="7" height="7" rx="1.5" />
+          <rect x="3" y="14" width="7" height="7" rx="1.5" />
+          <rect x="14" y="14" width="7" height="7" rx="1.5" />
+        </svg>
+        Catégories
+      </p>
+      <Link href="#produits" className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-semibold hover:bg-surface-2">
+        <span className="grid size-8 flex-none place-items-center rounded-full bg-ink text-app">
+          <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M4 7h16M4 12h16M4 17h16" />
           </svg>
         </span>
-        Tous les produits
+        <span className="flex-1">Tous les produits</span>
       </Link>
       {categories.map((c) => {
         const [from, to] = categoryGradient(c.name);
@@ -28,17 +31,17 @@ export function CategorySidebar({ categories }: { categories: CategoryCount[] })
           <Link
             key={c.id}
             href={`/?categorie=${c.id}#produits`}
-            className="flex items-center gap-2.5 rounded-xl px-2.5 py-2 text-sm hover:bg-surface-2"
+            className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm hover:bg-surface-2"
           >
             <span
-              className="grid size-7 flex-none place-items-center rounded-full text-white"
+              className="grid size-8 flex-none place-items-center rounded-full text-white"
               style={{ background: `linear-gradient(150deg, ${from}, ${to})` }}
             >
-              <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
+              <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
                 <use href={`#${iconId}`} />
               </svg>
             </span>
-            <span className="min-w-0 flex-1 truncate">{c.name}</span>
+            <span className="min-w-0 flex-1 truncate font-medium">{c.name}</span>
             <span className="flex-none font-mono text-[11px] text-ink-2">{c.count}</span>
           </Link>
         );

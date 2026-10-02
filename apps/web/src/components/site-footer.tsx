@@ -8,8 +8,8 @@ export function SiteFooter() {
   if (pathname.startsWith("/agent") || pathname.startsWith("/backoffice") || pathname.startsWith("/connexion-interne")) return null;
 
   return (
-    <footer className="mt-10 border-t border-line">
-      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-10 sm:grid-cols-3 sm:px-6">
+    <footer className="mt-10 border-t border-line bg-surface">
+      <div className="mx-auto grid max-w-6xl gap-8 px-4 py-12 sm:grid-cols-3 sm:px-6">
         <div>
           <div className="flex items-center gap-2">
             <div className="grid size-8 place-items-center rounded-[9px] bg-brand font-display text-xs font-extrabold text-on-brand">
@@ -42,7 +42,7 @@ export function SiteFooter() {
         </div>
       </div>
       <p className="border-t border-line px-4 py-4 text-center text-[11px] text-ink-2 sm:px-6">
-        OBP Market · Bénin — plateforme en développement, prix et produits d&apos;exemple.
+        © OBP Market · Bénin — le prix juste des marchés, en ligne.
       </p>
     </footer>
   );

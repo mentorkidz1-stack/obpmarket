@@ -10,7 +10,7 @@ export function AuthStatus() {
 
   if (!user) {
     return (
-      <Link href="/connexion" className="rounded-full bg-brand px-3.5 py-1.5 text-xs font-semibold text-on-brand">
+      <Link href="/connexion" className="rounded-xl bg-brand px-4 py-2 text-sm font-semibold text-on-brand">
         Se connecter
       </Link>
     );

@@ -1,16 +1,18 @@
-import { getBanners, getLatestReferencePrices, getMarkets, getProducts } from "@/lib/api";
+import { getBanners, getLatestReferencePrices, getMarkets, getProducts, parseProductPhotos } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/format";
 import { ShopGrid } from "@/components/shop-grid";
-import { TrendPanel } from "@/components/trend-panel";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategorySidebar } from "@/components/category-sidebar";
-import { CategoryTiles } from "@/components/category-tiles";
+import { CategoryTiles, type CategoryCount } from "@/components/category-tiles";
+import { PriceMovers } from "@/components/price-movers";
+import { PromoBanners } from "@/components/promo-banners";
 import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
 export default async function Home(props: PageProps<"/">) {
   const searchParams = await props.searchParams;
   const categoryParam = typeof searchParams.categorie === "string" ? searchParams.categorie : undefined;
+  const query = typeof searchParams.q === "string" ? searchParams.q : undefined;
 
   let products, prices, markets, banners;
   try {
@@ -37,11 +39,16 @@ export default async function Home(props: PageProps<"/">) {
     .sort()
     .at(-1);
 
-  const categoryCounts = new Map<string, { id: string; name: string; count: number }>();
+  const categoryCounts = new Map<string, CategoryCount>();
   for (const p of products) {
+    const photo = parseProductPhotos(p)[0];
     const entry = categoryCounts.get(p.category.id);
-    if (entry) entry.count += 1;
-    else categoryCounts.set(p.category.id, { id: p.category.id, name: p.category.name, count: 1 });
+    if (entry) {
+      entry.count += 1;
+      if (!entry.photo && photo) entry.photo = photo;
+    } else {
+      categoryCounts.set(p.category.id, { id: p.category.id, name: p.category.name, count: 1, photo });
+    }
   }
   const categories = [...categoryCounts.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
@@ -53,18 +60,16 @@ export default async function Home(props: PageProps<"/">) {
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 sm:px-6">
-      {banners.length > 0 ? (
-        <section className="grid gap-4 pt-5 sm:pt-7 lg:grid-cols-[240px_1fr]">
+      {banners.length > 0 && (
+        <section className="grid gap-4 pt-5 sm:pt-6 lg:grid-cols-[250px_1fr]">
           <CategorySidebar categories={categories} />
           <BannerCarousel banners={banners} />
         </section>
-      ) : (
-        <div className="pt-5 sm:pt-7" />
       )}
 
-      <section className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <section className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${banners.length > 0 ? "mt-8" : "pt-6"}`}>
         <div>
-          <h1 className="font-display text-2xl font-bold leading-tight sm:text-[28px]">
+          <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-[30px]">
             Le prix du marché, au jour le jour.
           </h1>
           <p className="mt-1 max-w-lg text-sm text-ink-2">
@@ -82,8 +87,8 @@ export default async function Home(props: PageProps<"/">) {
 
         <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
           {stats.map((s) => (
-            <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-2.5 text-center sm:min-w-20">
-              <p className="font-display text-xl font-bold tabular-nums sm:text-2xl">{s.value}</p>
+            <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-2.5 text-center sm:min-w-24">
+              <p className="font-display text-xl font-extrabold tabular-nums sm:text-2xl">{s.value}</p>
               <p className="text-[11px] text-ink-2">{s.label}</p>
             </div>
           ))}
@@ -91,7 +96,6 @@ export default async function Home(props: PageProps<"/">) {
       </section>
 
       <CategoryTiles categories={categories} />
-      <TrustStrip />
 
       {products.length === 0 ? (
         <p className="py-16 text-center text-sm text-ink-2">
@@ -100,21 +104,27 @@ export default async function Home(props: PageProps<"/">) {
         </p>
       ) : (
         <>
-          <div className="mt-8">
-            <TrendPanel
-              items={products.flatMap((product) => {
-                const price = priceByProduct.get(product.id);
-                return price ? [{ product, price }] : [];
-              })}
-            />
-          </div>
+          <PriceMovers
+            items={products.flatMap((product) => {
+              const price = priceByProduct.get(product.id);
+              return price ? [{ product, price }] : [];
+            })}
+          />
 
+          <TrustStrip />
+          <PromoBanners />
           <MarketStrip markets={markets} />
 
-          <section id="produits" className="scroll-mt-20 pt-8">
-            <h2 className="font-display text-xl font-bold">Tous les produits</h2>
+          <section id="produits" className="scroll-mt-28 pt-10">
+            <h2 className="font-display text-xl font-extrabold">Tous les produits</h2>
             <div className="mt-4">
-              <ShopGrid products={products} prices={priceByProduct} initialCategoryId={categoryParam} />
+              <ShopGrid
+                key={`${categoryParam ?? ""}|${query ?? ""}`}
+                products={products}
+                prices={priceByProduct}
+                initialCategoryId={categoryParam}
+                initialQuery={query}
+              />
             </div>
           </section>
         </>
