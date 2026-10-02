@@ -335,6 +335,17 @@ export function getPaymentInfo() {
   return apiFetch<PaymentInfo>("/payment-info");
 }
 
+export interface ExchangeRates {
+  base: "XOF";
+  rates: Record<"EUR" | "USD" | "NGN" | "GHS", number>;
+  updatedAt: string;
+  source: "live" | "fallback";
+}
+
+export function getExchangeRates() {
+  return apiFetch<ExchangeRates>("/exchange-rates");
+}
+
 export interface OrderItem {
   id: string;
   productId: string;

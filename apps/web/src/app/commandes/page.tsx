@@ -5,7 +5,8 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getMyOrders, type Order } from "@/lib/api";
-import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
+import { Money } from "@/components/money";
 import { PageHero } from "@/components/page-hero";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
@@ -74,7 +75,7 @@ export default function OrdersPage() {
                       <span>{formatRelativeTime(order.createdAt)}</span>
                     </p>
                   </div>
-                  <p className="flex-none font-display text-lg font-extrabold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
+                  <p className="flex-none font-display text-lg font-extrabold tabular-nums"><Money value={order.totalAmount} /></p>
                 </Link>
               </li>
             ))}

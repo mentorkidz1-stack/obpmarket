@@ -5,11 +5,13 @@ import { PageHero } from "@/components/page-hero";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getWallet, withdrawWallet, type WalletSummary } from "@/lib/api";
-import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
+import { Money, useMoneyText } from "@/components/money";
 
 export default function WalletPage() {
   const router = useRouter();
   const { token, ready } = useAuth();
+  const moneyText = useMoneyText();
   const [wallet, setWallet] = useState<WalletSummary | null>(null);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function WalletPage() {
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6">
       <div className="rounded-2xl bg-brand p-6 text-on-brand">
         <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Solde disponible</p>
-        <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(wallet.balance)} F</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums"><Money value={wallet.balance} /></p>
         {error && <p className="mt-2 rounded-lg bg-white/90 px-3 py-1.5 text-sm text-down">{error}</p>}
         <button
           type="button"
@@ -77,7 +79,7 @@ export default function WalletPage() {
               </div>
               <span className={`font-mono font-semibold ${t.amount >= 0 ? "text-up" : "text-ink"}`}>
                 {t.amount >= 0 ? "+" : ""}
-                {formatFCFA(t.amount)}
+                {moneyText(t.amount)}
               </span>
             </li>
           ))}

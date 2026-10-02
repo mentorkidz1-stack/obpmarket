@@ -6,6 +6,8 @@ import { useAuth } from "@/components/auth-provider";
 import { getOrder, getPaymentInfo, payOnline, submitPaymentReference, type Order, type PaymentInfo, type PaymentMethod } from "@/lib/api";
 import { formatFCFA } from "@/lib/format";
 import { PageHero } from "@/components/page-hero";
+import { Money } from "@/components/money";
+import { useCurrency } from "@/components/currency-provider";
 
 const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "MTN_MOMO", label: "MTN MoMo" },
@@ -16,6 +18,7 @@ export default function OrderPaymentPage(props: PageProps<"/commandes/[id]/paiem
   const { id } = use(props.params);
   const router = useRouter();
   const { token, ready } = useAuth();
+  const { currency } = useCurrency();
   const [order, setOrder] = useState<Order | null>(null);
   const [info, setInfo] = useState<PaymentInfo | null>(null);
   const [busyOnline, setBusyOnline] = useState(false);
@@ -87,6 +90,11 @@ export default function OrderPaymentPage(props: PageProps<"/commandes/[id]/paiem
       <div className="rounded-2xl border border-line bg-surface p-5">
         <p className="text-xs font-semibold uppercase tracking-wide text-ink-2">Montant à payer</p>
         <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
+        {currency !== "XOF" && (
+          <p className="mt-1 text-sm text-ink-2">
+            <Money value={order.totalAmount} /> · le paiement s&apos;effectue en FCFA.
+          </p>
+        )}
       </div>
 
       {error && <p className="mt-3 rounded-xl border border-down/30 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}

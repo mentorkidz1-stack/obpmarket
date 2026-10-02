@@ -17,6 +17,7 @@ import { ResaleModule } from './resale/resale.module.js';
 import { VendorModule } from './vendor/vendor.module.js';
 import { BannersModule } from './banners/banners.module.js';
 import { PaymentInfoModule } from './payment-info/payment-info.module.js';
+import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module.js';
 
 @Module({
   imports: [
@@ -36,6 +37,7 @@ import { PaymentInfoModule } from './payment-info/payment-info.module.js';
     VendorModule,
     BannersModule,
     PaymentInfoModule,
+    ExchangeRatesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

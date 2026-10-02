@@ -17,7 +17,8 @@ import {
   type ResaleListingRecord,
   type StockHolding,
 } from "@/lib/api";
-import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
+import { Money, useMoneyText } from "@/components/money";
 import { ProductImage } from "@/components/product-image";
 
 const REQUEST_STATUS_LABEL: Record<LiquidityRequestRecord["status"], string> = {
@@ -32,6 +33,7 @@ type OpenAction = { productId: string; kind: "liquidity" | "resale" } | null;
 export default function MyStockPage() {
   const router = useRouter();
   const { token, ready } = useAuth();
+  const moneyText = useMoneyText();
   const [holdings, setHoldings] = useState<StockHolding[] | null>(null);
   const [requests, setRequests] = useState<LiquidityRequestRecord[] | null>(null);
   const [listings, setListings] = useState<ResaleListingRecord[] | null>(null);
@@ -118,11 +120,11 @@ export default function MyStockPage() {
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <div className="rounded-2xl bg-brand p-6 text-on-brand">
         <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Valeur de mon stock</p>
-        <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(totalValue)} F</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums"><Money value={totalValue} /></p>
         {totalGain !== 0 && (
           <span className="mt-1 inline-block rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-brand">
             {totalGain >= 0 ? "+" : ""}
-            {formatFCFA(totalGain)} F depuis l&apos;achat
+            {moneyText(totalGain)} depuis l&apos;achat
           </span>
         )}
       </div>
@@ -133,10 +135,10 @@ export default function MyStockPage() {
             <div key={r.id} className="rounded-2xl bg-brand p-4 text-on-brand">
               <p className="text-xs uppercase tracking-wide opacity-80">Offre de rachat d&apos;OBP Market</p>
               <p className="font-display text-2xl font-bold">
-                {formatFCFA(r.offeredUnitPrice! * r.quantity)} F
+                <Money value={r.offeredUnitPrice! * r.quantity} />
               </p>
               <p className="text-xs opacity-90">
-                {r.product.name} · {r.quantity} {r.product.unitLabel} à {formatFCFA(r.offeredUnitPrice!)} F
+                {r.product.name} · {r.quantity} {r.product.unitLabel} à {moneyText(r.offeredUnitPrice!)}
               </p>
               {r.expiresAt && (
                 <p className="mt-1 text-xs opacity-80">Valable jusqu&apos;au {new Date(r.expiresAt).toLocaleString("fr-FR")}</p>
@@ -188,17 +190,17 @@ export default function MyStockPage() {
                   <div className="min-w-0 flex-1">
                     <p className="font-display font-bold">{h.product.name}</p>
                     <p className="text-xs text-ink-2">
-                      {h.quantity} {h.product.unitLabel} · acheté {formatFCFA(h.avgUnitCost)} F
+                      {h.quantity} {h.product.unitLabel} · acheté {moneyText(h.avgUnitCost)}
                     </p>
                   </div>
                   <div className="text-right">
                     <p className="font-display font-bold tabular-nums">
-                      {h.currentValue != null ? formatFCFA(h.currentValue) : "—"} F
+                      {h.currentValue != null ? moneyText(h.currentValue) : "—"}
                     </p>
                     {h.gain != null && (
                       <p className={`text-xs font-mono ${h.gain >= 0 ? "text-up" : "text-down"}`}>
                         {h.gain >= 0 ? "+" : ""}
-                        {formatFCFA(h.gain)} F
+                        {moneyText(h.gain)}
                       </p>
                     )}
                   </div>

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getOrder, reconcilePayment, type Order } from "@/lib/api";
-import { formatFCFA } from "@/lib/format";
+import { Money } from "@/components/money";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
   EN_ATTENTE_PAIEMENT: "En attente de paiement",
@@ -100,7 +100,7 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
             : STATUS_LABEL[order.status]}
         </h1>
         <p className="text-sm text-ink-2">
-          Commande <span className="font-mono">{order.id.slice(0, 10)}</span> · {formatFCFA(order.totalAmount)} F
+          Commande <span className="font-mono">{order.id.slice(0, 10)}</span> · <Money value={order.totalAmount} />
         </p>
         {order.status === "EN_ATTENTE_PAIEMENT" &&
           (returningFromOnlinePayment ? (
@@ -130,10 +130,10 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
               <div>
                 <p className="font-display font-bold">{item.product.name}</p>
                 <p className="text-xs text-ink-2">
-                  {item.quantity} × {item.product.unitLabel} · {formatFCFA(item.unitPrice)} F
+                  {item.quantity} × {item.product.unitLabel} · <Money value={item.unitPrice} />
                 </p>
               </div>
-              <p className="font-display font-bold tabular-nums">{formatFCFA(item.unitPrice * item.quantity)} F</p>
+              <p className="font-display font-bold tabular-nums"><Money value={item.unitPrice * item.quantity} /></p>
             </div>
 
             {item.withdrawalCode ? (

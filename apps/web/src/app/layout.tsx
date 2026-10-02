@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartProvider } from "@/components/cart-provider";
+import { CurrencyProvider } from "@/components/currency-provider";
 import { SiteHeader } from "@/components/site-header";
 import { SiteFooter } from "@/components/site-footer";
 import { ProductIconDefs } from "@/components/product-icons";
@@ -34,9 +35,11 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <ProductIconDefs />
         <AuthProvider>
           <CartProvider>
-            <SiteHeader />
-            {children}
-            <SiteFooter />
+            <CurrencyProvider>
+              <SiteHeader />
+              {children}
+              <SiteFooter />
+            </CurrencyProvider>
           </CartProvider>
         </AuthProvider>
       </body>

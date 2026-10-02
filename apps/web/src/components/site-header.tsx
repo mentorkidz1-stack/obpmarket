@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { CartLink } from "@/components/cart-link";
 import { AuthStatus } from "@/components/auth-status";
+import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
 
 function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   const pathname = usePathname();
@@ -25,6 +26,7 @@ export function SiteHeader() {
   const pathname = usePathname();
   const router = useRouter();
   const [query, setQuery] = useState("");
+  const { currency, setCurrency } = useCurrency();
 
   if (pathname.startsWith("/agent") || pathname.startsWith("/backoffice") || pathname.startsWith("/connexion-interne")) return null;
 
@@ -36,11 +38,29 @@ export function SiteHeader() {
 
   return (
     <>
-      <div className="bg-ink px-4 py-2 text-center text-[12px] font-semibold text-app sm:px-6">
-        Paiement sécurisé par Mobile Money et carte bancaire ·{" "}
-        <Link href="/vendeur" className="underline underline-offset-2">
-          Devenez vendeur sur OBP Market
-        </Link>
+      <div className="bg-ink px-4 py-2 text-[12px] font-semibold text-app sm:px-6">
+        <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
+          <p className="min-w-0 flex-1 text-center sm:text-left">
+            Paiement sécurisé par Mobile Money et carte bancaire ·{" "}
+            <Link href="/vendeur" className="underline underline-offset-2">
+              Devenez vendeur sur OBP Market
+            </Link>
+          </p>
+          <label className="flex flex-none items-center gap-1.5">
+            <span className="sr-only">Devise d&apos;affichage</span>
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value as Currency)}
+              className="cursor-pointer rounded-md border border-white/25 bg-transparent px-1.5 py-1 text-[12px] font-semibold text-app outline-none"
+            >
+              {CURRENCIES.map((c) => (
+                <option key={c.code} value={c.code} className="text-[#15172b]">
+                  {c.code === "XOF" ? "FCFA" : `${c.code} · ${c.label}`}
+                </option>
+              ))}
+            </select>
+          </label>
+        </div>
       </div>
 
       <header className="z-30 border-b border-line bg-surface md:sticky md:top-0">

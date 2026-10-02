@@ -4,7 +4,8 @@ import { useState } from "react";
 import Link from "next/link";
 import { ProductImage } from "@/components/product-image";
 import { useCart } from "@/components/cart-provider";
-import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { Money } from "@/components/money";
+import { formatRelativeTime } from "@/lib/format";
 import type { Product, ReferencePrice } from "@/lib/api";
 
 /** Carte produit commune à la grille du catalogue et aux variations de prix. */
@@ -54,7 +55,7 @@ export function ProductCard({ product, price }: { product: Product; price?: Refe
           {price ? (
             <>
               <p className="font-display text-xl font-extrabold tabular-nums leading-tight">
-                {formatFCFA(price.value)} <small className="text-xs font-semibold text-ink-2">F</small>
+                <Money value={price.value} unitClassName="text-xs font-semibold text-ink-2" />
               </p>
               <p className="font-mono text-[10.5px] text-ink-2">Prix du marché · {formatRelativeTime(price.computedAt)}</p>
             </>

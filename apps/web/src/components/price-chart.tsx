@@ -1,4 +1,5 @@
-import { formatFCFA } from "@/lib/format";
+import { Money } from "@/components/money";
+import { useCurrency } from "@/components/currency-provider";
 import type { ReferencePrice } from "@/lib/api";
 
 const W = 640;
@@ -9,6 +10,7 @@ const PAD_T = 16;
 const PAD_B = 26;
 
 export function PriceChart({ history }: { history: ReferencePrice[] }) {
+  const { format } = useCurrency();
   const data = history.map((h) => ({ t: new Date(h.computedAt).getTime(), v: h.value }));
 
   if (data.length === 0) {
@@ -17,7 +19,7 @@ export function PriceChart({ history }: { history: ReferencePrice[] }) {
   if (data.length === 1) {
     return (
       <p className="py-8 text-center text-sm text-ink-2">
-        Un seul relevé pour l&apos;instant : {formatFCFA(data[0].v)} F.
+        Un seul relevé pour l&apos;instant : <Money value={data[0].v} />.
       </p>
     );
   }
@@ -59,7 +61,7 @@ export function PriceChart({ history }: { history: ReferencePrice[] }) {
           <g key={i}>
             <line x1={PAD_L} x2={W - PAD_R} y1={y(tv)} y2={y(tv)} stroke="var(--color-line)" strokeWidth="1" />
             <text x={PAD_L - 8} y={y(tv) + 3} textAnchor="end" fontSize="10.5" fill="var(--color-ink-2)" fontFamily="var(--font-mono)">
-              {Math.round(tv).toLocaleString("fr-FR")}
+              {format(tv).amount}
             </text>
           </g>
         ))}

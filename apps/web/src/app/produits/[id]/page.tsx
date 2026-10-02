@@ -11,7 +11,8 @@ import {
   type Product,
   type ReferencePrice,
 } from "@/lib/api";
-import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { formatRelativeTime } from "@/lib/format";
+import { Money, useMoneyText } from "@/components/money";
 import { useCart, type Fulfillment } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
@@ -58,6 +59,7 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [related, setRelated] = useState<Array<{ product: Product; price?: ReferencePrice }> | null>(null);
   const { addItem } = useCart();
+  const moneyText = useMoneyText();
 
   useEffect(() => {
     Promise.all([getProduct(id), getReferencePriceHistory(id, 30)])
@@ -111,7 +113,7 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
     : added
       ? "Ajouté ✓"
       : latest
-        ? `Ajouter au panier · ${formatFCFA(latest.value * quantity)} F`
+        ? `Ajouter au panier · ${moneyText(latest.value * quantity)}`
         : "Indisponible";
 
   return (
@@ -173,7 +175,7 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
               </p>
               <div className="mt-1 flex flex-wrap items-baseline gap-3">
                 <p className="font-display text-4xl font-extrabold tabular-nums sm:text-5xl">
-                  {formatFCFA(latest.value)} <small className="text-lg font-semibold text-ink-2">F</small>
+                  <Money value={latest.value} unitClassName="text-lg font-semibold text-ink-2" />
                 </p>
                 <PriceTrend value={change7d(history)} size="md" />
               </div>
