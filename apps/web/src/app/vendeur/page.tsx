@@ -15,6 +15,7 @@ import {
 } from "@/lib/api";
 import { formatFCFA, formatRelativeTime } from "@/lib/format";
 import { ProductImage } from "@/components/product-image";
+import { PageHero } from "@/components/page-hero";
 
 const TYPE_LABEL: Record<VendorType, { title: string; desc: string }> = {
   PARTICULIER: { title: "Particulier", desc: "Je vends occasionnellement ma récolte ou mon surplus." },
@@ -140,15 +141,13 @@ export default function VendorDashboardPage() {
   }
 
   return (
+    <>
+    <PageHero title="Espace vendeur" crumb="Vendeur" subtitle="Publiez vos produits : OBP Market modère vos annonces et réceptionne votre stock." />
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/" className="inline-block pb-4 text-sm text-ink-2">
-        ← Retour aux prix
-      </Link>
-      <h1 className="font-display text-2xl font-bold">Espace vendeur</h1>
 
       {!profile && (
-        <div className="mt-4 rounded-2xl border border-line bg-surface p-5">
-          <h2 className="mb-3 font-display text-lg font-bold">Devenir vendeur</h2>
+        <div className="rounded-2xl border border-line bg-surface p-5 sm:p-6">
+          <h2 className="mb-3 font-display text-xl font-extrabold">Devenir vendeur</h2>
           <BecomeVendorForm token={token} onDone={() => reload(token)} />
         </div>
       )}
@@ -215,5 +214,6 @@ export default function VendorDashboardPage() {
         </>
       )}
     </main>
+    </>
   );
 }

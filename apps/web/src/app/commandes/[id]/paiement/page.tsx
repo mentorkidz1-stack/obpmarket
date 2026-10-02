@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getOrder, getPaymentInfo, payOnline, submitPaymentReference, type Order, type PaymentInfo, type PaymentMethod } from "@/lib/api";
 import { formatFCFA } from "@/lib/format";
+import { PageHero } from "@/components/page-hero";
 
 const METHODS: { value: PaymentMethod; label: string }[] = [
   { value: "MTN_MOMO", label: "MTN MoMo" },
@@ -76,16 +77,16 @@ export default function OrderPaymentPage(props: PageProps<"/commandes/[id]/paiem
   const number = method === "MTN_MOMO" ? info.mtnNumber : info.moovNumber;
 
   return (
+    <>
+    <PageHero
+      title="Payer ma commande"
+      crumb="Paiement"
+      subtitle="Mobile Money ou carte bancaire, en toute sécurité. Votre commande est confirmée automatiquement dès la réussite du paiement."
+    />
     <main className="mx-auto w-full max-w-lg flex-1 px-4 py-8 sm:px-6">
-      <h1 className="font-display text-2xl font-bold">Payer ma commande</h1>
-      <p className="mt-1 text-sm text-ink-2">
-        Mobile Money ou carte bancaire, en toute sécurité. Votre commande est confirmée automatiquement dès la
-        réussite du paiement.
-      </p>
-
-      <div className="mt-5 rounded-2xl border border-line bg-surface p-5">
-        <p className="text-xs uppercase tracking-wide text-ink-2">Montant à payer</p>
-        <p className="font-display text-3xl font-bold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
+      <div className="rounded-2xl border border-line bg-surface p-5">
+        <p className="text-xs font-semibold uppercase tracking-wide text-ink-2">Montant à payer</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
       </div>
 
       {error && <p className="mt-3 rounded-xl border border-down/30 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}
@@ -94,7 +95,7 @@ export default function OrderPaymentPage(props: PageProps<"/commandes/[id]/paiem
         type="button"
         disabled={busyOnline}
         onClick={handlePayOnline}
-        className="mt-4 w-full rounded-xl bg-brand py-3.5 text-center font-semibold text-on-brand disabled:opacity-60"
+        className="mt-4 w-full rounded-xl bg-brand py-4 text-center font-bold text-on-brand disabled:opacity-60"
       >
         {busyOnline ? "Redirection…" : "Payer maintenant"}
       </button>
@@ -166,5 +167,6 @@ export default function OrderPaymentPage(props: PageProps<"/commandes/[id]/paiem
         </div>
       )}
     </main>
+    </>
   );
 }

@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getMyOrders, type Order } from "@/lib/api";
 import { formatFCFA, formatRelativeTime } from "@/lib/format";
+import { PageHero } from "@/components/page-hero";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
   EN_ATTENTE_PAIEMENT: "En attente de paiement",
@@ -13,6 +14,14 @@ const STATUS_LABEL: Record<Order["status"], string> = {
   PAYEE: "Payée",
   RETIREE: "Retirée",
   ANNULEE: "Annulée",
+};
+
+const STATUS_STYLE: Record<Order["status"], string> = {
+  EN_ATTENTE_PAIEMENT: "bg-accent-soft text-accent",
+  EN_VERIFICATION: "bg-brand-soft text-brand",
+  PAYEE: "bg-up/10 text-up",
+  RETIREE: "bg-up/10 text-up",
+  ANNULEE: "bg-down/10 text-down",
 };
 
 export default function OrdersPage() {
@@ -34,35 +43,44 @@ export default function OrdersPage() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/" className="inline-block pb-4 text-sm text-ink-2">
-        ← Retour aux prix
-      </Link>
-      <h1 className="font-display text-2xl font-bold">Mes commandes</h1>
-
-      {orders.length === 0 ? (
-        <p className="mt-8 rounded-2xl border border-line bg-surface p-8 text-center text-sm text-ink-2">
-          Aucune commande pour l&apos;instant.
-        </p>
-      ) : (
-        <ul className="mt-5 overflow-hidden rounded-2xl border border-line bg-surface">
-          {orders.map((order) => (
-            <li key={order.id} className="border-t border-line first:border-t-0">
-              <Link href={`/commandes/${order.id}`} className="flex items-center justify-between gap-3 px-4 py-3">
-                <div>
-                  <p className="font-display font-bold">
-                    {order.items.length} article{order.items.length > 1 ? "s" : ""}
-                  </p>
-                  <p className="text-xs text-ink-2">
-                    {STATUS_LABEL[order.status]} · {formatRelativeTime(order.createdAt)}
-                  </p>
-                </div>
-                <p className="font-display font-bold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
-              </Link>
-            </li>
-          ))}
-        </ul>
-      )}
-    </main>
+    <>
+      <PageHero title="Mes commandes" crumb="Commandes" subtitle="Suivez vos paiements et récupérez vos bons de retrait." />
+      <main className="mx-auto w-full max-w-3xl flex-1 px-4 py-8 sm:px-6">
+        {orders.length === 0 ? (
+          <div className="rounded-2xl border border-line bg-surface p-10 text-center">
+            <p className="font-display text-lg font-extrabold">Aucune commande pour l&apos;instant</p>
+            <p className="mt-1 text-sm text-ink-2">Vos commandes apparaîtront ici dès votre premier achat.</p>
+            <Link href="/" className="mt-5 inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
+              Voir la boutique
+            </Link>
+          </div>
+        ) : (
+          <ul className="grid gap-3">
+            {orders.map((order) => (
+              <li key={order.id}>
+                <Link
+                  href={`/commandes/${order.id}`}
+                  className="flex items-center justify-between gap-3 rounded-2xl border border-line bg-surface p-4 transition-shadow hover:shadow-[0_14px_34px_-18px_rgba(21,23,43,0.4)]"
+                >
+                  <div className="min-w-0">
+                    <p className="font-display font-bold">
+                      {order.items.length} article{order.items.length > 1 ? "s" : ""}
+                      <span className="ml-2 font-mono text-xs font-normal text-ink-2">#{order.id.slice(0, 8)}</span>
+                    </p>
+                    <p className="mt-1 flex flex-wrap items-center gap-2 text-xs text-ink-2">
+                      <span className={`rounded-md px-2 py-0.5 font-bold ${STATUS_STYLE[order.status]}`}>
+                        {STATUS_LABEL[order.status]}
+                      </span>
+                      <span>{formatRelativeTime(order.createdAt)}</span>
+                    </p>
+                  </div>
+                  <p className="flex-none font-display text-lg font-extrabold tabular-nums">{formatFCFA(order.totalAmount)} F</p>
+                </Link>
+              </li>
+            ))}
+          </ul>
+        )}
+      </main>
+    </>
   );
 }

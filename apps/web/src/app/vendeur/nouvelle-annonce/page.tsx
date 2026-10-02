@@ -6,6 +6,7 @@ import { useAuth } from "@/components/auth-provider";
 import { createVendorListing, getLatestReferencePrices, getProducts, type Product, type ReferencePrice } from "@/lib/api";
 import { resizeImageFile } from "@/lib/image";
 import { formatFCFA } from "@/lib/format";
+import { PageHero } from "@/components/page-hero";
 
 const PRICE_BAND = 0.1; // doit correspondre à VENDOR_PRICE_BAND côté API
 
@@ -98,11 +99,10 @@ export default function NewVendorListingPage() {
   }
 
   return (
+    <>
+    <PageHero title="Nouvelle annonce" crumb="Vendeur / Nouvelle annonce" subtitle="Au moins 2 photos, jusqu'à 6. La première est la photo principale." />
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6">
-      <h1 className="font-display text-2xl font-bold">Nouvelle annonce</h1>
-      <p className="text-sm text-ink-2">Au moins 2 photos, jusqu&apos;à 6. La première est la photo principale.</p>
-
-      <div className="mt-4 grid grid-cols-3 gap-2">
+      <div className="grid grid-cols-3 gap-2">
         {photos.map((src, i) => (
           // eslint-disable-next-line @next/next/no-img-element
           <div key={i} className="relative aspect-square overflow-hidden rounded-xl border border-line">
@@ -198,5 +198,6 @@ export default function NewVendorListingPage() {
         Invisible sur le site tant qu&apos;OBP Market n&apos;a pas validé.
       </p>
     </main>
+    </>
   );
 }

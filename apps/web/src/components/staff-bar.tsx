@@ -19,15 +19,18 @@ export function StaffBar({ user, logout }: { user: AuthUser; logout: () => void 
 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
-      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-2.5 sm:px-6">
-        <span className="font-display text-sm font-bold">OBP · Back-office</span>
+      <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
+        <span className="flex items-center gap-2 font-display text-sm font-extrabold">
+          <span className="grid size-8 place-items-center rounded-[9px] bg-brand text-[11px] text-on-brand">OBP</span>
+          Back-office
+        </span>
         <nav className="ml-2 hidden flex-1 items-center gap-1 overflow-x-auto md:flex">
           {LINKS.map((l) => (
             <Link
               key={l.href}
               href={l.href}
-              className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-                pathname === l.href ? "bg-brand-soft text-brand" : "text-ink-2 hover:bg-surface-2"
+              className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold ${
+                pathname === l.href ? "bg-brand text-on-brand" : "text-ink-2 hover:bg-surface-2"
               }`}
             >
               {l.label}
@@ -42,7 +45,7 @@ export function StaffBar({ user, logout }: { user: AuthUser; logout: () => void 
               logout();
               router.replace("/connexion-interne");
             }}
-            className="rounded-full border border-line px-2.5 py-1 font-semibold"
+            className="rounded-lg border border-line px-3 py-1.5 font-bold text-ink hover:bg-surface-2"
           >
             Déconnexion
           </button>
@@ -53,8 +56,8 @@ export function StaffBar({ user, logout }: { user: AuthUser; logout: () => void 
           <Link
             key={l.href}
             href={l.href}
-            className={`whitespace-nowrap rounded-full px-2.5 py-1 text-xs font-semibold ${
-              pathname === l.href ? "bg-brand-soft text-brand" : "text-ink-2"
+            className={`whitespace-nowrap rounded-lg px-3 py-1.5 text-xs font-bold ${
+              pathname === l.href ? "bg-brand text-on-brand" : "text-ink-2"
             }`}
           >
             {l.label}

@@ -45,12 +45,24 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-5 px-4 py-12">
+    <main className="mx-auto grid w-full max-w-4xl flex-1 items-center px-4 py-10 sm:px-6 sm:py-14">
+      <div className="grid overflow-hidden rounded-3xl border border-line bg-surface md:grid-cols-2">
+        <div className="relative hidden min-h-[460px] md:block">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img src="/promos/hero-2.jpg" alt="" className="absolute inset-0 size-full object-cover" />
+          <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d20]/90 via-[#0b0d20]/30 to-transparent" />
+          <div className="relative flex h-full flex-col justify-end p-8 text-white">
+            <p className="font-display text-2xl font-extrabold leading-tight">Le prix juste, directement du marché.</p>
+            <p className="mt-2 text-sm text-white/85">Achetez, déposez et revendez vos produits en toute confiance.</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col justify-center gap-5 p-6 sm:p-10">
       <div>
         <p className="grid size-10 place-items-center rounded-[11px] bg-brand font-display text-[15px] font-extrabold text-on-brand">
           OBP
         </p>
-        <h1 className="mt-4 font-display text-2xl font-bold">Se connecter</h1>
+        <h1 className="mt-4 font-display text-3xl font-extrabold">Se connecter</h1>
         <p className="text-sm text-ink-2">
           {step === "phone" ? "Avec votre numéro de téléphone." : `Code envoyé au ${phone}.`}
         </p>
@@ -87,8 +99,7 @@ export default function LoginPage() {
         <>
           {devCode && (
             <p className="rounded-xl border border-accent/40 bg-accent-soft px-3 py-2 text-xs leading-relaxed">
-              Mode développement : aucune passerelle SMS n&apos;est branchée, le code est donc affiché ici et
-              pré-rempli.
+              Votre code de connexion est affiché et pré-rempli ci-dessous.
             </p>
           )}
           <div className="grid gap-1.5">
@@ -118,6 +129,8 @@ export default function LoginPage() {
           </button>
         </>
       )}
+        </div>
+      </div>
     </main>
   );
 }

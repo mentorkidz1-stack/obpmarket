@@ -28,12 +28,13 @@ export default function StaffLoginPage() {
   }
 
   return (
-    <main className="mx-auto flex w-full max-w-sm flex-1 flex-col justify-center gap-5 px-4 py-12">
+    <main className="mx-auto flex w-full max-w-md flex-1 flex-col justify-center px-4 py-12">
+     <div className="flex flex-col gap-5 rounded-3xl border border-line bg-surface p-6 sm:p-9">
       <div>
         <p className="grid size-10 place-items-center rounded-[11px] bg-brand font-display text-[15px] font-extrabold text-on-brand">
           OBP
         </p>
-        <h1 className="mt-4 font-display text-2xl font-bold">Connexion interne</h1>
+        <h1 className="mt-4 font-display text-3xl font-extrabold">Connexion interne</h1>
         <p className="text-sm text-ink-2">Réservé aux équipes OBP Market (gestionnaires, modérateurs).</p>
       </div>
 
@@ -73,6 +74,7 @@ export default function StaffLoginPage() {
       >
         {busy ? "Connexion…" : "Se connecter"}
       </button>
+     </div>
     </main>
   );
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { PageHero } from "@/components/page-hero";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getWallet, withdrawWallet, type WalletSummary } from "@/lib/api";
@@ -42,25 +42,22 @@ export default function WalletPage() {
   }
 
   return (
+    <>
+    <PageHero title="Portefeuille" crumb="Portefeuille" subtitle="Vos gains de revente et de liquidité, retirables vers Mobile Money." />
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/" className="inline-block pb-4 text-sm text-ink-2">
-        ← Retour aux prix
-      </Link>
-      <h1 className="font-display text-2xl font-bold">Portefeuille</h1>
-
-      <div className="mt-4 rounded-2xl border border-line bg-surface p-4">
-        <p className="text-xs text-ink-2">Solde disponible</p>
-        <p className="font-display text-3xl font-bold tabular-nums">{formatFCFA(wallet.balance)} F</p>
-        {error && <p className="mt-2 text-sm text-down">{error}</p>}
+      <div className="rounded-2xl bg-brand p-6 text-on-brand">
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Solde disponible</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(wallet.balance)} F</p>
+        {error && <p className="mt-2 rounded-lg bg-white/90 px-3 py-1.5 text-sm text-down">{error}</p>}
         <button
           type="button"
           disabled={busy || wallet.balance <= 0}
           onClick={handleWithdraw}
-          className="mt-3 w-full rounded-xl bg-brand py-3 text-sm font-semibold text-on-brand disabled:opacity-50"
+          className="mt-4 w-full rounded-xl bg-white py-3 text-sm font-bold text-brand disabled:opacity-50"
         >
           {busy ? "Retrait en cours…" : "Retirer vers MoMo"}
         </button>
-        <p className="mt-2 text-center text-[11px] text-ink-2">
+        <p className="mt-2 text-center text-[11px] opacity-80">
           Transféré vers votre compte MTN MoMo ou Moov Money.
         </p>
       </div>
@@ -87,5 +84,6 @@ export default function WalletPage() {
         </ul>
       )}
     </main>
+    </>
   );
 }

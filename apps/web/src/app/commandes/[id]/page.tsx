@@ -61,8 +61,15 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl flex-1 px-4 py-10 sm:px-6">
-      <div className="grid justify-items-center gap-2 text-center">
+    <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
+      <nav aria-label="Fil d'Ariane" className="mb-4 flex items-center gap-1.5 text-xs font-semibold text-ink-2">
+        <Link href="/" className="hover:text-ink">Accueil</Link>
+        <span>/</span>
+        <Link href="/commandes" className="hover:text-ink">Commandes</Link>
+        <span>/</span>
+        <span className="font-mono text-ink">#{order.id.slice(0, 8)}</span>
+      </nav>
+      <div className="grid justify-items-center gap-2 rounded-2xl bg-brand-soft px-5 py-8 text-center">
         <div
           className={`grid size-14 place-items-center rounded-full ${
             order.status === "PAYEE" || order.status === "RETIREE"
@@ -87,7 +94,7 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
             </svg>
           )}
         </div>
-        <h1 className="font-display text-xl font-bold">
+        <h1 className="font-display text-2xl font-extrabold">
           {order.status === "EN_ATTENTE_PAIEMENT" && returningFromOnlinePayment
             ? "Confirmation de votre paiement…"
             : STATUS_LABEL[order.status]}
@@ -99,7 +106,7 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
           (returningFromOnlinePayment ? (
             <p className="max-w-xs text-xs text-ink-2">Ça ne prend que quelques secondes.</p>
           ) : (
-            <Link href={`/commandes/${order.id}/paiement`} className="mt-1 rounded-full bg-brand px-4 py-2 text-sm font-semibold text-on-brand">
+            <Link href={`/commandes/${order.id}/paiement`} className="mt-2 rounded-xl bg-brand px-5 py-2.5 text-sm font-bold text-on-brand">
               Continuer le paiement
             </Link>
           ))}
@@ -154,10 +161,10 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
       </ul>
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
-        <Link href="/" className="flex-1 rounded-xl border border-line py-3 text-center text-sm font-semibold">
-          Retour aux prix
+        <Link href="/" className="flex-1 rounded-xl border border-line bg-surface py-3 text-center text-sm font-bold">
+          Retour à la boutique
         </Link>
-        <Link href="/commandes" className="flex-1 rounded-xl bg-brand py-3 text-center text-sm font-semibold text-on-brand">
+        <Link href="/commandes" className="flex-1 rounded-xl bg-brand py-3 text-center text-sm font-bold text-on-brand">
           Mes commandes
         </Link>
       </div>

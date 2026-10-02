@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
+import { PageHero } from "@/components/page-hero";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -113,17 +113,14 @@ export default function MyStockPage() {
   const activeListings = listings.filter((l) => l.status === "EN_VENTE");
 
   return (
+    <>
+    <PageHero title="Mon stock" crumb="Mon stock" subtitle="Vos produits déposés chez OBP, valorisés au prix du marché d'aujourd'hui." />
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
-      <Link href="/" className="inline-block pb-4 text-sm text-ink-2">
-        ← Retour aux prix
-      </Link>
-      <h1 className="font-display text-2xl font-bold">Mon stock</h1>
-      <p className="text-sm text-ink-2">Valeur aujourd&apos;hui, au prix du marché.</p>
-
-      <div className="mt-4 rounded-2xl border border-line bg-surface p-4">
-        <p className="font-display text-3xl font-bold tabular-nums">{formatFCFA(totalValue)} F</p>
+      <div className="rounded-2xl bg-brand p-6 text-on-brand">
+        <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Valeur de mon stock</p>
+        <p className="font-display text-4xl font-extrabold tabular-nums">{formatFCFA(totalValue)} F</p>
         {totalGain !== 0 && (
-          <span className={`inline-block rounded-full px-2 py-0.5 text-xs font-semibold ${totalGain >= 0 ? "bg-up/10 text-up" : "bg-down/10 text-down"}`}>
+          <span className="mt-1 inline-block rounded-full bg-white/90 px-2.5 py-0.5 text-xs font-bold text-brand">
             {totalGain >= 0 ? "+" : ""}
             {formatFCFA(totalGain)} F depuis l&apos;achat
           </span>
@@ -302,5 +299,6 @@ export default function MyStockPage() {
         </div>
       )}
     </main>
+    </>
   );
 }
