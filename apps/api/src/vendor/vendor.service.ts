@@ -6,6 +6,7 @@ import { ReferencePricesService } from '../reference-prices/reference-prices.ser
 import type { CreateVendorProfileDto } from './dto/create-vendor-profile.dto.js';
 import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
 import type { ReviewDto } from './dto/review.dto.js';
+import type { UpdateVendorListingDto, UpdateVendorProfileDto } from './dto/update-vendor-listing.dto.js';
 
 /// RG-16 : fourchette autorisée autour du prix de référence — à confirmer avec la direction.
 const VENDOR_PRICE_BAND = Number(process.env.VENDOR_PRICE_BAND ?? 0.1);
@@ -26,11 +27,62 @@ export class VendorService {
 
   async becomeVendor(userId: string, dto: CreateVendorProfileDto) {
     const existing = await this.prisma.vendorProfile.findUnique({ where: { userId } });
-    if (existing) throw new ConflictException('Vous avez déjà un compte vendeur.');
+    if (existing) {
+      // Une demande refusée peut être redéposée, corrigée ; tout autre état est déjà un compte.
+      if (existing.status !== VendorStatus.REFUSE) throw new ConflictException('Vous avez déjà un compte vendeur.');
+      return this.prisma.vendorProfile.update({
+        where: { id: existing.id },
+        data: { type: dto.type, zone: dto.zone, paymentInfo: dto.paymentInfo, status: VendorStatus.EN_ATTENTE, rejectionReason: null, reviewedAt: null },
+      });
+    }
 
     return this.prisma.vendorProfile.create({
       data: { userId, type: dto.type, zone: dto.zone, paymentInfo: dto.paymentInfo },
     });
+  }
+
+  /** Le vendeur met à jour sa zone et ses coordonnées de paiement (sans repasser par la validation). */
+  async updateProfile(userId: string, dto: UpdateVendorProfileDto) {
+    const vendor = await this.prisma.vendorProfile.findUnique({ where: { userId } });
+    if (!vendor) throw new NotFoundException("Vous n'avez pas de compte vendeur.");
+    return this.prisma.vendorProfile.update({
+      where: { id: vendor.id },
+      data: { zone: dto.zone?.trim() || undefined, paymentInfo: dto.paymentInfo?.trim() || undefined },
+    });
+  }
+
+  /** Tous les vendeurs, avec leur activité, pour le suivi du back-office. */
+  findAllVendors() {
+    return this.prisma.vendorProfile.findMany({
+      include: {
+        user: { select: SAFE_USER_SELECT },
+        _count: { select: { listings: true } },
+      },
+      orderBy: [{ status: 'asc' }, { createdAt: 'desc' }],
+    });
+  }
+
+  async suspendVendor(id: string, reason?: string) {
+    await this.findVendorOrThrow(id);
+    return this.prisma.vendorProfile.update({
+      where: { id },
+      data: { status: VendorStatus.SUSPENDU, rejectionReason: reason ?? null, reviewedAt: new Date() },
+    });
+  }
+
+  async reactivateVendor(id: string) {
+    const vendor = await this.findVendorOrThrow(id);
+    if (vendor.status !== VendorStatus.SUSPENDU) throw new BadRequestException("Ce compte n'est pas suspendu.");
+    return this.prisma.vendorProfile.update({
+      where: { id },
+      data: { status: VendorStatus.ACTIF, rejectionReason: null, reviewedAt: new Date() },
+    });
+  }
+
+  private async findVendorOrThrow(id: string) {
+    const vendor = await this.prisma.vendorProfile.findUnique({ where: { id } });
+    if (!vendor) throw new NotFoundException('Vendeur introuvable.');
+    return vendor;
   }
 
   myProfile(userId: string) {
@@ -75,6 +127,10 @@ export class VendorService {
 
     const product = await this.prisma.product.findUnique({ where: { id: dto.productId } });
     if (!product) throw new NotFoundException('Produit introuvable.');
+    // Mêmes règles que le formulaire : seuls les produits stockables non périssables se déposent au magasin.
+    if (!product.isStockable || product.isPerishable) {
+      throw new BadRequestException('Ce produit ne peut pas être proposé par un vendeur (produit frais ou non stockable).');
+    }
 
     return this.prisma.vendorListing.create({
       data: {
@@ -96,6 +152,50 @@ export class VendorService {
       include: WITH_LISTING_RELATIONS,
       orderBy: { createdAt: 'desc' },
     });
+  }
+
+  private async ownListingOrThrow(userId: string, id: string) {
+    const listing = await this.prisma.vendorListing.findUnique({ where: { id }, include: { vendor: { select: { userId: true } } } });
+    if (!listing || listing.vendor.userId !== userId) throw new NotFoundException('Annonce introuvable.');
+    return listing;
+  }
+
+  /** Le vendeur corrige son annonce (en attente ou à corriger) : elle repart en modération. */
+  async updateListing(userId: string, id: string, dto: UpdateVendorListingDto) {
+    await this.requireActiveVendor(userId);
+    const listing = await this.ownListingOrThrow(userId, id);
+    if (listing.status !== VendorListingStatus.EN_ATTENTE && listing.status !== VendorListingStatus.A_CORRIGER) {
+      throw new BadRequestException("Cette annonce ne peut plus être modifiée : elle a déjà été traitée.");
+    }
+    return this.prisma.vendorListing.update({
+      where: { id },
+      data: {
+        quantity: dto.quantity,
+        unitPrice: dto.unitPrice,
+        photos: dto.photos ? JSON.stringify(dto.photos) : undefined,
+        status: VendorListingStatus.EN_ATTENTE,
+        rejectionReason: null,
+        reviewedAt: null,
+        reviewedById: null,
+      },
+      include: WITH_LISTING_RELATIONS,
+    });
+  }
+
+  /** Le vendeur retire une annonce qui n'est pas encore en vente. */
+  async cancelListing(userId: string, id: string) {
+    const listing = await this.ownListingOrThrow(userId, id);
+    const cancellable: VendorListingStatus[] = [
+      VendorListingStatus.EN_ATTENTE,
+      VendorListingStatus.A_CORRIGER,
+      VendorListingStatus.REFUSEE,
+      VendorListingStatus.VALIDEE,
+    ];
+    if (!cancellable.includes(listing.status)) {
+      throw new BadRequestException('Cette annonce est en vente ou épuisée : contactez OBP Market pour la retirer.');
+    }
+    await this.prisma.vendorListing.delete({ where: { id } });
+    return { deleted: true };
   }
 
   async findPendingListings() {
@@ -167,16 +267,20 @@ export class VendorService {
   }
 
   /** RG-14 : l'annonce ne devient achetable qu'à réception effective au magasin. */
-  async markReceived(id: string) {
+  async markReceived(id: string, receivedQuantity?: number) {
     const listing = await this.findListingOrThrow(id);
     if (listing.status !== VendorListingStatus.VALIDEE) {
       throw new BadRequestException('Cette annonce doit être validée avant réception.');
+    }
+    const received = receivedQuantity ?? listing.quantity;
+    if (received > listing.quantity) {
+      throw new BadRequestException(`La quantité reçue ne peut pas dépasser la quantité annoncée (${listing.quantity}).`);
     }
     return this.prisma.vendorListing.update({
       where: { id },
       data: {
         status: VendorListingStatus.EN_VENTE,
-        receivedQuantity: listing.quantity,
+        receivedQuantity: received,
         receivedAt: new Date(),
       },
       include: WITH_LISTING_RELATIONS,

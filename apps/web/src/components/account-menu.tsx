@@ -15,8 +15,8 @@ const LINKS = [
 ];
 
 function initials(name: string, phone: string) {
-  const base = name && name !== "Nouveau client" ? name : phone.replace(/\D/g, "").slice(-2);
-  return base
+  if (!name || name === "Nouveau client") return phone.replace(/\D/g, "").slice(-2);
+  return name
     .split(/\s+/)
     .map((w) => w[0])
     .join("")

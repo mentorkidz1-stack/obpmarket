@@ -96,6 +96,18 @@ const GROUPS = [
         a: "Choisissez le produit, la quantité, votre prix et ajoutez au moins 2 photos. L'équipe OBP Market vérifie l'annonce ; elle est signalée au modérateur si votre prix s'écarte trop du prix du marché. L'annonce est mise en vente après réception du stock au magasin.",
       },
       {
+        q: "Mon annonce est « À corriger », que faire ?",
+        a: "Ouvrez votre Espace vendeur : le motif indiqué par OBP Market s'affiche sous l'annonce. Cliquez sur « Corriger », modifiez le prix, la quantité ou les photos, puis renvoyez-la : elle repart en vérification.",
+      },
+      {
+        q: "Ma demande de compte vendeur a été refusée. Puis-je la refaire ?",
+        a: "Oui. Depuis l'Espace vendeur, « Refaire une demande » vous permet de corriger vos informations et de les renvoyer.",
+      },
+      {
+        q: "Et si je dépose moins de stock que prévu ?",
+        a: "À la réception, OBP Market enregistre la quantité réellement déposée au magasin : c'est celle qui est mise en vente.",
+      },
+      {
         q: "Quand suis-je payé ?",
         a: "Vos ventes sont créditées sur votre portefeuille dès que le paiement de l'acheteur est confirmé. Vous pouvez ensuite les retirer vers Mobile Money.",
       },

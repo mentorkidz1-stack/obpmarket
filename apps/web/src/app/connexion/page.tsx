@@ -38,7 +38,9 @@ export default function LoginPage() {
     try {
       const { accessToken, user } = await verifyOtp(phone, code);
       setSession(accessToken, user);
-      router.push("/");
+      // Retour à la page d'où l'on vient (ex. « Devenir vendeur »), limité aux adresses internes du site.
+      const next = new URLSearchParams(window.location.search).get("next");
+      router.push(next && next.startsWith("/") && !next.startsWith("//") ? next : "/");
     } catch (err) {
       setError(err instanceof Error ? err.message : "Code invalide.");
     } finally {

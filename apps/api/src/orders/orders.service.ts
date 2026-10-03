@@ -98,7 +98,8 @@ export class OrdersService {
         const vendorListings =
           remaining > 0
             ? await tx.vendorListing.findMany({
-                where: { productId: product.id, status: VendorListingStatus.EN_VENTE, receivedQuantity: { gt: 0 } },
+                // Les annonces d'un vendeur suspendu ne se vendent plus.
+                where: { productId: product.id, status: VendorListingStatus.EN_VENTE, receivedQuantity: { gt: 0 }, vendor: { status: 'ACTIF' } },
                 include: { vendor: { select: { userId: true } } },
                 orderBy: { createdAt: 'asc' },
               })

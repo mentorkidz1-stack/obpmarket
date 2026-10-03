@@ -320,8 +320,32 @@ export function rejectVendorListing(token: string, id: string, reason: string) {
   return authJson<VendorListingRecord>(`/vendor-listings/${id}/reject`, token, "POST", { reason });
 }
 
-export function markVendorListingReceived(token: string, id: string) {
-  return authJson<VendorListingRecord>(`/vendor-listings/${id}/mark-received`, token, "POST");
+export function markVendorListingReceived(token: string, id: string, receivedQuantity?: number) {
+  return authJson<VendorListingRecord>(`/vendor-listings/${id}/mark-received`, token, "POST", receivedQuantity ? { receivedQuantity } : {});
+}
+
+export function updateVendorListing(token: string, id: string, data: { quantity?: number; unitPrice?: number; photos?: string[] }) {
+  return authJson<VendorListingRecord>(`/vendor-listings/${id}`, token, "PATCH", data);
+}
+
+export function cancelVendorListing(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/vendor-listings/${id}`, token, { method: "DELETE" });
+}
+
+export function updateVendorProfile(token: string, data: { zone?: string; paymentInfo?: string }) {
+  return authJson<VendorProfileRecord>("/vendor-profile/mine", token, "PATCH", data);
+}
+
+export function getAllVendors(token: string) {
+  return authFetch<Array<VendorProfileRecord & { _count: { listings: number } }>>("/vendor-profile/all", token);
+}
+
+export function suspendVendor(token: string, id: string, reason: string) {
+  return authJson<VendorProfileRecord>(`/vendor-profile/${id}/suspend`, token, "POST", { reason });
+}
+
+export function reactivateVendor(token: string, id: string) {
+  return authJson<VendorProfileRecord>(`/vendor-profile/${id}/reactivate`, token, "POST");
 }
 
 export type PaymentMethod = "MTN_MOMO" | "MOOV_MONEY";
