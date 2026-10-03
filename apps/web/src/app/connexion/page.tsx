@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { requestOtp, verifyOtp } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
+import { Photo } from "@/components/photo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -48,8 +49,7 @@ export default function LoginPage() {
     <main className="mx-auto grid w-full max-w-4xl flex-1 items-center px-4 py-10 sm:px-6 sm:py-14">
       <div className="grid overflow-hidden rounded-3xl border border-line bg-surface md:grid-cols-2">
         <div className="relative hidden min-h-[460px] md:block">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/promos/hero-2.jpg" alt="" className="absolute inset-0 size-full object-cover" />
+          <Photo src="/promos/hero-2.jpg" alt="" sizes="440px" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d20]/90 via-[#0b0d20]/30 to-transparent" />
           <div className="relative flex h-full flex-col justify-end p-8 text-white">
             <p className="font-display text-2xl font-extrabold leading-tight">Le prix juste, directement du marché.</p>

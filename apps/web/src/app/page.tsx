@@ -12,6 +12,9 @@ import { PromoBanners } from "@/components/promo-banners";
 import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
+// Page régénérée au plus toutes les 30 s : servie instantanément depuis le CDN, sans attendre l'API.
+export const revalidate = 30;
+
 export default async function Home() {
   let products, prices, markets, banners, properties;
   try {

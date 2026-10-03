@@ -30,9 +30,10 @@ export interface Banner {
 }
 
 async function apiFetch<T>(path: string): Promise<T> {
-  // no-store : prix, photos et bannières sont modifiés régulièrement par le back-office
-  // et doivent toujours refléter l'état réel de la base, pas un instantané mis en cache.
-  const res = await fetch(`${API_URL}${path}`, { cache: "no-store" });
+  // Côté serveur Next, la réponse est gardée 30 s : les visites suivantes ne rappellent pas l'API
+  // (dont le premier appel peut prendre plusieurs secondes sur l'hébergement gratuit). Une modification
+  // du back-office apparaît donc en moins de 30 s. Côté navigateur, l'option est ignorée.
+  const res = await fetch(`${API_URL}${path}`, { next: { revalidate: 30 } });
   if (!res.ok) {
     throw new Error(`Appel API ${path} en échec (${res.status})`);
   }

@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { Photo } from "@/components/photo";
 import { CATEGORY_ICON } from "@/components/product-icons";
 
 export interface CategoryCount {
@@ -52,12 +53,9 @@ export function CategoryTiles({ categories }: { categories: CategoryCount[] }) {
                 </svg>
               </span>
               {c.photo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={c.photo}
-                  alt=""
-                  className="absolute bottom-0 right-0 h-[78%] w-[46%] rounded-tl-[36px] object-cover transition-transform duration-300 group-hover:scale-105"
-                />
+                <span className="absolute bottom-0 right-0 h-[78%] w-[46%] overflow-hidden rounded-tl-[36px]">
+                  <Photo src={c.photo} alt="" sizes="160px" quality={60} className="transition-transform duration-300 group-hover:scale-105" />
+                </span>
               ) : (
                 <svg viewBox="0 0 24 24" className="absolute -bottom-2 -right-2 size-24 opacity-20" fill="none" stroke="currentColor" strokeWidth="1.2">
                   <use href={`#${iconId}`} />

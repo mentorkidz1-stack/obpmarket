@@ -83,7 +83,13 @@ export function SiteHeader() {
   const { currency, setCurrency } = useCurrency();
   const { setNavOpen } = useUI();
   const { ids } = useWishlist();
-  useCatalog(true); // préchargé : recherche, menu, panier latéral et favoris s'ouvrent instantanément
+  // Catalogue préchargé quand la page est au repos : recherche, menu, panier latéral et favoris s'ouvrent ensuite instantanément.
+  const [warm, setWarm] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setWarm(true), 2500);
+    return () => clearTimeout(t);
+  }, []);
+  useCatalog(warm);
 
   if (pathname.startsWith("/agent") || pathname.startsWith("/backoffice") || pathname.startsWith("/connexion-interne")) return null;
 

@@ -2,6 +2,7 @@ import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import type { CreateProductDto } from './dto/create-product.dto.js';
 import type { CreateCategoryDto } from './dto/create-category.dto.js';
+import { parsePhotoArray, resolvePhotoRefs } from '../common/photos.js';
 
 @Injectable()
 export class ProductsService {
@@ -38,10 +39,10 @@ export class ProductsService {
 
   /** Photos réelles du catalogue (back-office). Remplace la vignette illustrée par défaut. */
   async updatePhotos(id: string, photos: string[]) {
-    await this.findOne(id);
+    const current = await this.findOne(id);
     return this.prisma.product.update({
       where: { id },
-      data: { photos: JSON.stringify(photos) },
+      data: { photos: JSON.stringify(resolvePhotoRefs(parsePhotoArray(current.photos), 'products', id, photos)) },
       include: { category: true },
     });
   }

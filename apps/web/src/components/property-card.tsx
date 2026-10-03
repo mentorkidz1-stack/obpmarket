@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { Money } from "@/components/money";
+import { Photo } from "@/components/photo";
 import { parseProductPhotos, type Property } from "@/lib/api";
 import { KIND_LABEL, areaEquivalent, formatArea, rentShort, statusLabel, typeLabel } from "@/lib/property";
 
@@ -35,8 +36,12 @@ export function PropertyCard({ property: p }: { property: Property }) {
     <article className="group flex flex-col overflow-hidden rounded-2xl border border-line bg-surface transition-shadow hover:shadow-[0_14px_34px_-18px_rgba(21,23,43,0.4)]">
       <Link href={`/immobilier/${p.id}`} className="relative block aspect-[4/3] overflow-hidden">
         {photo ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img src={photo} alt={p.title} className={`size-full object-cover transition-transform duration-300 group-hover:scale-105 ${unavailable ? "grayscale-[0.5]" : ""}`} />
+          <Photo
+            src={photo}
+            alt={p.title}
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+            className={`transition-transform duration-300 group-hover:scale-105 ${unavailable ? "grayscale-[0.5]" : ""}`}
+          />
         ) : (
           <PropertyPlaceholder type={p.type} />
         )}

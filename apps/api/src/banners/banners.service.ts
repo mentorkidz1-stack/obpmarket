@@ -31,6 +31,10 @@ export class BannersService {
     return { deleted: true };
   }
 
+  findOne(id: string) {
+    return this.findOneOrThrow(id);
+  }
+
   private async findOneOrThrow(id: string) {
     const banner = await this.prisma.banner.findUnique({ where: { id } });
     if (!banner) throw new NotFoundException('Bannière introuvable.');

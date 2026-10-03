@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
 import { HowItWorks } from "@/components/how-it-works";
+import { Photo } from "@/components/photo";
 
 export const metadata: Metadata = {
   title: "Comment ça marche",
@@ -58,8 +59,7 @@ export default function HowItWorksPage() {
           {BLOCKS.map((b, i) => (
             <section key={b.title} className="grid items-center gap-6 md:grid-cols-2 md:gap-12">
               <div className={`relative aspect-[4/3] overflow-hidden rounded-3xl ${i % 2 ? "md:order-2" : ""}`}>
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={b.image} alt="" className="absolute inset-0 size-full object-cover" />
+                <Photo src={b.image} alt="" sizes="(max-width: 768px) 100vw, 560px" />
               </div>
               <div>
                 <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">{b.kicker}</p>

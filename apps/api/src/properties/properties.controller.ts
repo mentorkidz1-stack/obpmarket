@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Ip, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Ip, NotFoundException, Param, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
+import { parsePhotoArray, sendDataUri } from '../common/photos.js';
 import { PropertiesService } from './properties.service.js';
 import { CreateInquiryDto, CreatePropertyDto, UpdatePropertyDto } from './dto/property.dto.js';
 import { JwtAuthGuard } from '../auth/jwt-auth.guard.js';
@@ -67,6 +69,13 @@ export class PropertiesController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.properties.findPublishedOne(id);
+  }
+
+  /** Image d'une photo du bien, mise en cache par le navigateur et le CDN. */
+  @Get(':id/photo/:index')
+  async photo(@Param('id') id: string, @Param('index') index: string, @Res() res: Response) {
+    const property = await this.properties.findPublishedOne(id);
+    if (!sendDataUri(res, parsePhotoArray(property.photos)[Number(index)])) throw new NotFoundException('Photo introuvable.');
   }
 
   @Post(':id/inquiries')

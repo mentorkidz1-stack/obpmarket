@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Res, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
+import { sendDataUri } from '../common/photos.js';
 import { BannersService } from './banners.service.js';
 import { CreateBannerDto } from './dto/create-banner.dto.js';
 import { UpdateBannerDto } from './dto/update-banner.dto.js';
@@ -22,6 +24,13 @@ export class BannersController {
   @Roles(Role.MODERATEUR, Role.ADMIN)
   findAll() {
     return this.banners.findAll();
+  }
+
+  /** Image de la bannière, mise en cache par le navigateur et le CDN. */
+  @Get(':id/image')
+  async image(@Param('id') id: string, @Res() res: Response) {
+    const banner = await this.banners.findOne(id);
+    if (!sendDataUri(res, banner.imageUrl)) throw new NotFoundException('Image introuvable.');
   }
 
   @Post()

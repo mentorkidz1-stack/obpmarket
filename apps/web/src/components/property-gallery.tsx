@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { PropertyPlaceholder } from "@/components/property-card";
+import { Photo } from "@/components/photo";
 import type { Property } from "@/lib/api";
 
 export function PropertyGallery({ photos, title, type }: { photos: string[]; title: string; type: Property["type"] }) {
@@ -21,8 +22,9 @@ export function PropertyGallery({ photos, title, type }: { photos: string[]; tit
   return (
     <div>
       <div className="relative aspect-[4/3] overflow-hidden rounded-2xl border border-line bg-surface-2">
-        {/* eslint-disable-next-line @next/next/no-img-element */}
-        <img src={photos[index]} alt={`${title} — photo ${index + 1}`} onClick={() => setZoom(true)} className="size-full cursor-zoom-in object-cover" />
+        <div onClick={() => setZoom(true)} className="absolute inset-0 cursor-zoom-in">
+          <Photo src={photos[index]} alt={`${title} — photo ${index + 1}`} sizes="(max-width: 1024px) 100vw, 700px" priority={index === 0} />
+        </div>
         {photos.length > 1 && (
           <>
             <button type="button" onClick={() => go(-1)} aria-label="Photo précédente" className="absolute left-3 top-1/2 grid size-10 -translate-y-1/2 place-items-center rounded-full bg-white/90 text-[#15172b] shadow">
@@ -45,14 +47,15 @@ export function PropertyGallery({ photos, title, type }: { photos: string[]; tit
       {photos.length > 1 && (
         <div className="mt-3 flex gap-2.5 overflow-x-auto pb-1">
           {photos.map((src, i) => (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <button
               key={i}
-              src={src}
-              alt={`${title} — miniature ${i + 1}`}
+              type="button"
               onClick={() => setIndex(i)}
-              className={`h-16 w-24 flex-none cursor-pointer rounded-xl border-2 object-cover ${i === index ? "border-brand" : "border-line"}`}
-            />
+              aria-label={`Voir la photo ${i + 1}`}
+              className={`relative h-16 w-24 flex-none overflow-hidden rounded-xl border-2 ${i === index ? "border-brand" : "border-line"}`}
+            >
+              <Photo src={src} alt="" sizes="96px" quality={60} />
+            </button>
           ))}
         </div>
       )}

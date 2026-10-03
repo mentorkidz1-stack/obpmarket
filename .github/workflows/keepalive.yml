@@ -1,0 +1,18 @@
+name: Garder l'API éveillée
+
+# L'hébergement gratuit de Render endort l'API après 15 min sans visite, et le réveil prend 30 à 60 s :
+# c'est ce qui rend le premier chargement du site très lent. Ce ping, toutes les 10 min, l'évite.
+on:
+  schedule:
+    - cron: "*/10 * * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    timeout-minutes: 3
+    steps:
+      - name: Ping de l'API
+        run: |
+          curl --fail --silent --show-error --max-time 90 --retry 2 --retry-delay 10 \
+            https://obpmarket-1.onrender.com/health

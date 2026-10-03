@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import type { Banner } from "@/lib/api";
+import { Photo } from "@/components/photo";
 
 const ARROW = "grid size-9 place-items-center rounded-full bg-white/90 text-[#15172b] shadow transition-colors hover:bg-white";
 
@@ -21,8 +22,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
 
   return (
     <div className="relative min-h-72 overflow-hidden rounded-2xl bg-surface-2 sm:min-h-80 lg:min-h-[400px]">
-      {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={banner.imageUrl} alt={banner.title} className="absolute inset-0 size-full object-cover" />
+      <Photo key={banner.id} src={banner.imageUrl} alt={banner.title} sizes="(max-width: 1024px) 100vw, 900px" priority={index === 0} />
       <div className="absolute inset-0 bg-gradient-to-r from-[#0b0d20]/85 via-[#0b0d20]/45 to-transparent" />
 
       <div className="relative flex h-full min-h-72 flex-col justify-center p-6 text-white sm:min-h-80 sm:p-10 lg:min-h-[400px]">

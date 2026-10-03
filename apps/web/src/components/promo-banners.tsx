@@ -1,4 +1,5 @@
 ﻿import Link from "next/link";
+import { Photo } from "@/components/photo";
 
 const CARDS = [
   {
@@ -35,8 +36,7 @@ export function PromoBanners() {
       <div className="mt-4 grid gap-3 sm:gap-4 md:grid-cols-3">
         {CARDS.map((c) => (
           <div key={c.title} className="relative min-h-60 overflow-hidden rounded-2xl">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={c.image} alt="" className="absolute inset-0 size-full object-cover" style={{ objectPosition: c.position }} />
+            <Photo src={c.image} alt="" sizes="(max-width: 768px) 100vw, 360px" quality={60} className={c.position === "center" ? "object-center" : "object-[center_30%]"} />
             <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d20]/90 via-[#0b0d20]/35 to-transparent" />
             <div className="relative flex h-full min-h-60 flex-col justify-end p-5 text-white">
               <p className="font-display text-xl font-extrabold leading-tight">{c.title}</p>

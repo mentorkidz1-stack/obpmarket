@@ -9,4 +9,10 @@ export class AppController {
   getHello(): string {
     return this.appService.getHello();
   }
+
+  /** Sans base de données : sert aux pings de maintien en éveil (voir .github/workflows/keepalive.yml). */
+  @Get('health')
+  health() {
+    return { ok: true };
+  }
 }

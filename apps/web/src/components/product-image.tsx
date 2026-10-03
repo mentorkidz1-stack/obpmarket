@@ -1,6 +1,15 @@
 import { categoryGradient } from "@/lib/format";
 import { productIconId } from "@/components/product-icons";
+import { Photo } from "@/components/photo";
 import { parseProductPhotos, type Product } from "@/lib/api";
+
+const SIZES = {
+  sm: "44px",
+  md: "56px",
+  card: "(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 25vw",
+  hero: "(max-width: 1024px) 100vw, 560px",
+  fill: "210px",
+} as const;
 
 const SIZE_CLASS = {
   sm: "size-11 rounded-xl",
@@ -27,12 +36,9 @@ export function ProductImage({
 
   if (photo) {
     return (
-      // eslint-disable-next-line @next/next/no-img-element
-      <img
-        src={photo}
-        alt={product.name}
-        className={`flex-none object-cover ${SIZE_CLASS[size]} ${className}`}
-      />
+      <span className={`relative block flex-none overflow-hidden ${SIZE_CLASS[size]}`}>
+        <Photo src={photo} alt={product.name} sizes={SIZES[size]} priority={size === "hero" && photoIndex === 0} className={className} />
+      </span>
     );
   }
 
