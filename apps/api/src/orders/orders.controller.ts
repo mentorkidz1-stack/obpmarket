@@ -1,5 +1,6 @@
-import { Body, Controller, Get, Param, Post, Req, UseGuards } from '@nestjs/common';
-import { Role } from '@prisma/client';
+import { Body, Controller, Get, Param, Post, Query, Req, UseGuards } from '@nestjs/common';
+import { OrderStatus, Role } from '@prisma/client';
+import { IsString, Length } from 'class-validator';
 import { OrdersService } from './orders.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { SubmitPaymentReferenceDto } from './dto/submit-payment-reference.dto.js';
@@ -7,6 +8,12 @@ import { RejectPaymentDto } from './dto/reject-payment.dto.js';
 import { JwtAuthGuard, type AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
+
+class WithdrawDto {
+  @IsString()
+  @Length(6, 6, { message: 'Le bon de retrait contient 6 chiffres.' })
+  code!: string;
+}
 
 @Controller('orders')
 @UseGuards(JwtAuthGuard)
@@ -29,6 +36,37 @@ export class OrdersController {
   @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE)
   findPendingPayments() {
     return this.orders.findPendingPayments();
+  }
+
+  /** Back-office : toutes les commandes (recherche par n°, nom ou téléphone ; filtre par statut). */
+  @Get('admin/all')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE)
+  adminAll(@Query('status') status?: OrderStatus, @Query('q') q?: string, @Query('take') take?: string, @Query('skip') skip?: string) {
+    return this.orders.findAllForAdmin({ status, q, take: take ? Number(take) : undefined, skip: skip ? Number(skip) : undefined });
+  }
+
+  @Get('admin/:id')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE)
+  adminOne(@Param('id') id: string) {
+    return this.orders.findOneForAdmin(id);
+  }
+
+  /** Magasin : vérifier un bon de retrait avant de remettre la marchandise. */
+  @Get('withdrawal/:code')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
+  previewWithdrawal(@Param('code') code: string) {
+    return this.orders.previewWithdrawal(code);
+  }
+
+  /** Magasin : marchandise remise, le bon est consommé. */
+  @Post('withdraw')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
+  withdraw(@Req() req: AuthenticatedRequest, @Body() dto: WithdrawDto) {
+    return this.orders.withdraw(dto.code, req);
   }
 
   @Get(':id')

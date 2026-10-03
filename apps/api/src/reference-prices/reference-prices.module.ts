@@ -3,9 +3,10 @@ import { ReferencePricesService } from './reference-prices.service.js';
 import { ReferencePricesController } from './reference-prices.controller.js';
 import { ReferencePricesListController } from './reference-prices-list.controller.js';
 import { PriceAlertsModule } from '../price-alerts/price-alerts.module.js';
+import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
-  imports: [PriceAlertsModule],
+  imports: [PriceAlertsModule, AuthModule],
   controllers: [ReferencePricesController, ReferencePricesListController],
   providers: [ReferencePricesService],
   exports: [ReferencePricesService],

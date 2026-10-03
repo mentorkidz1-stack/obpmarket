@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs';
 const prisma = new PrismaClient();
 
 // Mot de passe de démonstration pour les comptes internes — docs/decisions/0006-connexion-interne.md.
+// À NE JAMAIS GARDER sur une base en ligne : `npm run provision:staff -- --rotate-demo` le remplace par des mots de passe aléatoires.
 const STAFF_DEMO_PASSWORD_HASH = bcrypt.hashSync('demo1234', 10);
 
 const MARKETS = [
@@ -74,9 +75,9 @@ async function main() {
     await prisma.user.upsert({
       where: { phone: s.phone },
       create: { ...s, passwordHash: STAFF_DEMO_PASSWORD_HASH },
-      // update backfille aussi l'e-mail/le rôle : un compte créé avant l'ajout de la
-      // connexion interne (0006) pouvait exister sans e-mail, ce qui bloquait le login.
-      update: { email: s.email, fullName: s.fullName, role: s.role, passwordHash: STAFF_DEMO_PASSWORD_HASH },
+      // update backfille l'e-mail et le rôle (un compte antérieur à 0006 pouvait n'avoir pas d'e-mail), mais ne touche
+      // JAMAIS au mot de passe : relancer le seed ne doit pas rétablir « demo1234 » sur un compte déjà sécurisé.
+      update: { email: s.email, fullName: s.fullName, role: s.role },
     });
   }
   await Promise.all(markets.map((m) => prisma.marketAssignment.upsert({

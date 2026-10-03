@@ -7,10 +7,14 @@ import { ReviewDto } from './dto/review.dto.js';
 import { JwtAuthGuard, type AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
+import { AuditService } from '../audit/audit.service.js';
 
 @Controller('vendor-listings')
 export class VendorListingController {
-  constructor(private readonly vendor: VendorService) {}
+  constructor(
+    private readonly vendor: VendorService,
+    private readonly audit: AuditService,
+  ) {}
 
   @Post()
   @UseGuards(JwtAuthGuard)
@@ -49,28 +53,36 @@ export class VendorListingController {
   @Post(':id/approve')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MODERATEUR, Role.ADMIN)
-  approve(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
-    return this.vendor.approveListing(id, req.userId!);
+  async approve(@Req() req: AuthenticatedRequest, @Param('id') id: string) {
+    const r = await this.vendor.approveListing(id, req.userId!);
+    await this.audit.log(req, 'Annonce vendeur validée', `Annonce ${r.product.name}`);
+    return r;
   }
 
   @Post(':id/request-correction')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MODERATEUR, Role.ADMIN)
-  requestCorrection(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: ReviewDto) {
-    return this.vendor.requestCorrection(id, req.userId!, dto);
+  async requestCorrection(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: ReviewDto) {
+    const r = await this.vendor.requestCorrection(id, req.userId!, dto);
+    await this.audit.log(req, 'Correction demandée', `Annonce ${r.product.name}`, dto.reason);
+    return r;
   }
 
   @Post(':id/reject')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MODERATEUR, Role.ADMIN)
-  reject(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: ReviewDto) {
-    return this.vendor.rejectListing(id, req.userId!, dto);
+  async reject(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: ReviewDto) {
+    const r = await this.vendor.rejectListing(id, req.userId!, dto);
+    await this.audit.log(req, 'Annonce vendeur refusée', `Annonce ${r.product.name}`, dto.reason);
+    return r;
   }
 
   @Post(':id/mark-received')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MODERATEUR, Role.ADMIN)
-  markReceived(@Param('id') id: string, @Body() dto: MarkReceivedDto) {
-    return this.vendor.markReceived(id, dto.receivedQuantity);
+  async markReceived(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: MarkReceivedDto) {
+    const r = await this.vendor.markReceived(id, dto.receivedQuantity);
+    await this.audit.log(req, 'Stock vendeur reçu au magasin', `Annonce ${r.product.name}`, `${r.receivedQuantity} ${r.product.unitLabel}`);
+    return r;
   }
 }

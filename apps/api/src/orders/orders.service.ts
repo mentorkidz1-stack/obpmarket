@@ -1,3 +1,4 @@
+import { randomInt } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
   FulfillmentMode,
@@ -12,12 +13,22 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { SAFE_USER_SELECT } from '../common/safe-user.select.js';
 import { ReferencePricesService } from '../reference-prices/reference-prices.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { AuditService } from '../audit/audit.service.js';
 import { NyoleService, type NyoleWebhookEvent } from '../nyole/nyole.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import type { SubmitPaymentReferenceDto } from './dto/submit-payment-reference.dto.js';
 
 function generateWithdrawalCode(): string {
-  return String(Math.floor(100000 + Math.random() * 900000));
+  return String(randomInt(100000, 1000000));
+}
+
+/** Code à 6 chiffres encore inutilisé : deux bons de retrait en attente ne partagent jamais le même code. */
+async function uniqueWithdrawalCode(tx: { orderItem: { findFirst: (args: { where: { withdrawalCode: string; withdrawnAt: null } }) => Promise<unknown> } }): Promise<string> {
+  for (let i = 0; i < 20; i++) {
+    const code = generateWithdrawalCode();
+    if (!(await tx.orderItem.findFirst({ where: { withdrawalCode: code, withdrawnAt: null } }))) return code;
+  }
+  throw new Error('Impossible de générer un bon de retrait unique.');
 }
 
 const WITH_PRODUCT = { items: { include: { product: { include: { category: true } } } } } as const;
@@ -36,6 +47,7 @@ export class OrdersService {
     private readonly referencePrices: ReferencePricesService,
     private readonly nyole: NyoleService,
     private readonly notifications: NotificationsService,
+    private readonly audit: AuditService,
   ) {}
 
   /**
@@ -422,7 +434,7 @@ export class OrdersService {
         } else {
           await tx.orderItem.update({
             where: { id: item.id },
-            data: { withdrawalCode: generateWithdrawalCode() },
+            data: { withdrawalCode: await uniqueWithdrawalCode(tx) },
           });
         }
       }
@@ -433,6 +445,7 @@ export class OrdersService {
       });
     });
 
+    await this.audit.log(await this.actorFor(actorId), 'Paiement confirmé', `Commande ${orderId.slice(0, 8)}`, `${Math.round(order.totalAmount).toLocaleString('fr-FR')} F${actorId ? '' : ' (automatique, passerelle)'}`);
     await this.notifications.notify(order.clientId, {
       title: 'Paiement confirmé',
       body: 'Votre commande est payée. Retrouvez vos bons de retrait ou vos produits en dépôt.',
@@ -499,6 +512,7 @@ export class OrdersService {
       });
     });
 
+    await this.audit.log(await this.actorFor(actorId), 'Paiement rejeté', `Commande ${orderId.slice(0, 8)}`, reason ?? undefined);
     await this.notifications.notify(order.clientId, {
       title: 'Paiement non retrouvé',
       body: reason ? `Votre commande a été annulée : ${reason}` : "Votre commande a été annulée car le paiement n'a pas pu être vérifié. Contactez-nous si vous avez payé.",
@@ -506,6 +520,90 @@ export class OrdersService {
     });
 
     return this.prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: WITH_PRODUCT });
+  }
+
+  /** Auteur d'une action pour le journal : le gestionnaire connecté, ou « Système » pour la confirmation automatique. */
+  private async actorFor(actorId: string | null) {
+    if (!actorId) return null;
+    const user = await this.prisma.user.findUnique({ where: { id: actorId }, select: { fullName: true } });
+    return { userId: actorId, userName: user?.fullName ?? 'Inconnu' };
+  }
+
+  // ---- Back-office : suivi des commandes et retrait au magasin ----
+
+  /** Liste des commandes pour le personnel, filtrable par statut et par recherche (n° de commande, nom ou téléphone du client). */
+  async findAllForAdmin(params: { status?: OrderStatus; q?: string; take?: number; skip?: number }) {
+    const q = params.q?.trim();
+    return this.prisma.order.findMany({
+      where: {
+        status: params.status,
+        ...(q
+          ? { OR: [{ id: { contains: q, mode: 'insensitive' } }, { client: { phone: { contains: q } } }, { client: { fullName: { contains: q, mode: 'insensitive' } } }] }
+          : {}),
+      },
+      include: { client: { select: SAFE_USER_SELECT }, items: { include: { product: { select: { id: true, name: true, unitLabel: true } } } } },
+      orderBy: { createdAt: 'desc' },
+      take: Math.min(params.take ?? 100, 300),
+      skip: params.skip ?? 0,
+    });
+  }
+
+  async findOneForAdmin(id: string) {
+    const order = await this.prisma.order.findUnique({
+      where: { id },
+      include: {
+        client: { select: SAFE_USER_SELECT },
+        confirmedBy: { select: SAFE_USER_SELECT },
+        items: { include: { product: { include: { category: true } }, fills: true } },
+      },
+    });
+    if (!order) throw new NotFoundException('Commande introuvable.');
+    return order;
+  }
+
+  private async withdrawableItems(code: string) {
+    return this.prisma.orderItem.findMany({
+      where: { withdrawalCode: code.trim(), withdrawnAt: null, order: { status: OrderStatus.PAYEE } },
+      include: { product: { select: { name: true, unitLabel: true } }, order: { select: { id: true, client: { select: SAFE_USER_SELECT } } } },
+    });
+  }
+
+  /** Vérifie un bon de retrait présenté au magasin, sans le consommer. */
+  async previewWithdrawal(code: string) {
+    const items = await this.withdrawableItems(code);
+    if (items.length === 0) throw new NotFoundException('Bon de retrait invalide, déjà utilisé, ou commande non payée.');
+    return items.map((i) => ({
+      itemId: i.id,
+      orderId: i.order.id,
+      client: i.order.client,
+      product: i.product.name,
+      unitLabel: i.product.unitLabel,
+      quantity: i.quantity,
+    }));
+  }
+
+  /** Remet la marchandise au client : le bon est consommé, et la commande passe « Retirée » quand tout est remis. */
+  async withdraw(code: string, actor: { userId?: string | null; userName?: string | null }) {
+    const items = await this.withdrawableItems(code);
+    if (items.length === 0) throw new NotFoundException('Bon de retrait invalide, déjà utilisé, ou commande non payée.');
+    if (items.length > 1) throw new BadRequestException('Ce code correspond à plusieurs bons : ouvrez la commande concernée pour les remettre un par un.');
+
+    const item = items[0];
+    const orderId = item.order.id;
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.orderItem.update({ where: { id: item.id }, data: { withdrawnAt: new Date() } });
+      const remaining = await tx.orderItem.count({ where: { orderId, withdrawalCode: { not: null }, withdrawnAt: null } });
+      if (remaining === 0) await tx.order.update({ where: { id: orderId }, data: { status: OrderStatus.RETIREE } });
+    });
+
+    await this.audit.log(actor, 'Retrait au magasin', `Commande ${orderId.slice(0, 8)}`, `${item.quantity} × ${item.product.name} remis à ${item.order.client.fullName}`);
+    await this.notifications.notify(item.order.client.id, {
+      title: 'Retrait effectué',
+      body: `${item.quantity} ${item.product.unitLabel} de ${item.product.name} remis au magasin. Merci de votre confiance.`,
+      href: `/commandes/${orderId}`,
+    });
+    return { orderId, product: item.product.name, quantity: item.quantity, client: item.order.client.fullName };
   }
 
   findMine(clientId: string) {

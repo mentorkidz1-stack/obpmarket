@@ -22,6 +22,8 @@ import { ContactModule } from './contact/contact.module.js';
 import { PropertiesModule } from './properties/properties.module.js';
 import { NotificationsModule } from './notifications/notifications.module.js';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module.js';
+import { AuditModule } from './audit/audit.module.js';
+import { AdminModule } from './admin/admin.module.js';
 
 @Module({
   imports: [
@@ -46,6 +48,8 @@ import { PriceAlertsModule } from './price-alerts/price-alerts.module.js';
     PropertiesModule,
     NotificationsModule,
     PriceAlertsModule,
+    AuditModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

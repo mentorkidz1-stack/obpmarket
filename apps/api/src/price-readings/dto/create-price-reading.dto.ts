@@ -7,8 +7,10 @@ export class CreatePriceReadingDto {
   @IsString()
   marketId!: string;
 
+  /** Ignoré : l'agent est celui du jeton de connexion. Conservé pour ne pas casser les anciens clients. */
+  @IsOptional()
   @IsString()
-  agentId!: string;
+  agentId?: string;
 
   @IsNumber()
   @IsPositive()

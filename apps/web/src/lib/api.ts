@@ -220,8 +220,9 @@ export function getMarkets() {
   return apiFetch<Market[]>("/markets");
 }
 
-export function getAgents() {
-  return apiFetch<AgentUser[]>("/users?role=AGENT");
+/** Agents de terrain (back-office : affectation aux marchés). */
+export function getAgents(token: string) {
+  return authFetch<AgentUser[]>("/admin/agents", token);
 }
 
 export interface PriceReadingToReview {
@@ -383,6 +384,238 @@ export interface ExchangeRates {
 
 export function getExchangeRates() {
   return apiFetch<ExchangeRates>("/exchange-rates");
+}
+
+// ---------------------------------------------------------------------------
+// Back-office : tableau de bord, catalogue, marchés, commandes, équipe, journal
+// ---------------------------------------------------------------------------
+
+export interface AdminStats {
+  generatedAt: string;
+  totals: { customers: number; activeVendors: number; products: number; publishedProperties: number; markets: number };
+  sales: {
+    paidOrders: number;
+    revenue: number;
+    paidOrders30d: number;
+    revenue30d: number;
+    averageBasket30d: number;
+    byStatus: Record<string, number>;
+  };
+  series: Array<{ date: string; orders: number; revenue: number }>;
+  todo: {
+    pendingPayments: number;
+    readingsToReview: number;
+    vendorsToValidate: number;
+    listingsToReview: number;
+    liquidityPending: number;
+    propertyInquiries: number;
+    contactMessages: number;
+    toWithdraw: number;
+  };
+  lowStock: Array<{ id: string; name: string; unitLabel: string; stockQuantity: number }>;
+  stalePrices: Array<{ id: string; name: string; lastAt: string | null; ageHours: number | null }>;
+  topProducts30d: Array<{ productId: string; name: string; units: number }>;
+}
+
+export function getAdminStats(token: string) {
+  return authFetch<AdminStats>("/admin/stats", token);
+}
+
+export interface CategoryWithCount extends Category {
+  _count: { products: number };
+}
+
+export function getCategories() {
+  return apiFetch<CategoryWithCount[]>("/products/categories");
+}
+
+export function createCategory(token: string, name: string) {
+  return authJson<Category>("/products/categories", token, "POST", { name });
+}
+
+export function renameCategory(token: string, id: string, name: string) {
+  return authJson<Category>(`/products/categories/${id}`, token, "PATCH", { name });
+}
+
+export function deleteCategory(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/products/categories/${id}`, token, { method: "DELETE" });
+}
+
+export interface ProductInput {
+  name: string;
+  categoryId: string;
+  unitLabel: string;
+  isPerishable: boolean;
+  isStockable: boolean;
+}
+
+export function createProduct(token: string, data: ProductInput) {
+  return authJson<Product>("/products", token, "POST", data);
+}
+
+export function updateProduct(token: string, id: string, data: Partial<ProductInput>) {
+  return authJson<Product>(`/products/${id}`, token, "PATCH", data);
+}
+
+export function adjustProductStock(token: string, id: string, quantity: number, reason: string) {
+  return authJson<Product>(`/products/${id}/stock`, token, "PATCH", { quantity, reason });
+}
+
+export function deleteProduct(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/products/${id}`, token, { method: "DELETE" });
+}
+
+export interface MarketAdmin extends Market {
+  radiusMeters: number;
+  assignments: Array<{ id: string; agent: AgentUser }>;
+  _count: { readings: number };
+}
+
+export function getMarketsAdmin(token: string) {
+  return authFetch<MarketAdmin[]>("/markets/admin/all", token);
+}
+
+export function createMarket(token: string, data: { name: string; city: string; latitude: number; longitude: number; radiusMeters?: number }) {
+  return authJson<Market>("/markets", token, "POST", data);
+}
+
+export function updateMarket(token: string, id: string, data: Partial<{ name: string; city: string; latitude: number; longitude: number; radiusMeters: number }>) {
+  return authJson<Market>(`/markets/${id}`, token, "PATCH", data);
+}
+
+export function deleteMarket(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/markets/${id}`, token, { method: "DELETE" });
+}
+
+export function assignAgentToMarket(token: string, marketId: string, agentId: string) {
+  return authJson<unknown>(`/markets/${marketId}/agents/${agentId}`, token, "POST");
+}
+
+export function unassignAgentFromMarket(token: string, marketId: string, agentId: string) {
+  return authFetch<{ deleted: boolean }>(`/markets/${marketId}/agents/${agentId}`, token, { method: "DELETE" });
+}
+
+export function getMyMarkets(token: string) {
+  return authFetch<Market[]>("/markets/mine", token);
+}
+
+export interface AdminOrder {
+  id: string;
+  status: Order["status"];
+  totalAmount: number;
+  createdAt: string;
+  paidAt: string | null;
+  paymentProvider: "MANUEL" | "NYOLE" | null;
+  paymentMethod: PaymentMethod | null;
+  paymentReference: string | null;
+  rejectionReason: string | null;
+  client: AgentUser;
+  items: Array<{
+    id: string;
+    quantity: number;
+    unitPrice: number;
+    fulfillment: "RETRAIT" | "DEPOT";
+    withdrawalCode?: string | null;
+    withdrawnAt?: string | null;
+    product: { id: string; name: string; unitLabel: string };
+  }>;
+}
+
+export function getAdminOrders(token: string, params: { status?: string; q?: string } = {}) {
+  const qs = new URLSearchParams();
+  if (params.status) qs.set("status", params.status);
+  if (params.q) qs.set("q", params.q);
+  return authFetch<AdminOrder[]>(`/orders/admin/all${qs.size ? `?${qs}` : ""}`, token);
+}
+
+export function getAdminOrder(token: string, id: string) {
+  return authFetch<AdminOrder & { confirmedBy: AgentUser | null }>(`/orders/admin/${id}`, token);
+}
+
+export interface WithdrawalPreview {
+  itemId: string;
+  orderId: string;
+  client: AgentUser;
+  product: string;
+  unitLabel: string;
+  quantity: number;
+}
+
+export function previewWithdrawal(token: string, code: string) {
+  return authFetch<WithdrawalPreview[]>(`/orders/withdrawal/${encodeURIComponent(code)}`, token);
+}
+
+export function confirmWithdrawal(token: string, code: string) {
+  return authJson<{ orderId: string; product: string; quantity: number; client: string }>("/orders/withdraw", token, "POST", { code });
+}
+
+export type StaffRole = "AGENT" | "AGENT_MAGASIN" | "GESTIONNAIRE_PRIX" | "GESTIONNAIRE_LIQUIDITE" | "MODERATEUR" | "ADMIN";
+
+export interface StaffMember {
+  id: string;
+  fullName: string;
+  email: string | null;
+  phone: string;
+  role: StaffRole;
+  disabled: boolean;
+  lastLoginAt: string | null;
+  createdAt: string;
+}
+
+export function getStaff(token: string) {
+  return authFetch<StaffMember[]>("/admin/staff", token);
+}
+
+export function createStaff(token: string, data: { fullName: string; phone: string; email?: string; role: StaffRole; password?: string }) {
+  return authJson<{ user: StaffMember; temporaryPassword?: string }>("/admin/staff", token, "POST", data);
+}
+
+export function updateStaff(token: string, id: string, data: Partial<{ fullName: string; phone: string; email: string; role: StaffRole; disabled: boolean }>) {
+  return authJson<StaffMember>(`/admin/staff/${id}`, token, "PATCH", data);
+}
+
+export function resetStaffPassword(token: string, id: string) {
+  return authJson<{ temporaryPassword: string }>(`/admin/staff/${id}/reset-password`, token, "POST");
+}
+
+export function changeMyPassword(token: string, currentPassword: string, newPassword: string) {
+  return authJson<{ ok: boolean }>("/auth/change-password", token, "POST", { currentPassword, newPassword });
+}
+
+export interface CustomerRow {
+  id: string;
+  fullName: string;
+  phone: string;
+  disabled: boolean;
+  createdAt: string;
+  lastLoginAt: string | null;
+  ordersCount: number;
+  totalSpent: number;
+}
+
+export function getCustomers(token: string, q?: string) {
+  return authFetch<CustomerRow[]>(`/admin/customers${q ? `?q=${encodeURIComponent(q)}` : ""}`, token);
+}
+
+export function setCustomerDisabled(token: string, id: string, disabled: boolean) {
+  return authJson<{ id: string; disabled: boolean }>(`/admin/customers/${id}`, token, "PATCH", { disabled });
+}
+
+export interface AuditEntry {
+  id: string;
+  actorId: string | null;
+  actorName: string;
+  action: string;
+  target: string;
+  detail: string | null;
+  createdAt: string;
+}
+
+export function getAuditLog(token: string, params: { action?: string; skip?: number } = {}) {
+  const qs = new URLSearchParams({ take: "100" });
+  if (params.action) qs.set("action", params.action);
+  if (params.skip) qs.set("skip", String(params.skip));
+  return authFetch<AuditEntry[]>(`/admin/audit?${qs}`, token);
 }
 
 export interface NotificationRecord {
@@ -775,14 +1008,17 @@ export interface PriceReadingResult {
   };
 }
 
-export async function submitPriceReading(input: {
-  productId: string;
-  marketId: string;
-  agentId: string;
-  price: number;
-  quality?: string;
-  latitude?: number;
-  longitude?: number;
-}): Promise<PriceReadingResult> {
-  return postJson<PriceReadingResult>("/price-readings", input);
+/** Relevé de prix : réservé à l'agent connecté, à qui le relevé est attribué (l'API ignore tout identifiant d'agent envoyé). */
+export async function submitPriceReading(
+  token: string,
+  input: {
+    productId: string;
+    marketId: string;
+    price: number;
+    quality?: string;
+    latitude?: number;
+    longitude?: number;
+  },
+): Promise<PriceReadingResult> {
+  return authJson<PriceReadingResult>("/price-readings", token, "POST", input);
 }

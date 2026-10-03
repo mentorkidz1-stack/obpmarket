@@ -6,6 +6,7 @@ import compression from 'compression';
 import type { Request } from 'express';
 import { AppModule } from './app.module.js';
 import { PhotoUrlInterceptor } from './common/photo-url.interceptor.js';
+import { PrismaExceptionFilter } from './common/prisma-exception.filter.js';
 
 async function bootstrap() {
   // bodyParser: false + notre propre json() : la limite par défaut (~100kb) est trop
@@ -25,6 +26,7 @@ async function bootstrap() {
   // Derrière le proxy de Render : sans cela, @Ip() renverrait l'adresse du proxy pour tous les visiteurs.
   app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.useGlobalInterceptors(new PhotoUrlInterceptor());
+  app.useGlobalFilters(new PrismaExceptionFilter());
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3001);

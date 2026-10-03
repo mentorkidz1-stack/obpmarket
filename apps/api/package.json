@@ -27,6 +27,7 @@
     "prisma:migrate": "prisma migrate dev",
     "prisma:studio": "prisma studio",
     "seed": "node --experimental-strip-types prisma/seed.ts",
+    "provision:staff": "node scripts/provision-staff.mjs",
     "seed:properties": "node --experimental-strip-types prisma/seed-properties.ts",
     "unseed:properties": "node --experimental-strip-types prisma/seed-properties.ts remove"
   },

@@ -1,4 +1,4 @@
-import { Inject, Injectable, NotFoundException } from '@nestjs/common';
+import { ForbiddenException, Inject, Injectable, NotFoundException } from '@nestjs/common';
 import { ReadingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SAFE_USER_SELECT } from '../common/safe-user.select.js';
@@ -23,9 +23,15 @@ export class PriceReadingsService {
    * zone ou trop éloigné du prix connu est mis de côté pour contrôle plutôt
    * que rejeté d'office : c'est le gestionnaire qui tranche (BO-04).
    */
-  async create(dto: CreatePriceReadingDto) {
+  async create(dto: CreatePriceReadingDto, agentId: string, enforceAssignment: boolean) {
     const market = await this.prisma.market.findUnique({ where: { id: dto.marketId } });
     if (!market) throw new NotFoundException(`Marché ${dto.marketId} introuvable`);
+
+    // Un agent de terrain ne relève que dans les marchés auxquels il est affecté.
+    if (enforceAssignment) {
+      const assigned = await this.prisma.marketAssignment.findUnique({ where: { agentId_marketId: { agentId, marketId: dto.marketId } } });
+      if (!assigned) throw new ForbiddenException("Vous n'êtes pas affecté à ce marché.");
+    }
 
     let distanceToMarketMeters: number | undefined;
     let flagReason: string | undefined;
@@ -35,6 +41,9 @@ export class PriceReadingsService {
       if (distanceToMarketMeters > market.radiusMeters) {
         flagReason = `Hors zone : à ${Math.round(distanceToMarketMeters)} m du marché (rayon ${market.radiusMeters} m)`;
       }
+    } else if (enforceAssignment) {
+      // Sans position, impossible de vérifier que l'agent est bien au marché : le gestionnaire tranche.
+      flagReason = 'Position GPS non fournie : présence au marché non vérifiable';
     }
 
     if (!flagReason) {
@@ -51,7 +60,7 @@ export class PriceReadingsService {
       data: {
         productId: dto.productId,
         marketId: dto.marketId,
-        agentId: dto.agentId,
+        agentId,
         price: dto.price,
         quality: dto.quality,
         photoUrl: dto.photoUrl,

@@ -1,5 +1,5 @@
 import { randomInt } from 'node:crypto';
-import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
+import { ForbiddenException, Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
@@ -23,6 +23,8 @@ function sanitizeUser<T extends { passwordHash: string | null }>(user: T) {
 }
 
 const TEN_MINUTES = 10 * 60 * 1000;
+/** Seuls ces rôles peuvent se connecter par code reçu sur leur téléphone. */
+const OTP_LOGIN_ROLES: string[] = ['CLIENT', 'AGENT'];
 
 @Injectable()
 export class AuthService {
@@ -31,6 +33,8 @@ export class AuthService {
   private readonly requestsPerIp = new SlidingLimiter(10, TEN_MINUTES, 'Trop de demandes depuis cet appareil. Réessayez dans quelques minutes.');
   /** 5 codes erronés par numéro et par fenêtre de 10 min, puis blocage temporaire. */
   private readonly failedAttempts = new SlidingLimiter(5, TEN_MINUTES, 'Trop de tentatives. Demandez un nouveau code dans quelques minutes.');
+  /** 5 mots de passe erronés par e-mail et par appareil, puis blocage temporaire. */
+  private readonly staffFailures = new SlidingLimiter(5, TEN_MINUTES, 'Trop de tentatives. Réessayez dans quelques minutes.');
 
   constructor(
     private readonly prisma: PrismaService,
@@ -87,26 +91,53 @@ export class AuthService {
 
     await this.prisma.otpCode.update({ where: { id: otp.id }, data: { consumedAt: new Date() } });
 
+    const existing = await this.prisma.user.findUnique({ where: { phone: dto.phone } });
+    if (existing) {
+      // Le code par téléphone ne protège que les comptes clients et agents de terrain. Le personnel du back-office
+      // se connecte par e-mail et mot de passe : sinon, quiconque connaît son numéro prendrait son compte.
+      if (!OTP_LOGIN_ROLES.includes(existing.role)) {
+        throw new ForbiddenException('Ce compte se connecte par la connexion interne (e-mail et mot de passe).');
+      }
+      if (existing.disabled) throw new UnauthorizedException('Ce compte a été désactivé.');
+    }
+
     const user = await this.prisma.user.upsert({
       where: { phone: dto.phone },
-      create: { phone: dto.phone, fullName: 'Nouveau client' },
-      update: {},
+      create: { phone: dto.phone, fullName: 'Nouveau client', lastLoginAt: new Date() },
+      update: { lastLoginAt: new Date() },
     });
 
     const accessToken = await this.jwt.signAsync({ sub: user.id, role: user.role });
     return { accessToken, user: sanitizeUser(user) };
   }
 
-  /** Connexion des rôles internes — docs/decisions/0006-connexion-interne.md. */
-  async staffLogin(dto: StaffLoginDto) {
+  /** Connexion des rôles internes — docs/decisions/0006-connexion-interne.md. Jeton de 12 h, 5 essais / 10 min. */
+  async staffLogin(dto: StaffLoginDto, ip = 'inconnu') {
+    const key = `${dto.email.toLowerCase()}|${ip}`;
+    this.staffFailures.assertBelow(key);
+
     const user = await this.prisma.user.findUnique({ where: { email: dto.email } });
-    if (!user?.passwordHash) throw new UnauthorizedException('Identifiants invalides.');
+    const valid = !!user?.passwordHash && (await bcrypt.compare(dto.password, user.passwordHash));
+    if (!user || !valid) {
+      this.staffFailures.hit(key);
+      throw new UnauthorizedException('Identifiants invalides.');
+    }
+    if (user.disabled) throw new UnauthorizedException('Ce compte a été désactivé. Contactez un administrateur.');
+    this.staffFailures.reset(key);
 
-    const valid = await bcrypt.compare(dto.password, user.passwordHash);
-    if (!valid) throw new UnauthorizedException('Identifiants invalides.');
-
-    const accessToken = await this.jwt.signAsync({ sub: user.id, role: user.role });
+    await this.prisma.user.update({ where: { id: user.id }, data: { lastLoginAt: new Date() } });
+    const accessToken = await this.jwt.signAsync({ sub: user.id, role: user.role }, { expiresIn: '12h' });
     return { accessToken, user: sanitizeUser(user) };
+  }
+
+  /** Le personnel change son propre mot de passe (le mot de passe de démonstration doit disparaître avant la production). */
+  async changePassword(userId: string, current: string, next: string) {
+    const user = await this.prisma.user.findUniqueOrThrow({ where: { id: userId } });
+    if (!user.passwordHash || !(await bcrypt.compare(current, user.passwordHash))) {
+      throw new UnauthorizedException('Mot de passe actuel incorrect.');
+    }
+    await this.prisma.user.update({ where: { id: userId }, data: { passwordHash: await bcrypt.hash(next, 10) } });
+    return { ok: true };
   }
 
   async me(userId: string) {

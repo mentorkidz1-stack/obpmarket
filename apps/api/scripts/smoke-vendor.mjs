@@ -13,7 +13,7 @@ const ok = (label, got, want) => console.log(`${got === want ? "OK " : "KO "} ${
 const otp = (await call("POST", "/auth/request-otp", null, { phone: PHONE }))[1];
 const vendorLogin = (await call("POST", "/auth/verify-otp", null, { phone: PHONE, code: otp.devCode }))[1];
 const V = vendorLogin.accessToken;
-const staff = (await call("POST", "/auth/staff-login", null, { email: "moderatrice@obpmarket.test", password: "demo1234" }))[1].accessToken;
+const staff = (await call("POST", "/auth/staff-login", null, { email: process.env.STAFF_EMAIL ?? "moderatrice@obpmarket.test", password: process.env.STAFF_PASSWORD ?? "demo1234" }))[1].accessToken;
 
 const products = (await call("GET", "/products"))[1];
 const stockable = products.find((p) => p.isStockable && !p.isPerishable);
