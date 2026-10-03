@@ -8,6 +8,7 @@ import { getMyOrders, type Order } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/format";
 import { Money } from "@/components/money";
 import { PageHero } from "@/components/page-hero";
+import { LoadError, PageLoading } from "@/components/page-state";
 
 const STATUS_LABEL: Record<Order["status"], string> = {
   EN_ATTENTE_PAIEMENT: "En attente de paiement",
@@ -29,6 +30,8 @@ export default function OrdersPage() {
   const router = useRouter();
   const { token, ready } = useAuth();
   const [orders, setOrders] = useState<Order[] | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!ready) return;
@@ -36,12 +39,23 @@ export default function OrdersPage() {
       router.replace("/connexion");
       return;
     }
-    getMyOrders(token).then(setOrders);
-  }, [ready, token, router]);
+    getMyOrders(token)
+      .then(setOrders)
+      .catch((err: Error) => setLoadError(err.message));
+  }, [ready, token, router, attempt]);
 
-  if (!orders) {
-    return <main className="flex flex-1 items-center justify-center text-sm text-ink-2">Chargement…</main>;
+  if (loadError) {
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => {
+          setLoadError(null);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
   }
+  if (!orders) return <PageLoading />;
 
   return (
     <>

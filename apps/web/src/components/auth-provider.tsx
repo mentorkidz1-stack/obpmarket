@@ -36,6 +36,21 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }, []);
 
+  // Une réponse 401 de l'API (jeton expiré) déconnecte : plus de page bloquée sur « Chargement… ».
+  useEffect(() => {
+    const onExpired = () => {
+      setToken(null);
+      setUser(null);
+      try {
+        localStorage.removeItem(STORAGE_KEY);
+      } catch {
+        // rien à faire si le stockage est indisponible
+      }
+    };
+    window.addEventListener("obp:session-expired", onExpired);
+    return () => window.removeEventListener("obp:session-expired", onExpired);
+  }, []);
+
   function setSession(nextToken: string, nextUser: AuthUser) {
     setToken(nextToken);
     setUser(nextUser);

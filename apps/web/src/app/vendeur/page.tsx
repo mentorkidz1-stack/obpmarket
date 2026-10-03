@@ -18,6 +18,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { Money } from "@/components/money";
 import { ProductImage } from "@/components/product-image";
 import { VendorLanding } from "@/components/vendor-landing";
+import { LoadError, PageLoading } from "@/components/page-state";
 
 const TYPE_LABEL: Record<VendorType, { title: string; desc: string }> = {
   PARTICULIER: { title: "Particulier", desc: "Je vends occasionnellement ma récolte ou mon surplus." },
@@ -208,11 +209,15 @@ export default function VendorPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   function reload(t: string) {
-    getMyVendorProfile(t).then((p) => {
-      setProfile(p);
-      if (p?.status === "ACTIF") getMyVendorListings(t).then(setListings);
-    });
+    getMyVendorProfile(t)
+      .then((p) => {
+        setProfile(p);
+        if (p?.status === "ACTIF") return getMyVendorListings(t).then(setListings);
+      })
+      .catch((err: Error) => setLoadError(err.message));
   }
 
   useEffect(() => {
@@ -233,10 +238,20 @@ export default function VendorPage() {
     }
   }
 
-  // Sans session, il n'y a rien à charger : on passe directement à la présentation du programme.
-  if (!ready || (token && profile === undefined)) {
-    return <main className="flex flex-1 items-center justify-center text-sm text-ink-2">Chargement…</main>;
+  if (token && loadError) {
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => {
+          setLoadError(null);
+          reload(token);
+        }}
+      />
+    );
   }
+
+  // Sans session, il n'y a rien à charger : on passe directement à la présentation du programme.
+  if (!ready || (token && profile === undefined)) return <PageLoading />;
 
   const shell = (children: React.ReactNode) => <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>;
 

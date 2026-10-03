@@ -46,16 +46,30 @@ async function readErrorMessage(res: Response, fallback: string): Promise<string
   return message ?? fallback;
 }
 
+/**
+ * Lit le corps d'une réponse JSON. L'API renvoie un corps vide (et non « null ») quand il n'y a rien à
+ * retourner — par exemple le profil vendeur d'un compte qui n'est pas vendeur : on le lit comme `null`.
+ */
+async function readJson<T>(res: Response): Promise<T> {
+  const text = await res.text();
+  return (text ? JSON.parse(text) : null) as T;
+}
+
 /** Requête authentifiée — envoie le jeton du staff ou du client connecté (JwtAuthGuard). */
 async function authFetch<T>(path: string, token: string, init?: RequestInit): Promise<T> {
   const res = await fetch(`${API_URL}${path}`, {
     ...init,
     headers: { ...(init?.headers ?? {}), Authorization: `Bearer ${token}` },
   });
+  if (res.status === 401 && typeof window !== "undefined") {
+    // Session expirée ou invalide : le AuthProvider déconnecte, les pages repassent sur la connexion.
+    window.dispatchEvent(new Event("obp:session-expired"));
+    throw new Error("Votre session a expiré. Reconnectez-vous.");
+  }
   if (!res.ok) {
     throw new Error(await readErrorMessage(res, `Échec de la requête (${res.status})`));
   }
-  return res.json() as Promise<T>;
+  return readJson<T>(res);
 }
 
 async function postJson<T>(path: string, body?: unknown): Promise<T> {
@@ -67,7 +81,7 @@ async function postJson<T>(path: string, body?: unknown): Promise<T> {
   if (!res.ok) {
     throw new Error(await readErrorMessage(res, `Échec de la requête (${res.status})`));
   }
-  return res.json() as Promise<T>;
+  return readJson<T>(res);
 }
 
 function authJson<T>(path: string, token: string, method: string, body?: unknown): Promise<T> {

@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHero } from "@/components/page-hero";
+import { LoadError, PageLoading } from "@/components/page-state";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import { getWallet, withdrawWallet, type WalletSummary } from "@/lib/api";
@@ -13,6 +14,8 @@ export default function WalletPage() {
   const { token, ready } = useAuth();
   const moneyText = useMoneyText();
   const [wallet, setWallet] = useState<WalletSummary | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [attempt, setAttempt] = useState(0);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -22,8 +25,10 @@ export default function WalletPage() {
       router.replace("/connexion");
       return;
     }
-    getWallet(token).then(setWallet);
-  }, [ready, token, router]);
+    getWallet(token)
+      .then(setWallet)
+      .catch((err: Error) => setLoadError(err.message));
+  }, [ready, token, router, attempt]);
 
   async function handleWithdraw() {
     if (!token || !wallet) return;
@@ -39,9 +44,18 @@ export default function WalletPage() {
     }
   }
 
-  if (!wallet) {
-    return <main className="flex flex-1 items-center justify-center text-sm text-ink-2">Chargement…</main>;
+  if (loadError) {
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => {
+          setLoadError(null);
+          setAttempt((n) => n + 1);
+        }}
+      />
+    );
   }
+  if (!wallet) return <PageLoading />;
 
   return (
     <>

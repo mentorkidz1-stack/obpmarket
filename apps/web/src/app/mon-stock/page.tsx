@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { PageHero } from "@/components/page-hero";
+import { LoadError, PageLoading } from "@/components/page-state";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/components/auth-provider";
 import {
@@ -42,12 +43,16 @@ export default function MyStockPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const [loadError, setLoadError] = useState<string | null>(null);
+
   function reload(t: string) {
-    Promise.all([getMyStock(t), getMyLiquidityRequests(t), getMyResaleListings(t)]).then(([h, r, l]) => {
-      setHoldings(h);
-      setRequests(r);
-      setListings(l);
-    });
+    Promise.all([getMyStock(t), getMyLiquidityRequests(t), getMyResaleListings(t)])
+      .then(([h, r, l]) => {
+        setHoldings(h);
+        setRequests(r);
+        setListings(l);
+      })
+      .catch((err: Error) => setLoadError(err.message));
   }
 
   useEffect(() => {
@@ -105,9 +110,18 @@ export default function MyStockPage() {
     }
   }
 
-  if (!holdings || !requests || !listings) {
-    return <main className="flex flex-1 items-center justify-center text-sm text-ink-2">Chargement…</main>;
+  if (loadError && token) {
+    return (
+      <LoadError
+        message={loadError}
+        onRetry={() => {
+          setLoadError(null);
+          reload(token);
+        }}
+      />
+    );
   }
+  if (!holdings || !requests || !listings) return <PageLoading />;
 
   const totalValue = holdings.reduce((sum, h) => sum + (h.currentValue ?? 0), 0);
   const totalGain = holdings.reduce((sum, h) => sum + (h.gain ?? 0), 0);
