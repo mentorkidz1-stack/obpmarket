@@ -25,6 +25,26 @@ model Banner {
   @@index([active, position])
 }
 
+enum ContactStatus {
+  NOUVEAU
+  TRAITE
+}
+
+/// Message envoyé depuis le formulaire de contact du site, traité par le back-office.
+model ContactMessage {
+  id        String        @id @default(cuid())
+  name      String
+  phone     String?
+  email     String?
+  subject   String
+  message   String
+  status    ContactStatus @default(NOUVEAU)
+  createdAt DateTime      @default(now())
+  handledAt DateTime?
+
+  @@index([status, createdAt])
+}
+
 /// Rôles du cahier des charges, §3. L'authentification n'est pas encore implémentée :
 /// ce champ sert à préparer les permissions du back-office.
 enum Role {

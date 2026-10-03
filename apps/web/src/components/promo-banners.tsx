@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 
 const CARDS = [
   {
@@ -23,7 +23,7 @@ const CARDS = [
     title: "Payez par Mobile Money",
     text: "MTN MoMo, Moov, Orange ou carte bancaire — votre commande est confirmée automatiquement.",
     cta: "Voir la boutique",
-    href: "#produits",
+    href: "/boutique",
   },
 ];
 

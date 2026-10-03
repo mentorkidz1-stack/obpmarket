@@ -7,6 +7,7 @@ const SIZE_CLASS = {
   md: "size-14 rounded-xl",
   card: "aspect-square w-full rounded-t-2xl",
   hero: "aspect-square w-full rounded-2xl",
+  fill: "h-full min-h-32 w-full",
 } as const;
 
 export function ProductImage({

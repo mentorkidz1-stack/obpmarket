@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/backoffice/paiements", label: "Paiements" },
   { href: "/backoffice/produits", label: "Photos" },
   { href: "/backoffice/bannieres", label: "Bannières" },
+  { href: "/backoffice/messages", label: "Messages" },
 ];
 
 export function StaffBar({ user, logout }: { user: AuthUser; logout: () => void }) {

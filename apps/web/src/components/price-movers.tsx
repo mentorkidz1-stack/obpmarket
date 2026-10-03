@@ -1,3 +1,4 @@
+﻿import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
 import type { Product, ReferencePrice } from "@/lib/api";
 
@@ -22,9 +23,9 @@ export function PriceMovers({ items }: { items: MoverItem[] }) {
           <h2 className="font-display text-xl font-extrabold">Variations de prix · 7 jours</h2>
           <p className="mt-0.5 text-sm text-ink-2">Les produits dont le prix du marché a le plus bougé cette semaine.</p>
         </div>
-        <a href="#produits" className="flex-none text-sm font-semibold text-brand">
+        <Link href="/boutique?tri=hausse" className="flex-none text-sm font-semibold text-brand">
           Tout voir
-        </a>
+        </Link>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {movers.map(({ product, price }) => (

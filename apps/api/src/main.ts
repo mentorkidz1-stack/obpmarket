@@ -18,6 +18,8 @@ async function bootstrap() {
       },
     }),
   );
+  // Derrière le proxy de Render : sans cela, @Ip() renverrait l'adresse du proxy pour tous les visiteurs.
+  app.getHttpAdapter().getInstance().set('trust proxy', 1);
   app.enableCors();
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
   await app.listen(process.env.PORT ?? 3001);

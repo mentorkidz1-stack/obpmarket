@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { categoryGradient } from "@/lib/format";
 import { CATEGORY_ICON } from "@/components/product-icons";
 import type { CategoryCount } from "@/components/category-tiles";
@@ -16,7 +16,7 @@ export function CategorySidebar({ categories }: { categories: CategoryCount[] })
         </svg>
         Catégories
       </p>
-      <Link href="#produits" className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-semibold hover:bg-surface-2">
+      <Link href="/boutique" className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm font-semibold hover:bg-surface-2">
         <span className="grid size-8 flex-none place-items-center rounded-full bg-ink text-app">
           <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 7h16M4 12h16M4 17h16" />
@@ -30,7 +30,7 @@ export function CategorySidebar({ categories }: { categories: CategoryCount[] })
         return (
           <Link
             key={c.id}
-            href={`/?categorie=${c.id}#produits`}
+            href={`/boutique?categorie=${c.id}`}
             className="flex items-center gap-3 rounded-xl px-2.5 py-2.5 text-sm hover:bg-surface-2"
           >
             <span

@@ -8,6 +8,8 @@ import { useAuth } from "@/components/auth-provider";
 import { createOrder } from "@/lib/api";
 import { PageHero } from "@/components/page-hero";
 import { ProductImage } from "@/components/product-image";
+import { Money } from "@/components/money";
+import { useCatalog } from "@/lib/use-catalog";
 
 export default function CartPage() {
   const router = useRouter();
@@ -16,7 +18,10 @@ export default function CartPage() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const { prices } = useCatalog();
   const total = lines.reduce((sum, l) => sum + l.quantity, 0);
+  const estimate = lines.reduce((sum, l) => sum + (prices.get(l.product.id)?.value ?? 0) * l.quantity, 0);
+  const estimateComplete = lines.every((l) => prices.has(l.product.id));
 
   async function handleCheckout() {
     if (!token) {
@@ -99,6 +104,9 @@ export default function CartPage() {
                       +
                     </button>
                   </div>
+                  <p className="min-w-24 text-right font-display font-extrabold tabular-nums">
+                    {prices.has(line.product.id) ? <Money value={prices.get(line.product.id)!.value * line.quantity} unitClassName="text-xs text-ink-2" /> : "—"}
+                  </p>
                   <button
                     type="button"
                     onClick={() => removeItem(line.product.id)}
@@ -119,8 +127,12 @@ export default function CartPage() {
                 <span className="text-ink-2">Articles</span>
                 <span className="font-semibold">{total}</span>
               </div>
-              <p className="mt-3 text-xs leading-relaxed text-ink-2">
-                Le total exact est calculé au prix du marché au moment du paiement.
+              <div className="mt-3 flex items-center justify-between">
+                <span className="text-sm font-semibold">Total estimé</span>
+                <span className="font-display text-2xl font-extrabold tabular-nums">{estimateComplete ? <Money value={estimate} unitClassName="text-sm text-ink-2" /> : "—"}</span>
+              </div>
+              <p className="mt-2 text-xs leading-relaxed text-ink-2">
+                Estimation au prix du marché actuel. Le total exact est fixé au moment du paiement.
               </p>
 
               {!user && (

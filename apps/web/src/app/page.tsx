@@ -1,6 +1,8 @@
 import { getBanners, getLatestReferencePrices, getMarkets, getProducts, parseProductPhotos } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/format";
-import { ShopGrid } from "@/components/shop-grid";
+import Link from "next/link";
+import { ProductCard } from "@/components/product-card";
+import { HowItWorks } from "@/components/how-it-works";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategorySidebar } from "@/components/category-sidebar";
 import { CategoryTiles, type CategoryCount } from "@/components/category-tiles";
@@ -9,11 +11,7 @@ import { PromoBanners } from "@/components/promo-banners";
 import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
-export default async function Home(props: PageProps<"/">) {
-  const searchParams = await props.searchParams;
-  const categoryParam = typeof searchParams.categorie === "string" ? searchParams.categorie : undefined;
-  const query = typeof searchParams.q === "string" ? searchParams.q : undefined;
-
+export default async function Home() {
   let products, prices, markets, banners;
   try {
     [products, prices, markets, banners] = await Promise.all([
@@ -51,6 +49,19 @@ export default async function Home(props: PageProps<"/">) {
     }
   }
   const categories = [...categoryCounts.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
+
+  // Les produits déjà montrés dans « Variations de prix » ne sont pas répétés dessous.
+  const moverIds = new Set(
+    products
+      .flatMap((p) => {
+        const change = priceByProduct.get(p.id)?.changePct7d;
+        return change == null ? [] : [{ id: p.id, abs: Math.abs(change) }];
+      })
+      .sort((a, b) => b.abs - a.abs)
+      .slice(0, 4)
+      .map((m) => m.id),
+  );
+  const featured = (moverIds.size >= 2 ? products.filter((p) => !moverIds.has(p.id)) : products).slice(0, 8);
 
   const stats = [
     { label: "Produits", value: products.length },
@@ -111,22 +122,32 @@ export default async function Home(props: PageProps<"/">) {
             })}
           />
 
-          <TrustStrip />
-          <PromoBanners />
-          <MarketStrip markets={markets} />
+          <HowItWorks />
 
-          <section id="produits" className="scroll-mt-28 pt-10">
-            <h2 className="font-display text-xl font-extrabold">Tous les produits</h2>
-            <div className="mt-4">
-              <ShopGrid
-                key={`${categoryParam ?? ""}|${query ?? ""}`}
-                products={products}
-                prices={priceByProduct}
-                initialCategoryId={categoryParam}
-                initialQuery={query}
-              />
+          <section className="mt-10">
+            <div className="flex items-baseline justify-between gap-3">
+              <h2 className="font-display text-xl font-extrabold">{featured.length < products.length ? "Découvrez aussi" : "Nos produits"}</h2>
+              <Link href="/boutique" className="flex-none text-sm font-semibold text-brand">
+                Toute la boutique →
+              </Link>
+            </div>
+            {featured.length > 0 && (
+              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+                {featured.map((p) => (
+                  <ProductCard key={p.id} product={p} price={priceByProduct.get(p.id)} />
+                ))}
+              </div>
+            )}
+            <div className="mt-6 text-center">
+              <Link href="/boutique" className="inline-block rounded-xl border-2 border-ink px-8 py-3 text-sm font-bold hover:bg-ink hover:text-app">
+                Voir les {products.length} produits
+              </Link>
             </div>
           </section>
+
+          <PromoBanners />
+          <TrustStrip />
+          <MarketStrip markets={markets} />
         </>
       )}
     </main>

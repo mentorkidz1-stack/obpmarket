@@ -1,4 +1,4 @@
-import Link from "next/link";
+﻿import Link from "next/link";
 import { CATEGORY_ICON } from "@/components/product-icons";
 
 export interface CategoryCount {
@@ -26,9 +26,9 @@ export function CategoryTiles({ categories }: { categories: CategoryCount[] }) {
     <section className="mt-10">
       <div className="flex items-baseline justify-between gap-3">
         <h2 className="font-display text-xl font-extrabold">Acheter par catégorie</h2>
-        <a href="#produits" className="flex-none text-sm font-semibold text-brand">
+        <Link href="/boutique" className="flex-none text-sm font-semibold text-brand">
           Tous les produits
-        </a>
+        </Link>
       </div>
       <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         {categories.map((c) => {
@@ -37,7 +37,7 @@ export function CategoryTiles({ categories }: { categories: CategoryCount[] }) {
           return (
             <Link
               key={c.id}
-              href={`/?categorie=${c.id}#produits`}
+              href={`/boutique?categorie=${c.id}`}
               className="group relative min-h-40 overflow-hidden rounded-2xl p-4 transition-transform hover:-translate-y-0.5 sm:min-h-44 sm:p-5"
               style={{ background: colors.bg, color: colors.fg }}
             >

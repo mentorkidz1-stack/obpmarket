@@ -13,6 +13,8 @@ import {
 } from "@/lib/api";
 import { formatRelativeTime } from "@/lib/format";
 import { Money, useMoneyText } from "@/components/money";
+import { useWishlist } from "@/components/wishlist-provider";
+import { useUI } from "@/components/ui-provider";
 import { useCart, type Fulfillment } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { ProductCard } from "@/components/product-card";
@@ -60,6 +62,25 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
   const [related, setRelated] = useState<Array<{ product: Product; price?: ReferencePrice }> | null>(null);
   const { addItem } = useCart();
   const moneyText = useMoneyText();
+  const { has, toggle: toggleWish } = useWishlist();
+  const { notify } = useUI();
+  const [tab, setTab] = useState<"infos" | "retrait" | "prix">("infos");
+  const [recent, setRecent] = useState<Product[]>([]);
+
+  // Produits récemment consultés : mémorisés dans le navigateur du visiteur.
+  useEffect(() => {
+    if (state.status !== "ready") return;
+    try {
+      const raw = localStorage.getItem("obp-recent");
+      const list: Product[] = raw ? JSON.parse(raw) : [];
+      setRecent(list.filter((p) => p.id !== id).slice(0, 4));
+      const next = [state.product, ...list.filter((p) => p.id !== id)].slice(0, 8);
+      localStorage.setItem("obp-recent", JSON.stringify(next));
+    } catch {
+      // stockage indisponible : pas d'historique
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state.status === "ready" ? state.product.id : null, id]);
 
   useEffect(() => {
     Promise.all([getProduct(id), getReferencePriceHistory(id, 30)])
@@ -100,10 +121,25 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
   const outOfStock = product.stockQuantity === 0;
   const photos = parseProductPhotos(product);
   const unitWord = product.unitLabel.split(" ")[0];
+  const wished = has(product.id);
+
+  async function share() {
+    const url = window.location.href;
+    try {
+      if (navigator.share) await navigator.share({ title: product.name, text: `${product.name} sur OBP Market`, url });
+      else {
+        await navigator.clipboard.writeText(url);
+        notify("Lien copié dans le presse-papiers");
+      }
+    } catch {
+      // partage annulé par le visiteur
+    }
+  }
 
   function addToCart() {
     if (!latest) return;
     addItem(product, quantity, fulfillment);
+    notify(`${product.name} ajouté au panier`, { label: "Voir le panier", href: "/panier" });
     setAdded(true);
     setTimeout(() => setAdded(false), 1500);
   }
@@ -119,9 +155,9 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-28 sm:px-6 lg:pb-16">
       <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 overflow-hidden py-5 text-sm text-ink-2">
-        <Link href="/" className="hover:text-ink">Boutique</Link>
+        <Link href="/boutique" className="hover:text-ink">Boutique</Link>
         <span>/</span>
-        <Link href={`/?categorie=${product.categoryId}#produits`} className="hover:text-ink">
+        <Link href={`/boutique?categorie=${product.categoryId}`} className="hover:text-ink">
           {product.category.name}
         </Link>
         <span>/</span>
@@ -165,7 +201,38 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
             </span>
           </div>
 
-          <h1 className="mt-3 font-display text-3xl font-extrabold leading-tight sm:text-4xl">{product.name}</h1>
+          <div className="mt-3 flex items-start justify-between gap-3">
+            <h1 className="font-display text-3xl font-extrabold leading-tight sm:text-4xl">{product.name}</h1>
+            <div className="flex flex-none gap-2">
+              <button
+                type="button"
+                onClick={() => {
+                  const added = toggleWish(product.id);
+                  notify(added ? "Ajouté aux favoris" : "Retiré des favoris", added ? { label: "Voir", href: "/favoris" } : undefined);
+                }}
+                aria-pressed={wished}
+                aria-label={wished ? "Retirer des favoris" : "Ajouter aux favoris"}
+                className={`grid size-10 place-items-center rounded-full border border-line bg-surface hover:bg-surface-2 ${wished ? "text-down" : ""}`}
+              >
+                <svg viewBox="0 0 24 24" className="size-5" fill={wished ? "currentColor" : "none"} stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                onClick={share}
+                aria-label="Partager ce produit"
+                className="grid size-10 place-items-center rounded-full border border-line bg-surface hover:bg-surface-2"
+              >
+                <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="18" cy="5.5" r="2.5" />
+                  <circle cx="6" cy="12" r="2.5" />
+                  <circle cx="18" cy="18.5" r="2.5" />
+                  <path d="M8.2 10.8l7.6-4M8.2 13.2l7.6 4" />
+                </svg>
+              </button>
+            </div>
+          </div>
           <p className="mt-1 text-sm text-ink-2">{product.unitLabel}</p>
 
           {latest ? (
@@ -274,7 +341,67 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
         </div>
       </div>
 
-      <section className="mt-10 rounded-2xl border border-line bg-surface p-4 sm:p-6">
+      <section className="mt-10 overflow-hidden rounded-2xl border border-line bg-surface">
+        <div role="tablist" className="flex gap-1 overflow-x-auto border-b border-line px-3 pt-3 [scrollbar-width:none] sm:px-5 [&::-webkit-scrollbar]:hidden">
+          {(
+            [
+              { v: "infos", l: "Informations" },
+              { v: "retrait", l: "Retrait et dépôt" },
+              { v: "prix", l: "Comment le prix est fixé" },
+            ] as const
+          ).map((t) => (
+            <button
+              key={t.v}
+              type="button"
+              role="tab"
+              aria-selected={tab === t.v}
+              onClick={() => setTab(t.v)}
+              className={`-mb-px whitespace-nowrap border-b-2 px-4 py-3 text-sm font-bold ${tab === t.v ? "border-brand text-brand" : "border-transparent text-ink-2 hover:text-ink"}`}
+            >
+              {t.l}
+            </button>
+          ))}
+        </div>
+        <div role="tabpanel" className="p-5 text-sm leading-relaxed text-ink-2 sm:p-6">
+          {tab === "infos" && (
+            <dl className="grid gap-x-8 gap-y-3 sm:grid-cols-2">
+              {[
+                ["Catégorie", product.category.name],
+                ["Conditionnement", product.unitLabel],
+                ["Nature", product.isPerishable ? "Produit frais (périssable)" : "Produit non périssable"],
+                ["Dépôt en stock", product.isStockable ? "Possible : vous pouvez le laisser à votre nom" : "Non proposé pour ce produit"],
+                ["Disponibilité", outOfStock ? "Rupture de stock" : `${product.stockQuantity} ${unitWord}${product.stockQuantity > 1 ? "s" : ""} au magasin`],
+              ].map(([k, v]) => (
+                <div key={k} className="flex justify-between gap-4 border-b border-line pb-2.5">
+                  <dt className="font-semibold text-ink">{k}</dt>
+                  <dd className="text-right">{v}</dd>
+                </div>
+              ))}
+            </dl>
+          )}
+          {tab === "retrait" && (
+            <div className="grid gap-3">
+              <p>
+                <span className="font-bold text-ink">Je retire :</span> après paiement, vous recevez un bon de retrait à présenter au magasin OBP Market pour récupérer votre produit.
+              </p>
+              {product.isStockable && !product.isPerishable ? (
+                <p>
+                  <span className="font-bold text-ink">Je laisse en dépôt :</span> le produit reste stocké à votre nom. Vous le retrouvez dans « Mon stock », où vous pouvez le remettre en vente au prix du marché ou demander une offre de rachat à OBP.
+                </p>
+              ) : (
+                <p>Ce produit n&apos;est pas proposé en dépôt : il est à retirer au magasin.</p>
+              )}
+            </div>
+          )}
+          {tab === "prix" && (
+            <p>
+              Le prix affiché est la moyenne des relevés réalisés par les agents OBP Market sur plusieurs marchés du Bénin. Il est recalculé à chaque nouveau relevé : le montant exact de votre commande est fixé au moment du paiement, au prix du marché du jour.
+            </p>
+          )}
+        </div>
+      </section>
+
+      <section className="mt-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
         <div className="mb-3 flex items-center justify-between gap-3">
           <h2 className="font-display text-lg font-extrabold">Évolution du prix</h2>
           <div className="flex rounded-full bg-surface-2 p-0.5">
@@ -301,6 +428,16 @@ export default function ProductPage(props: PageProps<"/produits/[id]">) {
           <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
             {related.map(({ product: r, price: rp }) => (
               <ProductCard key={r.id} product={r} price={rp} />
+            ))}
+          </div>
+        </section>
+      )}
+      {recent.length > 0 && (
+        <section className="mt-10">
+          <h2 className="font-display text-xl font-extrabold">Récemment consultés</h2>
+          <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+            {recent.map((r) => (
+              <ProductCard key={r.id} product={r} />
             ))}
           </div>
         </section>

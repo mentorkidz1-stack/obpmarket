@@ -346,6 +346,37 @@ export function getExchangeRates() {
   return apiFetch<ExchangeRates>("/exchange-rates");
 }
 
+export interface ContactMessageRecord {
+  id: string;
+  name: string;
+  phone: string | null;
+  email: string | null;
+  subject: string;
+  message: string;
+  status: "NOUVEAU" | "TRAITE";
+  createdAt: string;
+  handledAt: string | null;
+}
+
+export function sendContactMessage(data: {
+  name: string;
+  phone?: string;
+  email?: string;
+  subject: string;
+  message: string;
+  website?: string;
+}) {
+  return postJson<{ received: boolean }>("/contact", data);
+}
+
+export function getContactMessages(token: string) {
+  return authFetch<ContactMessageRecord[]>("/contact", token);
+}
+
+export function setContactHandled(token: string, id: string, handled: boolean) {
+  return authJson<ContactMessageRecord>(`/contact/${id}/handled`, token, "PATCH", { handled });
+}
+
 export interface OrderItem {
   id: string;
   productId: string;
