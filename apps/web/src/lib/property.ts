@@ -44,6 +44,18 @@ export function formatArea(value: number | null, unit: AreaUnit): string | null 
   return `${nf(value)} hectare${value > 1 ? "s" : ""}`;
 }
 
+/** Référence courte et stable de l'annonce, à donner à OBP par téléphone ou WhatsApp (ex. OBP-3KXQ9). */
+export const propertyRef = (id: string) => `OBP-${id.slice(-5).toUpperCase()}`;
+
+/** Prix au m² d'une vente (arrondi), ou null si la superficie est inconnue. */
+export function pricePerM2(p: Pick<Property, "kind" | "price" | "areaM2">): number | null {
+  return p.kind === "VENTE" && p.areaM2 && p.areaM2 > 0 ? Math.round(p.price / p.areaM2) : null;
+}
+
+/** Lien de carte (Google Maps) pour situer le quartier, sans clé ni service tiers intégré à la page. */
+export const mapsUrl = (p: Pick<Property, "district" | "city">) =>
+  `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([p.district, p.city, "Bénin"].filter(Boolean).join(", "))}`;
+
 /** Équivalent en m² quand la superficie n'est pas saisie en m². */
 export function areaEquivalent(p: Pick<Property, "areaUnit" | "areaM2">): string | null {
   return p.areaUnit !== "M2" && p.areaM2 != null ? `≈ ${nf(p.areaM2)} m²` : null;

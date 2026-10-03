@@ -3,11 +3,12 @@
 import { useState } from "react";
 import { sendPropertyInquiry } from "@/lib/api";
 import { SITE } from "@/lib/site";
+import { propertyRef } from "@/lib/property";
 
 const input = "w-full rounded-xl border border-line bg-surface px-4 py-3 text-sm outline-none focus:border-brand";
 
 export function PropertyInquiryForm({ propertyId, title }: { propertyId: string; title: string }) {
-  const [form, setForm] = useState({ name: "", phone: "+229 ", email: "", message: "Je souhaite visiter ce bien.", website: "" });
+  const [form, setForm] = useState({ name: "", phone: "+229 ", email: "", message: `Je souhaite visiter ce bien (réf. ${propertyRef(propertyId)}).`, website: "" });
   const [busy, setBusy] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -35,7 +36,7 @@ export function PropertyInquiryForm({ propertyId, title }: { propertyId: string;
   }
 
   const whatsapp = SITE.whatsapp
-    ? `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien « ${title} » sur OBP Market.`)}`
+    ? `https://wa.me/${SITE.whatsapp}?text=${encodeURIComponent(`Bonjour, je suis intéressé(e) par le bien « ${title} » (réf. ${propertyRef(propertyId)}) sur OBP Market.`)}`
     : null;
 
   return (

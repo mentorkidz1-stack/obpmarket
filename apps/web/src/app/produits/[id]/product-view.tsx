@@ -5,6 +5,7 @@ import Link from "next/link";
 import {
   getReferencePriceHistory,
   parseProductPhotos,
+  type MarketPrice,
   type Product,
   type ReferencePrice,
 } from "@/lib/api";
@@ -44,21 +45,21 @@ function change7d(history: ReferencePrice[]): number | null {
   return ((last.value - ref.value) / ref.value) * 100;
 }
 
-type LoadState = { status: "ready"; product: Product; history: ReferencePrice[] };
-
 /** Fiche produit interactive. Les données arrivent déjà chargées du serveur (page.tsx) : pas d'écran de chargement. */
 export function ProductView({
   id,
   initialProduct,
   initialHistory,
   related,
+  marketPrices,
 }: {
   id: string;
   initialProduct: Product;
   initialHistory: ReferencePrice[];
   related: Array<{ product: Product; price?: ReferencePrice }>;
+  marketPrices: MarketPrice[];
 }) {
-  const [state, setState] = useState<LoadState>({ status: "ready", product: initialProduct, history: initialHistory });
+  const [fetched, setFetched] = useState<{ days: number; history: ReferencePrice[] } | null>(null);
   const [quantity, setQuantity] = useState(1);
   const [fulfillment, setFulfillmentChoice] = useState<Fulfillment>("RETRAIT");
   const [added, setAdded] = useState(false);
@@ -71,32 +72,32 @@ export function ProductView({
   const [tab, setTab] = useState<"infos" | "retrait" | "prix">("infos");
   const [recent, setRecent] = useState<Product[]>([]);
 
-  // Produits récemment consultés : mémorisés dans le navigateur du visiteur.
+  // Produits récemment consultés : mémorisés dans le navigateur du visiteur (lecture au montage).
   useEffect(() => {
-    if (state.status !== "ready") return;
     try {
       const raw = localStorage.getItem("obp-recent");
       const list: Product[] = raw ? JSON.parse(raw) : [];
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- synchronisation avec localStorage, qui n'existe pas côté serveur
       setRecent(list.filter((p) => p.id !== id).slice(0, 4));
-      const next = [state.product, ...list.filter((p) => p.id !== id)].slice(0, 8);
+      const next = [initialProduct, ...list.filter((p) => p.id !== id)].slice(0, 8);
       localStorage.setItem("obp-recent", JSON.stringify(next));
     } catch {
       // stockage indisponible : pas d'historique
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [state.status === "ready" ? state.product.id : null, id]);
+  }, [initialProduct, id]);
 
-  // Seul le changement de période du graphique (7 / 30 / 90 jours) appelle l'API ; les 30 jours viennent du serveur.
+  // Seul le changement de période du graphique (7 / 90 jours) appelle l'API ; les 30 jours viennent du serveur.
   useEffect(() => {
-    if (days === 30) {
-      setState((s) => ({ ...s, history: initialHistory }));
-      return;
-    }
-    getReferencePriceHistory(id, days).then((history) => setState((s) => ({ ...s, history })));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    if (days === 30) return;
+    let alive = true;
+    getReferencePriceHistory(id, days).then((history) => alive && setFetched({ days, history }));
+    return () => {
+      alive = false;
+    };
   }, [days, id]);
 
-  const { product, history } = state;
+  const product = initialProduct;
+  const history = days === 30 ? initialHistory : fetched?.days === days ? fetched.history : initialHistory;
   const latest = history.at(-1);
   const outOfStock = product.stockQuantity === 0;
   const photos = parseProductPhotos(product);
@@ -381,6 +382,40 @@ export function ProductView({
           )}
         </div>
       </section>
+
+      {marketPrices.length > 0 && (
+        <section className="mt-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
+          <h2 className="font-display text-lg font-extrabold">Prix relevé dans chaque marché</h2>
+          <p className="mt-0.5 text-sm text-ink-2">Le prix moyen est calculé à partir de ces relevés de terrain.</p>
+          <ul className="mt-4 grid gap-3">
+            {marketPrices.map((m, i) => {
+              const max = Math.max(...marketPrices.map((x) => x.price));
+              const cheapest = marketPrices.length > 1 && i === 0;
+              const priciest = marketPrices.length > 1 && i === marketPrices.length - 1;
+              return (
+                <li key={m.marketId}>
+                  <div className="flex items-baseline justify-between gap-3 text-sm">
+                    <p className="min-w-0 truncate font-semibold">
+                      {m.name} <span className="font-normal text-ink-2">· {m.city}</span>
+                      {cheapest && <span className="ml-2 rounded bg-up/10 px-1.5 py-0.5 text-[10px] font-bold text-up">Le moins cher</span>}
+                      {priciest && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">Le plus cher</span>}
+                    </p>
+                    <p className="flex-none font-display font-extrabold tabular-nums">
+                      <Money value={m.price} unitClassName="text-xs text-ink-2" />
+                    </p>
+                  </div>
+                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
+                    <div className="h-full rounded-full bg-brand" style={{ width: `${Math.max(8, (m.price / max) * 100)}%` }} />
+                  </div>
+                  <p className="mt-1 text-[11px] text-ink-2">
+                    {m.readings} relevé{m.readings > 1 ? "s" : ""} · {formatRelativeTime(m.recordedAt)}
+                  </p>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
+      )}
 
       <section className="mt-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
         <div className="mb-3 flex items-center justify-between gap-3">

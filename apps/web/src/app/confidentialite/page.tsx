@@ -5,6 +5,10 @@ export const metadata: Metadata = { title: "Confidentialité" };
 
 const SECTIONS = [
   {
+    title: "Responsable des données",
+    text: "ONE BUILD PLUS GROUPE (OBP), éditeur d'OBP Market, est responsable des données collectées sur ce site. Ses coordonnées figurent dans les mentions légales.",
+  },
+  {
     title: "Données collectées",
     text: "Numéro de téléphone et nom (compte), commandes, stock, opérations du portefeuille, informations de réception des paiements pour les vendeurs, et messages envoyés via le formulaire de contact.",
   },
@@ -19,6 +23,10 @@ const SECTIONS = [
   {
     title: "Stockage sur votre appareil",
     text: "Votre navigateur conserve localement votre panier, vos favoris, votre devise d'affichage, votre session de connexion et les derniers produits consultés. Vous pouvez les effacer à tout moment depuis les réglages de votre navigateur.",
+  },
+  {
+    title: "Mesure d'audience",
+    text: "Nous mesurons la fréquentation du site (pages vues, provenance générale) avec un outil respectueux de la vie privée, sans cookie et sans identifier les visiteurs.",
   },
   {
     title: "Vos droits",

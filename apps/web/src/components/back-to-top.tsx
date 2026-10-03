@@ -17,7 +17,7 @@ export function BackToTop() {
       type="button"
       onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
       aria-label="Revenir en haut de la page"
-      className={`fixed bottom-24 right-4 z-40 grid size-11 place-items-center rounded-full bg-ink text-app shadow-lg transition-all lg:bottom-6 lg:right-6 ${
+      className={`fixed bottom-20 left-4 z-40 grid size-11 place-items-center rounded-full bg-ink text-app shadow-lg transition-all lg:bottom-6 lg:left-6 ${
         visible ? "translate-y-0 opacity-100" : "pointer-events-none translate-y-3 opacity-0"
       }`}
     >

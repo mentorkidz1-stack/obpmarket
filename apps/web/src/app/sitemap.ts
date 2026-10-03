@@ -4,7 +4,7 @@ import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-const PAGES = ["", "/boutique", "/immobilier", "/comment-ca-marche", "/faq", "/contact", "/vendeur", "/conditions", "/confidentialite"];
+const PAGES = ["", "/boutique", "/immobilier", "/comment-ca-marche", "/faq", "/contact", "/vendeur", "/conditions", "/confidentialite", "/mentions-legales"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();

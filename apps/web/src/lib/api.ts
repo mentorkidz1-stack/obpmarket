@@ -347,6 +347,20 @@ export function getExchangeRates() {
   return apiFetch<ExchangeRates>("/exchange-rates");
 }
 
+export interface MarketPrice {
+  marketId: string;
+  name: string;
+  city: string;
+  price: number;
+  recordedAt: string;
+  readings: number;
+}
+
+/** Prix relevé dans chaque marché pour le dernier prix de référence (public, sans données d'agent). */
+export function getMarketPrices(productId: string) {
+  return apiFetch<MarketPrice[]>(`/products/${productId}/reference-price/markets`);
+}
+
 export interface ContactMessageRecord {
   id: string;
   name: string;

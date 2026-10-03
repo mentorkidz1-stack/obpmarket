@@ -37,7 +37,6 @@ export default function VendorModerationPage() {
 
   useEffect(() => {
     if (token) reload(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const selected = listings?.find((l) => l.id === selectedId) ?? null;

@@ -6,7 +6,9 @@ import { Money } from "@/components/money";
 import { PropertyCard } from "@/components/property-card";
 import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyInquiryForm } from "@/components/property-inquiry-form";
-import { KIND_LABEL, areaEquivalent, formatArea, rentShort, statusLabel, typeLabel } from "@/lib/property";
+import { ShareButton } from "@/components/share-button";
+import { SITE } from "@/lib/site";
+import { KIND_LABEL, areaEquivalent, formatArea, mapsUrl, pricePerM2, propertyRef, rentShort, statusLabel, typeLabel } from "@/lib/property";
 
 async function load(id: string): Promise<Property | null> {
   try {
@@ -42,19 +44,42 @@ export default async function PropertyPage(props: PageProps<"/immobilier/[id]">)
   const eq = areaEquivalent(p);
   const unavailable = p.status !== "DISPONIBLE";
 
+  const perM2 = pricePerM2(p);
+
   const facts: [string, string][] = [
+    ["Référence", propertyRef(p.id)],
     ["Type de bien", typeLabel(p.type)],
     ["Annonce", KIND_LABEL[p.kind]],
     ["Localisation", [p.district, p.city].filter(Boolean).join(", ")],
   ];
   if (area) facts.push(["Superficie", eq ? `${area} (${eq})` : area]);
+  if (perM2) facts.push(["Prix au m²", `≈ ${new Intl.NumberFormat("fr-FR").format(perM2)} F`]);
   if (p.bedrooms != null) facts.push(["Chambres", String(p.bedrooms)]);
   if (p.bathrooms != null) facts.push(["Salles de bain", String(p.bathrooms)]);
   if (p.titleDeed) facts.push(["Documents", p.titleDeed]);
   facts.push(["Disponibilité", statusLabel(p.status, p.kind)]);
 
+  // Données structurées : permet à Google d'afficher l'annonce avec photo et prix.
+  const jsonLd = {
+    "@context": "https://schema.org",
+    "@type": "Product",
+    name: p.title,
+    sku: propertyRef(p.id),
+    description: p.description || `${typeLabel(p.type)} ${KIND_LABEL[p.kind].toLowerCase()} à ${p.city}`,
+    image: photos.filter((x) => !x.startsWith("data:")),
+    brand: { "@type": "Brand", name: SITE.name },
+    offers: {
+      "@type": "Offer",
+      price: p.price,
+      priceCurrency: "XOF",
+      availability: unavailable ? "https://schema.org/SoldOut" : "https://schema.org/InStock",
+      url: `${SITE.url}/immobilier/${p.id}`,
+    },
+  };
+
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 sm:px-6">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
       <nav aria-label="Fil d'Ariane" className="flex items-center gap-1.5 overflow-hidden py-5 text-sm text-ink-2">
         <Link href="/immobilier" className="hover:text-ink">Immobilier</Link>
         <span>/</span>
@@ -88,6 +113,17 @@ export default async function PropertyPage(props: PageProps<"/immobilier/[id]">)
               {p.kind === "LOCATION" && <span className="ml-2 text-lg font-semibold text-ink-2">{rentShort(p.rentPeriod)}</span>}
             </p>
             {p.negotiable && <p className="mt-1 text-sm font-semibold text-up">Prix négociable</p>}
+          </div>
+
+          <div className="mt-5 flex flex-wrap gap-2.5">
+            <a href={mapsUrl(p)} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 rounded-xl border border-line bg-surface px-4 py-2.5 text-sm font-bold hover:bg-surface-2">
+              <svg viewBox="0 0 24 24" className="size-4.5" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden>
+                <path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" />
+                <circle cx="12" cy="9.5" r="2.4" />
+              </svg>
+              Voir sur la carte
+            </a>
+            <ShareButton title={p.title} />
           </div>
 
           <dl className="mt-6 grid gap-x-8 gap-y-3 sm:grid-cols-2">

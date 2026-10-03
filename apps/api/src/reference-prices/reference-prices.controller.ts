@@ -10,6 +10,12 @@ export class ReferencePricesController {
     return this.referencePrices.latestForProduct(productId);
   }
 
+  /** Prix par marché (public, sans données d'agent). */
+  @Get('markets')
+  markets(@Param('productId') productId: string) {
+    return this.referencePrices.marketsForProduct(productId);
+  }
+
   @Get('history')
   history(@Param('productId') productId: string, @Query('days') days?: string) {
     return this.referencePrices.historyForProduct(productId, days ? Number(days) : undefined);

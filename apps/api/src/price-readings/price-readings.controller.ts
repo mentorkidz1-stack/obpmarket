@@ -24,7 +24,10 @@ export class PriceReadingsController {
     return this.priceReadings.findToReview();
   }
 
+  /** Réservé au personnel : la réponse contient l'agent qui a fait chaque relevé (le public passe par /products/:id/reference-price/markets). */
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.GESTIONNAIRE_PRIX, Role.ADMIN)
   findForProduct(@Query('productId') productId: string) {
     return this.priceReadings.findForProduct(productId);
   }

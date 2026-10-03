@@ -39,6 +39,7 @@ export function CurrencyProvider({ children }: { children: React.ReactNode }) {
   const [rates, setRates] = useState<ExchangeRates | null>(null);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- hydratation depuis localStorage, absent côté serveur
     setCurrencyState(readStored());
   }, []);
 

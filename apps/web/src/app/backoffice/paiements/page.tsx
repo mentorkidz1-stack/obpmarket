@@ -28,7 +28,6 @@ export default function PaymentQueuePage() {
 
   useEffect(() => {
     if (token) reload(token);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const selected = orders?.find((o) => o.id === selectedId) ?? null;

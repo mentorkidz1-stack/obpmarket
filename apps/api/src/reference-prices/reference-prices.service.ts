@@ -65,6 +65,30 @@ export class ReferencePricesService {
     });
   }
 
+  /**
+   * Prix relevé dans chaque marché pour le dernier prix de référence : les relevés valides de sa fenêtre,
+   * le plus récent par marché. Aucune donnée d'agent n'est exposée.
+   */
+  async marketsForProduct(productId: string) {
+    const latest = await this.latestForProduct(productId);
+    if (!latest) return [];
+
+    const since = new Date(latest.computedAt.getTime() - latest.windowHours * 60 * 60 * 1000);
+    const readings = await this.prisma.priceReading.findMany({
+      where: { productId, status: ReadingStatus.VALIDE, recordedAt: { gte: since, lte: latest.computedAt } },
+      select: { price: true, recordedAt: true, market: { select: { id: true, name: true, city: true } } },
+      orderBy: { recordedAt: 'desc' },
+    });
+
+    const byMarket = new Map<string, { marketId: string; name: string; city: string; price: number; recordedAt: Date; readings: number }>();
+    for (const r of readings) {
+      const entry = byMarket.get(r.market.id);
+      if (entry) entry.readings += 1;
+      else byMarket.set(r.market.id, { marketId: r.market.id, name: r.market.name, city: r.market.city, price: r.price, recordedAt: r.recordedAt, readings: 1 });
+    }
+    return [...byMarket.values()].sort((a, b) => a.price - b.price);
+  }
+
   /** Historique pour la courbe d'évolution de la fiche produit (PRI-05). */
   historyForProduct(productId: string, days = 30) {
     const since = new Date(Date.now() - days * 24 * 60 * 60 * 1000);

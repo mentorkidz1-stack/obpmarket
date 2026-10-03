@@ -104,8 +104,9 @@ export default function NewVendorListingPage() {
     <main className="mx-auto w-full max-w-xl flex-1 px-4 py-8 sm:px-6">
       <div className="grid grid-cols-3 gap-2">
         {photos.map((src, i) => (
-          // eslint-disable-next-line @next/next/no-img-element
           <div key={i} className="relative aspect-square overflow-hidden rounded-xl border border-line">
+            {/* Aperçu local (data URI) : l'optimiseur d'images n'a pas lieu d'intervenir. */}
+            {/* eslint-disable-next-line @next/next/no-img-element */}
             <img src={src} alt={`Photo ${i + 1}`} className="size-full object-cover" />
             {i === 0 && (
               <span className="absolute bottom-1 left-1 rounded bg-accent px-1.5 py-0.5 font-mono text-[10px] font-bold text-on-accent">

@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { SITE } from "@/lib/site";
+import { LogoMark } from "@/components/logo";
 
 const COLUMNS = [
   {
@@ -32,6 +33,7 @@ const COLUMNS = [
       { href: "/faq", label: "Questions fréquentes" },
       { href: "/contact", label: "Contact" },
       { href: "/conditions", label: "Conditions d'utilisation" },
+      { href: "/mentions-legales", label: "Mentions légales" },
       { href: "/confidentialite", label: "Confidentialité" },
     ],
   },
@@ -48,14 +50,15 @@ export function SiteFooter() {
       <div className="mx-auto grid max-w-6xl gap-10 px-4 py-14 sm:px-6 md:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_1fr]">
         <div>
           <div className="flex items-center gap-2.5">
-            <div className="grid size-10 place-items-center rounded-xl bg-white font-display text-sm font-extrabold text-[#2b3fae]">OBP</div>
+            <LogoMark className="size-10" />
             <span className="font-display text-xl font-extrabold">OBP Market</span>
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-app/70">
-            Le prix moyen des marchés du Bénin, calculé à partir de relevés de terrain, pour acheter, déposer et revendre au prix juste.
+            Le prix moyen des marchés du Bénin, calculé à partir de relevés de terrain, pour acheter, déposer et revendre au prix juste — et des biens immobiliers proposés par OBP.
           </p>
-          {(SITE.whatsapp || SITE.phone || SITE.email) && (
+          {(SITE.whatsapp || SITE.phone || SITE.email || SITE.address) && (
             <ul className="mt-5 grid gap-1.5 text-sm">
+              {SITE.address && <li className="max-w-xs text-app/85">{SITE.address}</li>}
               {SITE.whatsapp && (
                 <li>
                   <a href={`https://wa.me/${SITE.whatsapp}`} className="text-app/85 hover:text-app">
@@ -99,7 +102,9 @@ export function SiteFooter() {
 
       <div className="border-t border-white/10">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-6 sm:px-6 md:flex-row">
-          <p className="text-xs text-app/60">© {new Date().getFullYear()} OBP Market · Bénin — {SITE.tagline}</p>
+          <p className="text-center text-xs text-app/60 md:text-left">
+            © {new Date().getFullYear()} OBP Market, un service de {SITE.company.legalName} · IFU {SITE.company.ifu} · Bénin
+          </p>
           <ul className="flex flex-wrap justify-center gap-2" aria-label="Moyens de paiement acceptés">
             {PAYMENTS.map((p) => (
               <li key={p} className="rounded-md border border-white/20 px-2.5 py-1 text-[11px] font-bold text-app/85">

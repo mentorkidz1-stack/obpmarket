@@ -3,8 +3,10 @@
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import type { AuthUser } from "@/lib/api";
+import { LogoMark } from "@/components/logo";
 
 const LINKS = [
+  { href: "/backoffice", label: "Accueil" },
   { href: "/backoffice/releves", label: "Relevés" },
   { href: "/backoffice/liquidite", label: "Liquidité" },
   { href: "/backoffice/vendeurs", label: "Vendeurs" },
@@ -22,10 +24,10 @@ export function StaffBar({ user, logout }: { user: AuthUser; logout: () => void 
   return (
     <header className="sticky top-0 z-20 border-b border-line bg-surface/95 backdrop-blur">
       <div className="mx-auto flex max-w-6xl items-center gap-3 px-4 py-3 sm:px-6">
-        <span className="flex items-center gap-2 font-display text-sm font-extrabold">
-          <span className="grid size-8 place-items-center rounded-[9px] bg-brand text-[11px] text-on-brand">OBP</span>
+        <Link href="/backoffice" className="flex items-center gap-2 font-display text-sm font-extrabold">
+          <LogoMark className="size-8" />
           Back-office
-        </span>
+        </Link>
         <nav className="ml-2 hidden flex-1 items-center gap-1 overflow-x-auto md:flex">
           {LINKS.map((l) => (
             <Link

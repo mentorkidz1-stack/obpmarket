@@ -18,6 +18,7 @@ export function WishlistProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydratation depuis localStorage, absent côté serveur
       if (raw) setIds((JSON.parse(raw) as unknown[]).filter((v): v is string => typeof v === "string"));
     } catch {
       // favoris vides si le stockage est indisponible

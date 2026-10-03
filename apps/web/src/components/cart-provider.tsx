@@ -32,6 +32,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     try {
       const raw = localStorage.getItem(STORAGE_KEY);
+      // eslint-disable-next-line react-hooks/set-state-in-effect -- hydratation depuis localStorage, absent côté serveur
       if (raw) setLines(JSON.parse(raw) as CartLine[]);
     } catch {
       // panier vide si le stockage est indisponible ou corrompu

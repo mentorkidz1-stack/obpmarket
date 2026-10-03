@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import { requestOtp, verifyOtp } from "@/lib/api";
 import { useAuth } from "@/components/auth-provider";
 import { Photo } from "@/components/photo";
+import { Logo } from "@/components/logo";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -59,9 +60,7 @@ export default function LoginPage() {
 
         <div className="flex flex-col justify-center gap-5 p-6 sm:p-10">
       <div>
-        <p className="grid size-10 place-items-center rounded-[11px] bg-brand font-display text-[15px] font-extrabold text-on-brand">
-          OBP
-        </p>
+        <Logo markClassName="size-11" textClassName="text-xl" />
         <h1 className="mt-4 font-display text-3xl font-extrabold">Se connecter</h1>
         <p className="text-sm text-ink-2">
           {step === "phone" ? "Avec votre numéro de téléphone." : `Code envoyé au ${phone}.`}

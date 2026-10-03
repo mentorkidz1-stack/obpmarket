@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useUI } from "@/components/ui-provider";
+import { Logo } from "@/components/logo";
 import { useCatalog } from "@/lib/use-catalog";
 import { PROPERTY_TYPES } from "@/lib/property";
 import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
@@ -44,10 +45,7 @@ export function MobileNav() {
         }`}
       >
         <header className="flex items-center justify-between border-b border-line px-5 py-4">
-          <span className="flex items-center gap-2 font-display text-lg font-extrabold">
-            <span className="grid size-9 place-items-center rounded-xl bg-brand text-xs text-on-brand">OBP</span>
-            OBP Market
-          </span>
+          <Logo markClassName="size-9" textClassName="text-lg" />
           <button type="button" onClick={() => setNavOpen(false)} aria-label="Fermer le menu" className="grid size-9 place-items-center rounded-full hover:bg-surface-2">
             <svg viewBox="0 0 24 24" className="size-5" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round">
               <path d="M6 6l12 12M18 6L6 18" />

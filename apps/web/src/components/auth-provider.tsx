@@ -25,6 +25,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const raw = localStorage.getItem(STORAGE_KEY);
       if (raw) {
         const parsed = JSON.parse(raw) as { token: string; user: AuthUser };
+        // eslint-disable-next-line react-hooks/set-state-in-effect -- hydratation depuis localStorage, absent côté serveur
         setToken(parsed.token);
         setUser(parsed.user);
       }

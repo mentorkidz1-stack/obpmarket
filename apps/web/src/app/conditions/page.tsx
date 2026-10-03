@@ -6,7 +6,7 @@ export const metadata: Metadata = { title: "Conditions d'utilisation" };
 const SECTIONS = [
   {
     title: "1. Objet",
-    text: "OBP Market est une plateforme qui publie le prix moyen de produits agricoles, vivriers et d'électroménager relevé sur les marchés du Bénin, et permet de les acheter, de les déposer en stock, de les revendre et, pour les vendeurs partenaires, de les proposer à la vente.",
+    text: "OBP Market, service de ONE BUILD PLUS GROUPE (OBP), est une plateforme qui publie le prix moyen de produits agricoles, vivriers et d'électroménager relevé sur les marchés du Bénin, et permet de les acheter, de les déposer en stock, de les revendre et, pour les vendeurs partenaires, de les proposer à la vente.",
   },
   {
     title: "2. Prix",

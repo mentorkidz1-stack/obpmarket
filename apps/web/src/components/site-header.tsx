@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { Logo } from "@/components/logo";
 import { CartLink } from "@/components/cart-link";
 import { AccountMenu } from "@/components/account-menu";
 import { SearchBox } from "@/components/search-box";
@@ -137,11 +138,8 @@ export function SiteHeader() {
             </svg>
           </button>
 
-          <Link href="/" className="flex flex-none items-center gap-2.5">
-            <div className="grid size-9 place-items-center rounded-xl bg-brand font-display text-xs font-extrabold tracking-tight text-on-brand sm:size-10 sm:text-sm">
-              OBP
-            </div>
-            <span className="font-display text-lg font-extrabold tracking-tight sm:text-xl">OBP Market</span>
+          <Link href="/" className="flex-none" aria-label="OBP Market, accueil">
+            <Logo />
           </Link>
 
           <SearchBox className="order-last w-full lg:order-none lg:max-w-xl lg:flex-1" />
