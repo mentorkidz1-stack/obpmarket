@@ -16,6 +16,10 @@ Chaque personne change son mot de passe provisoire dans **Mon compte**.
 - **Paiements à vérifier** : confirmer ou rejeter un paiement Mobile Money déclaré.
 - **Retrait en magasin** : saisir le code du client, vérifier les articles, confirmer la remise.
 - **Stock** : fixer le nouveau total d'un produit avec un motif (réception, casse, inventaire).
+- **Dépôts et livraison** : créez les magasins et dépôts OBP (adresse, téléphone) et les zones de livraison
+  à domicile avec leurs frais. À la réception d'une annonce vendeur, on choisit le dépôt qui a reçu la marchandise.
+- **Retraits à verser** : demandes de retrait des vendeurs. Envoyez l'argent par Mobile Money au numéro indiqué,
+  puis cliquez « J'ai versé les fonds » avec la référence ; ou refusez avec un motif (le montant est recrédité).
 - **Demandes de liquidité**, **Clients** (export CSV, désactivation par l'administrateur).
 - **Vendeurs et annonces**, **Immobilier**, **Bannières**, **Messages**.
 - **Équipe et accès** (administrateur) : créer un compte, changer un rôle, désactiver, réinitialiser un

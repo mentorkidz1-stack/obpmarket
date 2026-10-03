@@ -6,6 +6,7 @@ import { ReferencePricesService } from '../reference-prices/reference-prices.ser
 import type { CreateVendorProfileDto } from './dto/create-vendor-profile.dto.js';
 import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
 import type { ReviewDto } from './dto/review.dto.js';
+import { DepotsService } from '../depots/depots.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import type { UpdateVendorListingDto, UpdateVendorProfileDto } from './dto/update-vendor-listing.dto.js';
 
@@ -15,6 +16,7 @@ const VENDOR_PRICE_BAND = Number(process.env.VENDOR_PRICE_BAND ?? 0.1);
 const WITH_LISTING_RELATIONS = {
   product: { include: { category: true } },
   vendor: { include: { user: { select: SAFE_USER_SELECT } } },
+  depot: { select: { id: true, name: true, city: true } },
 } as const;
 
 @Injectable()
@@ -23,6 +25,7 @@ export class VendorService {
     private readonly prisma: PrismaService,
     private readonly referencePrices: ReferencePricesService,
     private readonly notifications: NotificationsService,
+    private readonly depots: DepotsService,
   ) {}
 
   // ---------- Compte vendeur (VEN-01 à VEN-03) ----------
@@ -289,11 +292,13 @@ export class VendorService {
   }
 
   /** RG-14 : l'annonce ne devient achetable qu'à réception effective au magasin. */
-  async markReceived(id: string, receivedQuantity?: number) {
+  async markReceived(id: string, receivedQuantity?: number, depotId?: string) {
     const listing = await this.findListingOrThrow(id);
     if (listing.status !== VendorListingStatus.VALIDEE) {
       throw new BadRequestException('Cette annonce doit être validée avant réception.');
     }
+    if (depotId) await this.depots.assertUsable(depotId);
+    else if (await this.depots.hasActiveDepots()) throw new BadRequestException('Indiquez le dépôt qui a reçu la marchandise.');
     const received = receivedQuantity ?? listing.quantity;
     if (received > listing.quantity) {
       throw new BadRequestException(`La quantité reçue ne peut pas dépasser la quantité annoncée (${listing.quantity}).`);
@@ -304,6 +309,7 @@ export class VendorService {
         status: VendorListingStatus.EN_VENTE,
         receivedQuantity: received,
         receivedAt: new Date(),
+        depotId: depotId ?? null,
       },
       include: WITH_LISTING_RELATIONS,
     });

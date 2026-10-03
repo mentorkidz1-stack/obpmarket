@@ -187,6 +187,70 @@ model User {
   vendorProfile     VendorProfile?
   reviewedVendorListings VendorListing[] @relation("VendorListingReviewedBy")
   confirmedOrders   Order[]            @relation("OrderConfirmedBy")
+  payoutRequests    PayoutRequest[]    @relation("PayoutOwner")
+  processedPayouts  PayoutRequest[]    @relation("PayoutProcessedBy")
+}
+
+/// Magasin ou dépôt OBP où la marchandise est reçue, stockée et remise (retrait ou départ de livraison).
+/// Créé et modifié librement par l'administration : aucune liste figée dans le code.
+model Depot {
+  id        String   @id @default(cuid())
+  name      String
+  city      String
+  address   String
+  phone     String?
+  latitude  Float?
+  longitude Float?
+  /// Un dépôt désactivé n'est plus proposé pour les nouvelles annonces, mais reste lisible dans l'historique.
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  zones    DeliveryZone[]
+  listings VendorListing[]
+}
+
+/// Zone de livraison à domicile et son tarif. La livraison est assurée par OBP depuis le dépôt de rattachement.
+model DeliveryZone {
+  id        String   @id @default(cuid())
+  name      String
+  /// Frais de livraison en FCFA, ajoutés à la commande.
+  fee       Float
+  depotId   String?
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+
+  depot Depot? @relation(fields: [depotId], references: [id], onDelete: SetNull)
+}
+
+enum PayoutStatus {
+  EN_ATTENTE
+  PAYE
+  REFUSE
+}
+
+/// Demande de retrait des gains d'un vendeur ou revendeur. Le montant est retenu sur le portefeuille dès la
+/// demande ; OBP verse ensuite les fonds hors plateforme (Mobile Money) puis marque la demande payée,
+/// ou la refuse (le montant est alors recrédité).
+model PayoutRequest {
+  id              String       @id @default(cuid())
+  ownerId         String
+  amount          Float
+  method          PaymentMethod
+  /// Numéro Mobile Money qui recevra les fonds.
+  phone           String
+  status          PayoutStatus @default(EN_ATTENTE)
+  /// Référence de la transaction de versement, saisie par OBP.
+  reference       String?
+  rejectionReason String?
+  createdAt       DateTime     @default(now())
+  processedAt     DateTime?
+  processedById   String?
+
+  owner       User  @relation("PayoutOwner", fields: [ownerId], references: [id])
+  processedBy User? @relation("PayoutProcessedBy", fields: [processedById], references: [id])
+
+  @@index([status, createdAt])
+  @@index([ownerId])
 }
 
 /// Code de vérification envoyé par SMS (CPT-01). Pas de passerelle SMS configurée pour
@@ -642,7 +706,10 @@ model VendorListing {
   reviewedAt       DateTime?
   reviewedById     String?
   receivedAt       DateTime?
+  /// Dépôt OBP où la marchandise a été reçue, renseigné à la réception.
+  depotId          String?
 
+  depot      Depot?        @relation(fields: [depotId], references: [id], onDelete: SetNull)
   vendor     VendorProfile @relation(fields: [vendorId], references: [id])
   product    Product       @relation(fields: [productId], references: [id])
   reviewedBy User?         @relation("VendorListingReviewedBy", fields: [reviewedById], references: [id])

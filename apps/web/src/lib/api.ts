@@ -282,6 +282,8 @@ export interface VendorListingRecord {
   createdAt: string;
   reviewedAt: string | null;
   receivedAt: string | null;
+  depotId?: string | null;
+  depot?: { id: string; name: string; city: string } | null;
   product: Product;
   vendor: VendorProfileRecord;
   referencePrice?: number | null;
@@ -335,8 +337,8 @@ export function rejectVendorListing(token: string, id: string, reason: string) {
   return authJson<VendorListingRecord>(`/vendor-listings/${id}/reject`, token, "POST", { reason });
 }
 
-export function markVendorListingReceived(token: string, id: string, receivedQuantity?: number) {
-  return authJson<VendorListingRecord>(`/vendor-listings/${id}/mark-received`, token, "POST", receivedQuantity ? { receivedQuantity } : {});
+export function markVendorListingReceived(token: string, id: string, receivedQuantity?: number, depotId?: string) {
+  return authJson<VendorListingRecord>(`/vendor-listings/${id}/mark-received`, token, "POST", { ...(receivedQuantity ? { receivedQuantity } : {}), ...(depotId ? { depotId } : {}) });
 }
 
 export function updateVendorListing(token: string, id: string, data: { quantity?: number; unitPrice?: number; photos?: string[] }) {
@@ -411,6 +413,7 @@ export interface AdminStats {
     propertyInquiries: number;
     contactMessages: number;
     toWithdraw: number;
+    pendingPayouts: number;
   };
   lowStock: Array<{ id: string; name: string; unitLabel: string; stockQuantity: number }>;
   stalePrices: Array<{ id: string; name: string; lastAt: string | null; ageHours: number | null }>;
@@ -917,15 +920,123 @@ export interface WalletTransaction {
 
 export interface WalletSummary {
   balance: number;
+  /** Montant déjà demandé en retrait, en attente de versement par OBP. */
+  pendingPayouts: number;
   transactions: WalletTransaction[];
+}
+
+export interface PayoutRecord {
+  id: string;
+  amount: number;
+  method: PaymentMethod;
+  phone: string;
+  status: "EN_ATTENTE" | "PAYE" | "REFUSE";
+  reference: string | null;
+  rejectionReason: string | null;
+  createdAt: string;
+  processedAt: string | null;
+  owner?: { id: string; fullName: string; phone: string };
+  processedBy?: { id: string; fullName: string } | null;
+}
+
+export function getMyPayouts(token: string) {
+  return authFetch<PayoutRecord[]>("/wallet/payouts/mine", token);
 }
 
 export function getWallet(token: string) {
   return authFetch<WalletSummary>("/wallet/mine", token);
 }
 
-export function withdrawWallet(token: string, amount: number) {
-  return authJson<WalletSummary>("/wallet/withdraw", token, "POST", { amount });
+/** Demande de retrait : OBP verse ensuite les fonds sur le numéro Mobile Money indiqué. */
+export function requestPayout(token: string, data: { amount: number; method: PaymentMethod; phone: string }) {
+  return authJson<PayoutRecord>("/wallet/withdraw", token, "POST", data);
+}
+
+export function getPayouts(token: string, status?: PayoutRecord["status"]) {
+  return authFetch<PayoutRecord[]>(`/payouts${status ? `?status=${status}` : ""}`, token);
+}
+
+export function markPayoutPaid(token: string, id: string, reference: string) {
+  return authJson<PayoutRecord>(`/payouts/${id}/paid`, token, "POST", { reference });
+}
+
+export function rejectPayout(token: string, id: string, reason: string) {
+  return authJson<PayoutRecord>(`/payouts/${id}/reject`, token, "POST", { reason });
+}
+
+// ---- Dépôts et zones de livraison ----
+
+export interface Depot {
+  id: string;
+  name: string;
+  city: string;
+  address: string;
+  phone: string | null;
+  latitude: number | null;
+  longitude: number | null;
+  active: boolean;
+}
+
+export interface DepotAdmin extends Depot {
+  _count: { listings: number; zones: number };
+}
+
+export interface DepotInput {
+  name: string;
+  city: string;
+  address: string;
+  phone?: string;
+  latitude?: number;
+  longitude?: number;
+}
+
+export interface DeliveryZone {
+  id: string;
+  name: string;
+  fee: number;
+  active: boolean;
+  depotId: string | null;
+  depot: { id: string; name: string; city: string } | null;
+}
+
+export function getDepots() {
+  return apiFetch<Depot[]>("/depots");
+}
+
+export function getDepotsAdmin(token: string) {
+  return authFetch<DepotAdmin[]>("/depots/admin/all", token);
+}
+
+export function createDepot(token: string, data: DepotInput) {
+  return authJson<Depot>("/depots", token, "POST", data);
+}
+
+export function updateDepot(token: string, id: string, data: Partial<DepotInput> & { active?: boolean }) {
+  return authJson<Depot>(`/depots/${id}`, token, "PATCH", data);
+}
+
+export function deleteDepot(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/depots/${id}`, token, { method: "DELETE" });
+}
+
+export function getDeliveryZones() {
+  return apiFetch<DeliveryZone[]>("/delivery-zones");
+}
+
+export function getDeliveryZonesAdmin(token: string) {
+  return authFetch<DeliveryZone[]>("/delivery-zones/admin/all", token);
+}
+
+export function createDeliveryZone(token: string, data: { name: string; fee: number; depotId?: string }) {
+  return authJson<DeliveryZone>("/delivery-zones", token, "POST", data);
+}
+
+export function updateDeliveryZone(token: string, id: string, data: Partial<{ name: string; fee: number; depotId: string | null; active: boolean }>) {
+  return authJson<DeliveryZone>(`/delivery-zones/${id}`, token, "PATCH", data);
+}
+
+export function deleteDeliveryZone(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/delivery-zones/${id}`, token, { method: "DELETE" });
 }
 
 export interface LiquidityRequestRecord {

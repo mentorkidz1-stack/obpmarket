@@ -5,6 +5,7 @@ import {
   approveVendor,
   approveVendorListing,
   getAllVendors,
+  getDepots,
   getPendingVendorListings,
   getPendingVendors,
   markVendorListingReceived,
@@ -13,6 +14,7 @@ import {
   rejectVendorListing,
   requestVendorListingCorrection,
   suspendVendor,
+  type Depot,
   type VendorListingRecord,
   type VendorProfileRecord,
   type VendorStatus,
@@ -44,13 +46,17 @@ export default function VendorModerationPage() {
   const [photoIndex, setPhotoIndex] = useState(0);
   const [reason, setReason] = useState("");
   const [received, setReceived] = useState("");
+  const [depots, setDepots] = useState<Depot[]>([]);
+  const [depotId, setDepotId] = useState("");
   const [vendorReason, setVendorReason] = useState<Record<string, string>>({});
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   function reload(t: string) {
-    Promise.all([getPendingVendors(t), getPendingVendorListings(t), getAllVendors(t)])
-      .then(([v, l, all]) => {
+    Promise.all([getPendingVendors(t), getPendingVendorListings(t), getAllVendors(t), getDepots()])
+      .then(([v, l, all, d]) => {
+        setDepots(d);
+        setDepotId((prev) => (prev && d.some((x) => x.id === prev) ? prev : (d[0]?.id ?? "")));
         setPendingVendors(v);
         setListings(l);
         setAllVendors(all);
@@ -100,7 +106,7 @@ export default function VendorModerationPage() {
       if (action === "approve") return approveVendorListing(token, selected.id);
       if (action === "correction") return requestVendorListingCorrection(token, selected.id, reason);
       if (action === "reject") return rejectVendorListing(token, selected.id, reason);
-      return markVendorListingReceived(token, selected.id, qty);
+      return markVendorListingReceived(token, selected.id, qty, depotId || undefined);
     });
   }
 
@@ -316,6 +322,20 @@ export default function VendorModerationPage() {
                             Quantité réellement reçue (annoncée : {selected.quantity})
                             <input inputMode="numeric" value={received} onChange={(e) => setReceived(e.target.value.replace(/\D/g, ""))} placeholder={String(selected.quantity)} className={field} />
                           </label>
+                          {depots.length > 0 ? (
+                            <label className="grid max-w-xs gap-1.5 text-xs font-semibold text-ink-2">
+                              Dépôt qui a reçu la marchandise
+                              <select value={depotId} onChange={(e) => setDepotId(e.target.value)} className={field}>
+                                {depots.map((d) => (
+                                  <option key={d.id} value={d.id}>
+                                    {d.name} · {d.city}
+                                  </option>
+                                ))}
+                              </select>
+                            </label>
+                          ) : (
+                            <p className="text-xs text-ink-2">Aucun dépôt n&apos;est encore créé : l&apos;administration peut en ajouter dans « Dépôts et livraison ».</p>
+                          )}
                           <button type="button" disabled={busy} onClick={() => listingDecision("receive")} className="rounded-xl bg-brand px-4 py-2.5 text-sm font-bold text-on-brand disabled:opacity-60">
                             Marquer reçu au magasin
                           </button>

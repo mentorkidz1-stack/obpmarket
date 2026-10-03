@@ -1,11 +1,11 @@
 import { Module } from '@nestjs/common';
 import { WalletService } from './wallet.service.js';
-import { WalletController } from './wallet.controller.js';
+import { PayoutsController, WalletController } from './wallet.controller.js';
 import { AuthModule } from '../auth/auth.module.js';
 
 @Module({
   imports: [AuthModule],
-  controllers: [WalletController],
+  controllers: [WalletController, PayoutsController],
   providers: [WalletService],
   exports: [WalletService],
 })

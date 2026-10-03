@@ -24,6 +24,7 @@ import { NotificationsModule } from './notifications/notifications.module.js';
 import { PriceAlertsModule } from './price-alerts/price-alerts.module.js';
 import { AuditModule } from './audit/audit.module.js';
 import { AdminModule } from './admin/admin.module.js';
+import { DepotsModule } from './depots/depots.module.js';
 
 @Module({
   imports: [
@@ -50,6 +51,7 @@ import { AdminModule } from './admin/admin.module.js';
     PriceAlertsModule,
     AuditModule,
     AdminModule,
+    DepotsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

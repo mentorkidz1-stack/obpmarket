@@ -26,6 +26,11 @@ export class MarkReceivedDto {
   @IsInt()
   @Min(1)
   receivedQuantity?: number;
+
+  /** Dépôt OBP qui a reçu la marchandise (obligatoire dès qu'au moins un dépôt est ouvert). */
+  @IsOptional()
+  @IsString()
+  depotId?: string;
 }
 
 export class UpdateVendorProfileDto {

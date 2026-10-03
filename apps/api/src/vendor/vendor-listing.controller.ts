@@ -81,7 +81,7 @@ export class VendorListingController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(Role.MODERATEUR, Role.ADMIN)
   async markReceived(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: MarkReceivedDto) {
-    const r = await this.vendor.markReceived(id, dto.receivedQuantity);
+    const r = await this.vendor.markReceived(id, dto.receivedQuantity, dto.depotId);
     await this.audit.log(req, 'Stock vendeur reçu au magasin', `Annonce ${r.product.name}`, `${r.receivedQuantity} ${r.product.unitLabel}`);
     return r;
   }

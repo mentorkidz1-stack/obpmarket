@@ -17,6 +17,7 @@ interface Task {
 
 const TASKS: Task[] = [
   { key: "pendingPayments", href: "/backoffice/paiements", title: "Paiements à vérifier", hint: "Paiements Mobile Money déclarés par les clients.", roles: ["GESTIONNAIRE_LIQUIDITE", "ADMIN"] },
+  { key: "pendingPayouts", href: "/backoffice/retraits", title: "Retraits à verser", hint: "Demandes de retrait des vendeurs, à payer par Mobile Money.", roles: ["GESTIONNAIRE_LIQUIDITE", "ADMIN"] },
   { key: "toWithdraw", href: "/backoffice/retrait", title: "Retraits en magasin", hint: "Commandes payées, en attente de retrait.", roles: ["GESTIONNAIRE_LIQUIDITE", "AGENT_MAGASIN", "ADMIN"] },
   { key: "readingsToReview", href: "/backoffice/releves", title: "Relevés de prix à valider", hint: "Relevés signalés par le contrôle automatique.", roles: ["GESTIONNAIRE_PRIX", "ADMIN"] },
   { key: "liquidityPending", href: "/backoffice/liquidite", title: "Demandes de liquidité", hint: "Clients qui demandent une offre de rachat.", roles: ["GESTIONNAIRE_LIQUIDITE", "ADMIN"] },
