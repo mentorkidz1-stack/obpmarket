@@ -1,11 +1,12 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { getLatestReferencePrices, getProducts, type Product, type ReferencePrice } from "@/lib/api";
+import { getLatestReferencePrices, getProducts, getProperties, type Product, type Property, type ReferencePrice } from "@/lib/api";
 
 interface Catalog {
   products: Product[];
   prices: Map<string, ReferencePrice>;
+  properties: Property[];
 }
 
 const TTL_MS = 60_000;
@@ -14,9 +15,9 @@ let inflight: Promise<Catalog> | null = null;
 
 function load(): Promise<Catalog> {
   if (cache && Date.now() - cache.at < TTL_MS) return Promise.resolve(cache.data);
-  inflight ??= Promise.all([getProducts(), getLatestReferencePrices()])
-    .then(([products, prices]) => {
-      const data = { products, prices: new Map(prices.map((p) => [p.productId, p])) };
+  inflight ??= Promise.all([getProducts(), getLatestReferencePrices(), getProperties().catch(() => [] as Property[])])
+    .then(([products, prices, properties]) => {
+      const data = { products, properties, prices: new Map(prices.map((p) => [p.productId, p])) };
       cache = { at: Date.now(), data };
       return data;
     })
@@ -53,5 +54,5 @@ export function useCatalog(enabled = true) {
     return [...map.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
   }, [data]);
 
-  return { products: data?.products ?? [], prices: data?.prices ?? new Map<string, ReferencePrice>(), categories, loaded: !!data, error };
+  return { products: data?.products ?? [], properties: data?.properties ?? [], prices: data?.prices ?? new Map<string, ReferencePrice>(), categories, loaded: !!data, error };
 }

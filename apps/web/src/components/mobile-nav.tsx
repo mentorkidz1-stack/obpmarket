@@ -5,6 +5,7 @@ import { usePathname } from "next/navigation";
 import { useEffect } from "react";
 import { useUI } from "@/components/ui-provider";
 import { useCatalog } from "@/lib/use-catalog";
+import { PROPERTY_TYPES } from "@/lib/property";
 import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
 
 const PAGES = [
@@ -23,7 +24,11 @@ const PAGES = [
 export function MobileNav() {
   const { navOpen, setNavOpen } = useUI();
   const pathname = usePathname();
-  const { categories } = useCatalog(navOpen);
+  const { categories, properties } = useCatalog(navOpen);
+  const propertyTypes = PROPERTY_TYPES.flatMap((t) => {
+    const count = properties.filter((p) => p.type === t.value).length;
+    return count > 0 ? [{ value: t.value, label: t.plural, count }] : [];
+  });
   const { currency, setCurrency } = useCurrency();
 
   useEffect(() => {
@@ -69,6 +74,18 @@ export function MobileNav() {
               <Link key={c.id} href={`/boutique?categorie=${c.id}`} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm hover:bg-surface-2">
                 <span className="font-medium">{c.name}</span>
                 <span className="font-mono text-xs text-ink-2">{c.count}</span>
+              </Link>
+            ))}
+          </div>
+        )}
+
+        {propertyTypes.length > 0 && (
+          <div className="border-t border-line p-3">
+            <p className="px-4 pb-1 pt-2 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2">Immobilier</p>
+            {propertyTypes.map((t) => (
+              <Link key={t.value} href={`/immobilier?type=${t.value}`} className="flex items-center justify-between rounded-xl px-4 py-2.5 text-sm hover:bg-surface-2">
+                <span className="font-medium">{t.label}</span>
+                <span className="font-mono text-xs text-ink-2">{t.count}</span>
               </Link>
             ))}
           </div>

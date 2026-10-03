@@ -20,8 +20,15 @@ const PASTEL: Record<string, { bg: string; fg: string }> = {
 const FALLBACK = { bg: "#e8ebfb", fg: "#2b3fae" };
 
 /** Tuiles pastel « Acheter par catégorie », avec la vraie photo d'un produit du rayon. */
-export function CategoryTiles({ categories }: { categories: CategoryCount[] }) {
-  if (categories.length === 0) return null;
+export function CategoryTiles({
+  categories,
+  realEstate,
+}: {
+  categories: CategoryCount[];
+  /** Tuile large « Immobilier », au même niveau que les rayons de la boutique. */
+  realEstate?: { count: number; photo?: string };
+}) {
+  if (categories.length === 0 && !realEstate) return null;
 
   return (
     <section className="mt-10">
@@ -64,6 +71,32 @@ export function CategoryTiles({ categories }: { categories: CategoryCount[] }) {
             </Link>
           );
         })}
+
+        {realEstate && (
+          <Link
+            href="/immobilier"
+            className="group relative col-span-2 min-h-40 overflow-hidden rounded-2xl bg-[#15172b] p-5 text-white transition-transform hover:-translate-y-0.5 sm:min-h-44 sm:p-6 lg:col-span-4"
+          >
+            <div className="relative max-w-[60%] sm:max-w-[50%]">
+              <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Immobilier</p>
+              <p className="mt-1 font-display text-xl font-extrabold leading-tight sm:text-2xl">Parcelles, maisons, chambres et guest houses</p>
+              <p className="mt-1.5 text-xs font-semibold text-white/75">
+                {realEstate.count > 0 ? `${realEstate.count} annonce${realEstate.count > 1 ? "s" : ""} à vendre ou à louer` : "À vendre ou à louer"}
+              </p>
+              <span className="mt-4 inline-flex items-center gap-1 text-xs font-bold underline underline-offset-4">
+                Découvrir les annonces
+                <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M5 12h14M13 6l6 6-6 6" />
+                </svg>
+              </span>
+            </div>
+            {realEstate.photo && (
+              <span className="absolute inset-y-0 right-0 w-[42%] overflow-hidden rounded-l-[40px]">
+                <Photo src={realEstate.photo} alt="" sizes="(max-width: 1024px) 45vw, 420px" quality={60} className="transition-transform duration-300 group-hover:scale-105" />
+              </span>
+            )}
+          </Link>
+        )}
       </div>
     </section>
   );

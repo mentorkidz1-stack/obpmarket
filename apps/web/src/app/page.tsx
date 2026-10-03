@@ -1,5 +1,6 @@
 import { getBanners, getLatestReferencePrices, getMarkets, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
-import { PropertyCard } from "@/components/property-card";
+import { HomeRealEstate } from "@/components/home-real-estate";
+import { PROPERTY_TYPES } from "@/lib/property";
 import { formatRelativeTime } from "@/lib/format";
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
@@ -70,15 +71,22 @@ export default async function Home() {
 
   const stats = [
     { label: "Produits", value: products.length },
+    { label: "Biens immobiliers", value: properties.length },
     { label: "Marchés suivis", value: markets.length },
     { label: "Catégories", value: categories.length },
   ];
+
+  const propertyTypes = PROPERTY_TYPES.flatMap((t) => {
+    const count = properties.filter((p) => p.type === t.value).length;
+    return count > 0 ? [{ value: t.value, label: t.plural, count }] : [];
+  });
+  const propertyPhoto = properties.map((p) => parseProductPhotos(p)[0]).find(Boolean);
 
   return (
     <main className="mx-auto w-full max-w-6xl flex-1 px-4 pb-16 sm:px-6">
       {banners.length > 0 && (
         <section className="grid gap-4 pt-5 sm:pt-6 lg:grid-cols-[250px_1fr]">
-          <CategorySidebar categories={categories} />
+          <CategorySidebar categories={categories} propertyTypes={propertyTypes} />
           <BannerCarousel banners={banners} />
         </section>
       )}
@@ -86,10 +94,10 @@ export default async function Home() {
       <section className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${banners.length > 0 ? "mt-8" : "pt-6"}`}>
         <div>
           <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-[30px]">
-            Le prix du marché, au jour le jour.
+            Produits du marché et immobilier, au juste prix.
           </h1>
-          <p className="mt-1 max-w-lg text-sm text-ink-2">
-            Prix moyen calculé à partir des relevés de nos agents sur les marchés du Bénin.
+          <p className="mt-1 max-w-xl text-sm text-ink-2">
+            Prix moyens relevés par nos agents sur les marchés du Bénin, et parcelles, maisons et chambres proposés par OBP Market.
           </p>
           {lastUpdate && (
             <div className="mt-2 flex items-center gap-2 text-[13px] text-ink-2">
@@ -101,7 +109,7 @@ export default async function Home() {
           )}
         </div>
 
-        <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
+        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-2.5 text-center sm:min-w-24">
               <p className="font-display text-xl font-extrabold tabular-nums sm:text-2xl">{s.value}</p>
@@ -111,7 +119,9 @@ export default async function Home() {
         </div>
       </section>
 
-      <CategoryTiles categories={categories} />
+      <CategoryTiles categories={categories} realEstate={{ count: properties.length, photo: propertyPhoto }} />
+
+      <HomeRealEstate properties={properties} />
 
       {products.length === 0 ? (
         <p className="py-16 text-center text-sm text-ink-2">
@@ -147,28 +157,6 @@ export default async function Home() {
               <Link href="/boutique" className="inline-block rounded-xl border-2 border-ink px-8 py-3 text-sm font-bold hover:bg-ink hover:text-app">
                 Voir les {products.length} produits
               </Link>
-            </div>
-          </section>
-
-          <section className="mt-10 overflow-hidden rounded-3xl bg-ink text-app">
-            <div className="grid gap-6 p-6 sm:p-9 lg:grid-cols-[320px_1fr] lg:items-center">
-              <div>
-                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-app/60">Nouveau</p>
-                <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight sm:text-3xl">Parcelles et immobilier</h2>
-                <p className="mt-3 text-sm leading-relaxed text-app/75">
-                  Terrains, maisons, chambres et guest houses proposés directement par OBP Market.
-                </p>
-                <Link href="/immobilier" className="mt-5 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#15172b]">
-                  Voir les annonces
-                </Link>
-              </div>
-              {properties.length > 0 && (
-                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&_article]:bg-surface [&_article]:text-ink">
-                  {properties.slice(0, 3).map((p) => (
-                    <PropertyCard key={p.id} property={p} />
-                  ))}
-                </div>
-              )}
             </div>
           </section>
 

@@ -4,7 +4,14 @@ import { CATEGORY_ICON } from "@/components/product-icons";
 import type { CategoryCount } from "@/components/category-tiles";
 
 /** Navigation par catégorie à côté de la bannière, sur desktop. */
-export function CategorySidebar({ categories }: { categories: CategoryCount[] }) {
+export function CategorySidebar({
+  categories,
+  propertyTypes = [],
+}: {
+  categories: CategoryCount[];
+  /** Types de biens immobiliers présents, avec leur nombre d'annonces. */
+  propertyTypes?: { value: string; label: string; count: number }[];
+}) {
   return (
     <nav className="hidden flex-col rounded-2xl border border-line bg-surface p-2.5 lg:flex">
       <p className="flex items-center gap-2 px-2.5 pb-2 pt-1.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2">
@@ -46,6 +53,23 @@ export function CategorySidebar({ categories }: { categories: CategoryCount[] })
           </Link>
         );
       })}
+
+      {propertyTypes.length > 0 && (
+        <>
+          <p className="mt-2 flex items-center gap-2 border-t border-line px-2.5 pb-2 pt-3.5 text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2">
+            <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3.5 11L12 4l8.5 7M5.5 9.5V20h13V9.5" />
+            </svg>
+            Immobilier
+          </p>
+          {propertyTypes.map((t) => (
+            <Link key={t.value} href={`/immobilier?type=${t.value}`} className="flex items-center gap-3 rounded-xl px-2.5 py-2 text-sm hover:bg-surface-2">
+              <span className="min-w-0 flex-1 truncate font-medium">{t.label}</span>
+              <span className="flex-none font-mono text-[11px] text-ink-2">{t.count}</span>
+            </Link>
+          ))}
+        </>
+      )}
     </nav>
   );
 }
