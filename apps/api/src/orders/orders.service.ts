@@ -1,9 +1,12 @@
 import { randomInt } from 'node:crypto';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException } from '@nestjs/common';
 import {
+  DeliveryMode,
+  DeliveryStatus,
   FulfillmentMode,
   OrderFillSource,
   OrderStatus,
+  Prisma,
   ResaleListingStatus,
   StockMovementKind,
   VendorListingStatus,
@@ -207,10 +210,19 @@ export class OrdersService {
         });
       }
 
+      const delivery = await this.resolveDelivery(tx, clientId, dto, itemsData.some((i) => i.fulfillment === FulfillmentMode.RETRAIT));
+
       return tx.order.create({
         data: {
           clientId,
-          totalAmount,
+          totalAmount: totalAmount + delivery.fee,
+          deliveryMode: delivery.mode,
+          deliveryFee: delivery.fee,
+          deliveryZoneName: delivery.zoneName,
+          deliveryAddress: delivery.address,
+          deliveryPhone: delivery.phone,
+          deliveryNote: delivery.note,
+          depotId: delivery.depotId,
           items: {
             create: itemsData.map((item) => ({
               productId: item.productId,
@@ -224,6 +236,42 @@ export class OrdersService {
         include: WITH_PRODUCT,
       });
     });
+  }
+
+  /**
+   * Valide le mode de remise choisi : retrait au dépôt (éventuellement un dépôt précis) ou livraison à domicile
+   * dans une zone active, dont les frais sont figés ici. La livraison ne concerne que les produits « retrait ».
+   */
+  private async resolveDelivery(tx: Prisma.TransactionClient, clientId: string, dto: CreateOrderDto, hasPickupItems: boolean) {
+    const mode = dto.deliveryMode ?? DeliveryMode.RETRAIT;
+
+    if (mode === DeliveryMode.RETRAIT) {
+      if (dto.depotId) {
+        const depot = await tx.depot.findUnique({ where: { id: dto.depotId } });
+        if (!depot || !depot.active) throw new BadRequestException("Ce dépôt n'est pas disponible pour le retrait.");
+      }
+      return { mode, fee: 0, zoneName: null, address: null, phone: null, note: null, depotId: dto.depotId ?? null };
+    }
+
+    if (!hasPickupItems) {
+      throw new BadRequestException('La livraison ne concerne que les produits à retirer : les produits laissés en dépôt restent chez OBP.');
+    }
+    if (!dto.deliveryZoneId) throw new BadRequestException('Choisissez votre zone de livraison.');
+    if (!dto.deliveryAddress?.trim()) throw new BadRequestException("Indiquez l'adresse de livraison.");
+
+    const zone = await tx.deliveryZone.findUnique({ where: { id: dto.deliveryZoneId } });
+    if (!zone || !zone.active) throw new BadRequestException("Cette zone de livraison n'est plus disponible.");
+    const client = await tx.user.findUniqueOrThrow({ where: { id: clientId }, select: { phone: true } });
+
+    return {
+      mode,
+      fee: zone.fee,
+      zoneName: zone.name,
+      address: dto.deliveryAddress.trim(),
+      phone: dto.deliveryPhone?.trim() || client.phone,
+      note: dto.deliveryNote?.trim() || null,
+      depotId: zone.depotId ?? dto.depotId ?? null,
+    };
   }
 
   /**
@@ -358,7 +406,12 @@ export class OrdersService {
     // Vendeurs à prévenir une fois la transaction réussie.
     const sellerNotices: { sellerId: string; text: string }[] = [];
 
+    const delivered = order.deliveryMode === DeliveryMode.LIVRAISON;
+
     await this.prisma.$transaction(async (tx) => {
+      // En livraison, un seul code couvre toute la commande : le client le donne au livreur à la remise.
+      const sharedCode = delivered ? await uniqueWithdrawalCode(tx) : null;
+
       for (const item of order.items) {
         for (const fill of item.fills) {
           if (fill.settledAt) continue;
@@ -434,21 +487,28 @@ export class OrdersService {
         } else {
           await tx.orderItem.update({
             where: { id: item.id },
-            data: { withdrawalCode: await uniqueWithdrawalCode(tx) },
+            data: { withdrawalCode: sharedCode ?? (await uniqueWithdrawalCode(tx)) },
           });
         }
       }
 
       await tx.order.update({
         where: { id: orderId },
-        data: { status: OrderStatus.PAYEE, paidAt: new Date(), confirmedById: actorId },
+        data: {
+          status: OrderStatus.PAYEE,
+          paidAt: new Date(),
+          confirmedById: actorId,
+          ...(delivered ? { deliveryStatus: DeliveryStatus.A_PREPARER } : {}),
+        },
       });
     });
 
     await this.audit.log(await this.actorFor(actorId), 'Paiement confirmé', `Commande ${orderId.slice(0, 8)}`, `${Math.round(order.totalAmount).toLocaleString('fr-FR')} F${actorId ? '' : ' (automatique, passerelle)'}`);
     await this.notifications.notify(order.clientId, {
       title: 'Paiement confirmé',
-      body: 'Votre commande est payée. Retrouvez vos bons de retrait ou vos produits en dépôt.',
+      body: delivered
+        ? 'Votre commande est payée. OBP prépare la livraison à votre adresse : gardez votre code de livraison pour le livreur.'
+        : 'Votre commande est payée. Retrouvez vos bons de retrait ou vos produits en dépôt.',
       href: `/commandes/${orderId}`,
     });
     for (const n of sellerNotices) {
@@ -563,7 +623,7 @@ export class OrdersService {
 
   private async withdrawableItems(code: string) {
     return this.prisma.orderItem.findMany({
-      where: { withdrawalCode: code.trim(), withdrawnAt: null, order: { status: OrderStatus.PAYEE } },
+      where: { withdrawalCode: code.trim(), withdrawnAt: null, order: { status: OrderStatus.PAYEE, deliveryMode: DeliveryMode.RETRAIT } },
       include: { product: { select: { name: true, unitLabel: true } }, order: { select: { id: true, client: { select: SAFE_USER_SELECT } } } },
     });
   }
@@ -571,7 +631,11 @@ export class OrdersService {
   /** Vérifie un bon de retrait présenté au magasin, sans le consommer. */
   async previewWithdrawal(code: string) {
     const items = await this.withdrawableItems(code);
-    if (items.length === 0) throw new NotFoundException('Bon de retrait invalide, déjà utilisé, ou commande non payée.');
+    if (items.length === 0) {
+      const delivery = await this.prisma.orderItem.findFirst({ where: { withdrawalCode: code.trim(), withdrawnAt: null, order: { deliveryMode: DeliveryMode.LIVRAISON } } });
+      if (delivery) throw new BadRequestException("Ce code est celui d'une livraison à domicile : confirmez-la depuis la page « Livraisons ».");
+      throw new NotFoundException('Bon de retrait invalide, déjà utilisé, ou commande non payée.');
+    }
     return items.map((i) => ({
       itemId: i.id,
       orderId: i.order.id,
@@ -604,6 +668,88 @@ export class OrdersService {
       href: `/commandes/${orderId}`,
     });
     return { orderId, product: item.product.name, quantity: item.quantity, client: item.order.client.fullName };
+  }
+
+  // ---- Back-office : livraisons à domicile ----
+
+  /** Commandes à livrer (`done` faux) ou déjà livrées (`done` vrai), les plus anciennement payées d'abord. */
+  findDeliveries(done: boolean) {
+    return this.prisma.order.findMany({
+      where: done
+        ? { deliveryMode: DeliveryMode.LIVRAISON, deliveryStatus: DeliveryStatus.LIVREE }
+        : { deliveryMode: DeliveryMode.LIVRAISON, status: OrderStatus.PAYEE },
+      include: {
+        client: { select: SAFE_USER_SELECT },
+        depot: { select: { id: true, name: true, city: true } },
+        items: { include: { product: { select: { id: true, name: true, unitLabel: true } } } },
+      },
+      orderBy: done ? { deliveredAt: 'desc' } : { paidAt: 'asc' },
+      take: 200,
+    });
+  }
+
+  private async findDeliveryOrder(id: string) {
+    const order = await this.prisma.order.findUnique({ where: { id }, include: { items: true } });
+    if (!order || order.deliveryMode !== DeliveryMode.LIVRAISON) throw new NotFoundException('Livraison introuvable.');
+    if (order.status !== OrderStatus.PAYEE) throw new BadRequestException("Cette commande n'est pas à livrer (non payée, annulée ou déjà livrée).");
+    return order;
+  }
+
+  /** Fait avancer la livraison : à préparer → préparée → en route (jamais en arrière). */
+  async setDeliveryStatus(id: string, next: DeliveryStatus, actor: { userId?: string | null; userName?: string | null }) {
+    const order = await this.findDeliveryOrder(id);
+    const allowed: Record<string, DeliveryStatus[]> = {
+      [DeliveryStatus.A_PREPARER]: [DeliveryStatus.PREPAREE, DeliveryStatus.EN_ROUTE],
+      [DeliveryStatus.PREPAREE]: [DeliveryStatus.EN_ROUTE],
+    };
+    if (!order.deliveryStatus || !allowed[order.deliveryStatus]?.includes(next)) {
+      throw new BadRequestException('Cette étape ne peut pas être enregistrée à partir du statut actuel de la livraison.');
+    }
+
+    const claimed = await this.prisma.order.updateMany({ where: { id, deliveryStatus: order.deliveryStatus }, data: { deliveryStatus: next } });
+    if (claimed.count === 0) throw new BadRequestException('La livraison vient d\'être mise à jour par quelqu\'un d\'autre : rechargez la page.');
+
+    const label = next === DeliveryStatus.PREPAREE ? 'préparée' : 'en route';
+    await this.audit.log(actor, 'Livraison mise à jour', `Commande ${id.slice(0, 8)}`, label);
+    await this.notifications.notify(order.clientId, {
+      title: next === DeliveryStatus.PREPAREE ? 'Commande préparée' : 'Votre commande est en route',
+      body:
+        next === DeliveryStatus.PREPAREE
+          ? 'Votre commande est prête et va partir en livraison.'
+          : 'Le livreur est en route. Gardez votre code de livraison : donnez-le à la réception.',
+      href: `/commandes/${id}`,
+    });
+    return this.prisma.order.findUniqueOrThrow({ where: { id }, include: { items: { include: { product: { select: { id: true, name: true, unitLabel: true } } } } } });
+  }
+
+  /**
+   * Remise au client. Le code à 6 chiffres reçu par le client prouve la livraison ; seul un administrateur peut
+   * confirmer sans code (cas exceptionnel, consigné au journal).
+   */
+  async confirmDelivery(id: string, code: string | undefined, isAdmin: boolean, actor: { userId?: string | null; userName?: string | null }) {
+    const order = await this.findDeliveryOrder(id);
+    if (order.deliveryStatus !== DeliveryStatus.EN_ROUTE) {
+      throw new BadRequestException("Marquez d'abord la commande « en route » avant de confirmer la remise.");
+    }
+    const expected = order.items.find((i) => i.withdrawalCode)?.withdrawalCode ?? null;
+    const given = code?.trim();
+    if (given ? given !== expected : !isAdmin) {
+      throw new BadRequestException(given ? 'Code de livraison incorrect.' : 'Demandez au client son code de livraison à 6 chiffres.');
+    }
+
+    const now = new Date();
+    await this.prisma.$transaction(async (tx) => {
+      await tx.orderItem.updateMany({ where: { orderId: id, withdrawalCode: { not: null }, withdrawnAt: null }, data: { withdrawnAt: now } });
+      await tx.order.update({ where: { id }, data: { status: OrderStatus.RETIREE, deliveryStatus: DeliveryStatus.LIVREE, deliveredAt: now } });
+    });
+
+    await this.audit.log(actor, 'Livraison confirmée', `Commande ${id.slice(0, 8)}`, given ? 'code client vérifié' : 'sans code (administrateur)');
+    await this.notifications.notify(order.clientId, {
+      title: 'Commande livrée',
+      body: 'Votre commande a été livrée. Merci de votre confiance !',
+      href: `/commandes/${id}`,
+    });
+    return { orderId: id, deliveredAt: now };
   }
 
   findMine(clientId: string) {

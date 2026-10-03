@@ -413,6 +413,7 @@ export interface AdminStats {
     propertyInquiries: number;
     contactMessages: number;
     toWithdraw: number;
+    toDeliver: number;
     pendingPayouts: number;
   };
   lowStock: Array<{ id: string; name: string; unitLabel: string; stockQuantity: number }>;
@@ -512,6 +513,12 @@ export interface AdminOrder {
   paymentMethod: PaymentMethod | null;
   paymentReference: string | null;
   rejectionReason: string | null;
+  deliveryMode?: DeliveryMode;
+  deliveryFee?: number;
+  deliveryZoneName?: string | null;
+  deliveryAddress?: string | null;
+  deliveryPhone?: string | null;
+  deliveryStatus?: DeliveryStatus | null;
   client: AgentUser;
   items: Array<{
     id: string;
@@ -849,13 +856,65 @@ export interface Order {
   paidAt: string | null;
   items: OrderItem[];
   client?: AgentUser;
+  deliveryMode: DeliveryMode;
+  deliveryFee: number;
+  deliveryZoneName: string | null;
+  deliveryAddress: string | null;
+  deliveryPhone: string | null;
+  deliveryNote: string | null;
+  deliveryStatus: DeliveryStatus | null;
+  deliveredAt: string | null;
+  depotId: string | null;
+}
+
+export type DeliveryMode = "RETRAIT" | "LIVRAISON";
+export type DeliveryStatus = "A_PREPARER" | "PREPAREE" | "EN_ROUTE" | "LIVREE";
+
+/** Remise des produits « retrait » : au dépôt, ou livraison à domicile avec la zone choisie (ses frais s'ajoutent au total). */
+export interface DeliveryChoice {
+  deliveryMode?: DeliveryMode;
+  deliveryZoneId?: string;
+  deliveryAddress?: string;
+  deliveryPhone?: string;
+  deliveryNote?: string;
+  depotId?: string;
 }
 
 export function createOrder(
   token: string,
   items: Array<{ productId: string; quantity: number; fulfillment?: "RETRAIT" | "DEPOT" }>,
+  delivery: DeliveryChoice = {},
 ) {
-  return authJson<Order>("/orders", token, "POST", { items });
+  return authJson<Order>("/orders", token, "POST", { items, ...delivery });
+}
+
+export interface DeliveryOrder {
+  id: string;
+  status: Order["status"];
+  totalAmount: number;
+  paidAt: string | null;
+  deliveredAt: string | null;
+  deliveryFee: number;
+  deliveryZoneName: string | null;
+  deliveryAddress: string | null;
+  deliveryPhone: string | null;
+  deliveryNote: string | null;
+  deliveryStatus: DeliveryStatus | null;
+  client: AgentUser;
+  depot: { id: string; name: string; city: string } | null;
+  items: Array<{ id: string; quantity: number; fulfillment: "RETRAIT" | "DEPOT"; product: { id: string; name: string; unitLabel: string } }>;
+}
+
+export function getDeliveries(token: string, done = false) {
+  return authFetch<DeliveryOrder[]>(`/orders/deliveries${done ? "?done=1" : ""}`, token);
+}
+
+export function setDeliveryStatus(token: string, orderId: string, status: "PREPAREE" | "EN_ROUTE") {
+  return authJson<unknown>(`/orders/${orderId}/delivery-status`, token, "POST", { status });
+}
+
+export function confirmDelivery(token: string, orderId: string, code?: string) {
+  return authJson<{ orderId: string; deliveredAt: string }>(`/orders/${orderId}/deliver`, token, "POST", code ? { code } : {});
 }
 
 export function getMyOrders(token: string) {

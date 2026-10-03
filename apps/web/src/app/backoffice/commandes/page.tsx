@@ -147,6 +147,17 @@ function Orders({ token }: StaffContext) {
               <dd>
                 {detail.paymentProvider === "NYOLE" ? "Nyole" : detail.paymentMethod ? `${METHOD[detail.paymentMethod]} · réf. ${detail.paymentReference ?? "—"}` : "—"}
               </dd>
+              {detail.deliveryMode === "LIVRAISON" && (
+                <>
+                  <dt className="text-ink-2">Livraison</dt>
+                  <dd>
+                    {detail.deliveryZoneName} · {formatFCFA(detail.deliveryFee ?? 0)} F
+                    <br />
+                    {detail.deliveryAddress}
+                    {detail.deliveryPhone ? ` · ${detail.deliveryPhone}` : ""}
+                  </dd>
+                </>
+              )}
               {detail.confirmedBy && (
                 <>
                   <dt className="text-ink-2">Confirmé par</dt>

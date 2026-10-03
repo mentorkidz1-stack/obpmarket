@@ -5,6 +5,7 @@ import { OrdersService } from './orders.service.js';
 import { CreateOrderDto } from './dto/create-order.dto.js';
 import { SubmitPaymentReferenceDto } from './dto/submit-payment-reference.dto.js';
 import { RejectPaymentDto } from './dto/reject-payment.dto.js';
+import { DeliverDto, DeliveryStatusDto } from './dto/delivery.dto.js';
 import { JwtAuthGuard, type AuthenticatedRequest } from '../auth/jwt-auth.guard.js';
 import { RolesGuard } from '../auth/roles.guard.js';
 import { Roles } from '../auth/roles.decorator.js';
@@ -67,6 +68,28 @@ export class OrdersController {
   @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
   withdraw(@Req() req: AuthenticatedRequest, @Body() dto: WithdrawDto) {
     return this.orders.withdraw(dto.code, req);
+  }
+
+  /** Livraisons à domicile : à livrer (par défaut) ou déjà livrées (`?done=1`). */
+  @Get('deliveries')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
+  deliveries(@Query('done') done?: string) {
+    return this.orders.findDeliveries(done === '1' || done === 'true');
+  }
+
+  @Post(':id/delivery-status')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
+  deliveryStatus(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: DeliveryStatusDto) {
+    return this.orders.setDeliveryStatus(id, dto.status, req);
+  }
+
+  @Post(':id/deliver')
+  @UseGuards(RolesGuard)
+  @Roles(Role.ADMIN, Role.GESTIONNAIRE_LIQUIDITE, Role.AGENT_MAGASIN)
+  deliver(@Req() req: AuthenticatedRequest, @Param('id') id: string, @Body() dto: DeliverDto) {
+    return this.orders.confirmDelivery(id, dto.code, req.userRole === Role.ADMIN, req);
   }
 
   @Get(':id')

@@ -15,6 +15,13 @@ const STATUS_LABEL: Record<Order["status"], string> = {
   ANNULEE: "Annulée",
 };
 
+const DELIVERY_STEPS: Array<{ key: NonNullable<Order["deliveryStatus"]>; label: string }> = [
+  { key: "A_PREPARER", label: "Reçue" },
+  { key: "PREPAREE", label: "Préparée" },
+  { key: "EN_ROUTE", label: "En route" },
+  { key: "LIVREE", label: "Livrée" },
+];
+
 /** Combien de fois on ré-interroge la commande après un retour de paiement en ligne, en attendant le webhook. */
 const MAX_POLL_ATTEMPTS = 12;
 const POLL_INTERVAL_MS = 2500;
@@ -97,7 +104,9 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
         <h1 className="font-display text-2xl font-extrabold">
           {order.status === "EN_ATTENTE_PAIEMENT" && returningFromOnlinePayment
             ? "Confirmation de votre paiement…"
-            : STATUS_LABEL[order.status]}
+            : order.deliveryMode === "LIVRAISON" && order.status === "RETIREE"
+              ? "Livrée"
+              : STATUS_LABEL[order.status]}
         </h1>
         <p className="text-sm text-ink-2">
           Commande <span className="font-mono">{order.id.slice(0, 10)}</span> · <Money value={order.totalAmount} />
@@ -123,6 +132,39 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
         )}
       </div>
 
+      {order.deliveryMode === "LIVRAISON" && (
+        <section className="mt-6 rounded-2xl border border-line bg-surface p-4" aria-label="Livraison">
+          <div className="flex items-start justify-between gap-3">
+            <div>
+              <p className="font-display font-bold">Livraison à domicile</p>
+              <p className="text-xs text-ink-2">
+                {order.deliveryZoneName} · <Money value={order.deliveryFee} />
+              </p>
+            </div>
+          </div>
+          <p className="mt-2 text-sm">{order.deliveryAddress}</p>
+          {order.deliveryPhone && <p className="text-xs text-ink-2">À joindre au {order.deliveryPhone}</p>}
+          {order.deliveryNote && <p className="text-xs text-ink-2">Consigne : {order.deliveryNote}</p>}
+
+          {order.status === "PAYEE" || order.status === "RETIREE" ? (
+            <ol className="mt-4 grid grid-cols-4 gap-1 text-center text-[11px] font-semibold" aria-label="Étapes de la livraison">
+              {DELIVERY_STEPS.map((step, i) => {
+                const current = order.deliveryStatus ? DELIVERY_STEPS.findIndex((s) => s.key === order.deliveryStatus) : -1;
+                const reached = i <= current;
+                return (
+                  <li key={step.key} className="grid justify-items-center gap-1">
+                    <span className={`grid size-7 place-items-center rounded-full text-xs font-bold ${reached ? "bg-brand text-on-brand" : "bg-surface-2 text-ink-2"}`}>{reached ? "✓" : i + 1}</span>
+                    <span className={reached ? "text-ink" : "text-ink-2"}>{step.label}</span>
+                  </li>
+                );
+              })}
+            </ol>
+          ) : (
+            <p className="mt-3 text-xs text-ink-2">Le suivi de livraison démarre dès que votre paiement est confirmé.</p>
+          )}
+        </section>
+      )}
+
       <ul className="mt-6 grid gap-3">
         {order.items.map((item) => (
           <li key={item.id} className="rounded-2xl border border-line bg-surface p-4">
@@ -139,11 +181,13 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
             {item.withdrawalCode ? (
               <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
                 <div>
-                  <p className="text-[11px] uppercase tracking-wide text-ink-2">Bon de retrait</p>
+                  <p className="text-[11px] uppercase tracking-wide text-ink-2">{order.deliveryMode === "LIVRAISON" ? "Code de livraison" : "Bon de retrait"}</p>
                   <p className="font-mono text-lg tracking-[0.2em]">{item.withdrawalCode}</p>
                 </div>
                 <p className="max-w-[45%] text-right text-[11px] text-ink-2">
-                  Présentez ce code au magasin pour récupérer votre produit.
+                  {order.deliveryMode === "LIVRAISON"
+                    ? "Donnez ce code au livreur à la réception de votre commande."
+                    : "Présentez ce code au magasin pour récupérer votre produit."}
                 </p>
               </div>
             ) : item.fulfillment === "DEPOT" && order.status === "PAYEE" ? (

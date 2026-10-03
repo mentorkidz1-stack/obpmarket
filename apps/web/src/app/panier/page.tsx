@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/components/cart-provider";
 import { useAuth } from "@/components/auth-provider";
-import { createOrder } from "@/lib/api";
+import { createOrder, getDeliveryZones, getDepots, type DeliveryZone, type Depot } from "@/lib/api";
 import { PageHero } from "@/components/page-hero";
 import { ProductImage } from "@/components/product-image";
 import { Money } from "@/components/money";
@@ -23,9 +23,42 @@ export default function CartPage() {
   const estimate = lines.reduce((sum, l) => sum + (prices.get(l.product.id)?.value ?? 0) * l.quantity, 0);
   const estimateComplete = lines.every((l) => prices.has(l.product.id));
 
+  // Remise des produits à retirer : au dépôt, ou livraison à domicile (zone choisie, frais ajoutés au total).
+  const [zones, setZones] = useState<DeliveryZone[]>([]);
+  const [depots, setDepots] = useState<Depot[]>([]);
+  const [mode, setMode] = useState<"RETRAIT" | "LIVRAISON">("RETRAIT");
+  const [zoneId, setZoneId] = useState("");
+  const [depotId, setDepotId] = useState("");
+  const [address, setAddress] = useState("");
+  const [contactPhone, setContactPhone] = useState("");
+  const [note, setNote] = useState("");
+
+  useEffect(() => {
+    Promise.all([getDeliveryZones(), getDepots()])
+      .then(([z, d]) => {
+        setZones(z);
+        setDepots(d);
+        setDepotId((prev) => prev || d[0]?.id || "");
+      })
+      .catch(() => {
+        // Sans zones ni dépôts, la commande reste possible en retrait simple.
+      });
+  }, []);
+
+  const hasPickup = lines.some((l) => l.fulfillment !== "DEPOT");
+  const canDeliver = hasPickup && zones.length > 0;
+  const delivering = canDeliver && mode === "LIVRAISON";
+  const zone = zones.find((z) => z.id === zoneId);
+  const fee = delivering && zone ? zone.fee : 0;
+  const fieldCls = "w-full rounded-xl border border-line bg-bg px-3 py-2.5 text-sm outline-none focus:border-brand";
+
   async function handleCheckout() {
     if (!token) {
       router.push("/connexion");
+      return;
+    }
+    if (delivering && (!zoneId || address.trim().length < 5)) {
+      setError(!zoneId ? "Choisissez votre zone de livraison." : "Indiquez votre adresse de livraison (quartier, rue, repère).");
       return;
     }
     setBusy(true);
@@ -34,6 +67,9 @@ export default function CartPage() {
       const order = await createOrder(
         token,
         lines.map((l) => ({ productId: l.product.id, quantity: l.quantity, fulfillment: l.fulfillment })),
+        delivering
+          ? { deliveryMode: "LIVRAISON", deliveryZoneId: zoneId, deliveryAddress: address.trim(), deliveryPhone: contactPhone.trim() || undefined, deliveryNote: note.trim() || undefined }
+          : { deliveryMode: "RETRAIT", depotId: hasPickup && depotId ? depotId : undefined },
       );
       clear();
       router.push(`/commandes/${order.id}/paiement`);
@@ -123,13 +159,89 @@ export default function CartPage() {
 
             <aside className="h-fit rounded-2xl border border-line bg-surface p-5 lg:sticky lg:top-24">
               <h2 className="font-display text-lg font-extrabold">Récapitulatif</h2>
+
+              {hasPickup && (depots.length > 0 || canDeliver) && (
+                <fieldset className="mt-3 grid gap-2 border-b border-line pb-4">
+                  <legend className="mb-1 text-xs font-bold uppercase tracking-wide text-ink-2">Réception</legend>
+                  {canDeliver && (
+                    <div className="grid grid-cols-2 gap-2" role="radiogroup" aria-label="Mode de réception">
+                      {(
+                        [
+                          ["RETRAIT", "Retrait au magasin"],
+                          ["LIVRAISON", "Livraison à domicile"],
+                        ] as const
+                      ).map(([v, l]) => (
+                        <button
+                          key={v}
+                          type="button"
+                          role="radio"
+                          aria-checked={mode === v}
+                          onClick={() => setMode(v)}
+                          className={`rounded-xl border px-2 py-2.5 text-xs font-bold ${mode === v ? "border-brand bg-brand-soft text-brand" : "border-line"}`}
+                        >
+                          {l}
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {!delivering && depots.length > 0 && (
+                    <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                      Magasin de retrait
+                      <select value={depotId} onChange={(e) => setDepotId(e.target.value)} className={fieldCls}>
+                        {depots.map((d) => (
+                          <option key={d.id} value={d.id}>
+                            {d.name} · {d.city}
+                          </option>
+                        ))}
+                      </select>
+                    </label>
+                  )}
+
+                  {delivering && (
+                    <>
+                      <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                        Zone de livraison
+                        <select value={zoneId} onChange={(e) => setZoneId(e.target.value)} className={fieldCls}>
+                          <option value="">Choisir ma zone…</option>
+                          {zones.map((z) => (
+                            <option key={z.id} value={z.id}>
+                              {z.name} · {Math.round(z.fee).toLocaleString("fr-FR")} F
+                            </option>
+                          ))}
+                        </select>
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                        Adresse de livraison
+                        <textarea rows={2} value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Quartier, rue, maison, repère connu…" className={fieldCls} />
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                        Téléphone à joindre (facultatif)
+                        <input type="tel" value={contactPhone} onChange={(e) => setContactPhone(e.target.value)} placeholder={user?.phone ?? "+229…"} className={fieldCls} />
+                      </label>
+                      <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                        Consigne pour le livreur (facultatif)
+                        <input value={note} onChange={(e) => setNote(e.target.value)} className={fieldCls} />
+                      </label>
+                      <p className="text-[11px] text-ink-2">OBP livre depuis son dépôt. À la réception, vous donnez au livreur le code qui vous sera remis après paiement.</p>
+                    </>
+                  )}
+                </fieldset>
+              )}
+
               <div className="mt-3 flex items-center justify-between border-b border-line pb-3 text-sm">
                 <span className="text-ink-2">Articles</span>
                 <span className="font-semibold">{total}</span>
               </div>
+              {delivering && (
+                <div className="mt-3 flex items-center justify-between border-b border-line pb-3 text-sm">
+                  <span className="text-ink-2">Livraison{zone ? ` · ${zone.name}` : ""}</span>
+                  <span className="font-semibold">{zone ? <Money value={fee} unitClassName="text-xs text-ink-2" /> : "—"}</span>
+                </div>
+              )}
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm font-semibold">Total estimé</span>
-                <span className="font-display text-2xl font-extrabold tabular-nums">{estimateComplete ? <Money value={estimate} unitClassName="text-sm text-ink-2" /> : "—"}</span>
+                <span className="text-sm font-semibold">{delivering ? "Total estimé, livraison comprise" : "Total estimé"}</span>
+                <span className="font-display text-2xl font-extrabold tabular-nums">{estimateComplete && (!delivering || zone) ? <Money value={estimate + fee} unitClassName="text-sm text-ink-2" /> : "—"}</span>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-ink-2">
                 Estimation au prix du marché actuel. Le total exact est fixé au moment du paiement.

@@ -46,6 +46,7 @@ export const NAV_GROUPS: NavGroup[] = [
       { href: "/backoffice/commandes", label: "Commandes", roles: LIQ },
       { href: "/backoffice/paiements", label: "Paiements à vérifier", roles: LIQ },
       { href: "/backoffice/retrait", label: "Retrait en magasin", roles: STORE },
+      { href: "/backoffice/livraisons", label: "Livraisons à domicile", roles: STORE },
       { href: "/backoffice/stock", label: "Stock", roles: STORE },
       { href: "/backoffice/depots", label: "Dépôts et livraison", roles: LIQ },
       { href: "/backoffice/retraits", label: "Retraits à verser", roles: LIQ },

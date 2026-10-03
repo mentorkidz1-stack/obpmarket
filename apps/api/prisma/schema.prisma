@@ -207,6 +207,7 @@ model Depot {
 
   zones    DeliveryZone[]
   listings VendorListing[]
+  orders   Order[]
 }
 
 /// Zone de livraison à domicile et son tarif. La livraison est assurée par OBP depuis le dépôt de rattachement.
@@ -511,6 +512,18 @@ enum PaymentProvider {
   NYOLE
 }
 
+enum DeliveryMode {
+  RETRAIT
+  LIVRAISON
+}
+
+enum DeliveryStatus {
+  A_PREPARER
+  PREPAREE
+  EN_ROUTE
+  LIVREE
+}
+
 /// Une commande client — module 4.5 (Commande et paiement).
 model Order {
   id          String      @id @default(cuid())
@@ -531,6 +544,21 @@ model Order {
   /// Session de paiement Nyole (paymentProvider = NYOLE) — docs/decisions/0008-nyole.md.
   nyoleSessionId String? @unique
 
+  /// Remise des produits « retrait » : au dépôt (RETRAIT) ou à domicile par OBP (LIVRAISON).
+  deliveryMode     DeliveryMode    @default(RETRAIT)
+  /// Frais de livraison figés à la commande (déjà inclus dans totalAmount) ; 0 pour un retrait.
+  deliveryFee      Float           @default(0)
+  /// Nom de la zone au moment de la commande (la zone peut être renommée ou supprimée ensuite).
+  deliveryZoneName String?
+  deliveryAddress  String?
+  deliveryPhone    String?
+  deliveryNote     String?
+  /// Suivi de la livraison, renseigné à la confirmation du paiement (LIVRAISON uniquement).
+  deliveryStatus   DeliveryStatus?
+  deliveredAt      DateTime?
+  /// Dépôt où retirer la commande, ou d'où part la livraison.
+  depotId          String?
+
   /// Qui a confirmé/rejeté le paiement : un gestionnaire (flux manuel), ou nul si
   /// confirmé automatiquement par le webhook Nyole.
   confirmedById   String?
@@ -539,10 +567,12 @@ model Order {
 
   client      User        @relation(fields: [clientId], references: [id])
   confirmedBy User?       @relation("OrderConfirmedBy", fields: [confirmedById], references: [id])
+  depot       Depot?      @relation(fields: [depotId], references: [id], onDelete: SetNull)
   items       OrderItem[]
 
   @@index([clientId])
   @@index([status])
+  @@index([deliveryMode, status])
 }
 
 model OrderItem {
