@@ -32,6 +32,7 @@ export function PropertyCatalog({ properties, initial }: { properties: Property[
   const [minArea, setMinArea] = useState("");
   const [maxArea, setMaxArea] = useState("");
   const [onlyAvailable, setOnlyAvailable] = useState(false);
+  const [more, setMore] = useState(false);
   const [sort, setSort] = useState<Sort>("recents");
   const [shown, setShown] = useState({ key: "", count: STEP });
 
@@ -120,7 +121,19 @@ export function PropertyCatalog({ properties, initial }: { properties: Property[
           ))}
         </div>
 
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        <button
+          type="button"
+          onClick={() => setMore((v) => !v)}
+          aria-expanded={more}
+          className="flex items-center justify-between rounded-xl border border-line px-4 py-3 text-sm font-bold sm:hidden"
+        >
+          Ville, prix, superficie, tri
+          <svg viewBox="0 0 24 24" className={`size-4 transition-transform ${more ? "rotate-180" : ""}`} fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M6 9l6 6 6-6" />
+          </svg>
+        </button>
+
+        <div className={`${more ? "grid" : "hidden"} gap-4 sm:grid sm:grid-cols-2 lg:grid-cols-4`}>
           <label className="grid gap-1.5">
             <span className={label}>Ville</span>
             <select value={city} onChange={(e) => setCity(e.target.value)} className={input}>
