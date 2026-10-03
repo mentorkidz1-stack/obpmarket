@@ -3,6 +3,7 @@ import { ReadingStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { PRICING_CONFIG } from '../config/pricing-config.token.js';
 import type { PricingConfig } from '../config/pricing.config.js';
+import { PriceAlertsService } from '../price-alerts/price-alerts.service.js';
 
 export interface RecomputeResult {
   published: boolean;
@@ -17,6 +18,7 @@ export class ReferencePricesService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(PRICING_CONFIG) private readonly config: PricingConfig,
+    private readonly priceAlerts: PriceAlertsService,
   ) {}
 
   /**
@@ -54,6 +56,9 @@ export class ReferencePricesService {
         windowHours: this.config.windowHours,
       },
     });
+
+    // Prévient les clients dont l'alerte de prix est atteinte. Sans conséquence sur le calcul s'il échoue.
+    await this.priceAlerts.check(productId, value).catch(() => 0);
 
     return { published: true, readingsCount: readings.length, marketsCount, value };
   }

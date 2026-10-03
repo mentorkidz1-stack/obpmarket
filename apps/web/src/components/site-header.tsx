@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import { Logo } from "@/components/logo";
 import { CartLink } from "@/components/cart-link";
 import { AccountMenu } from "@/components/account-menu";
+import { NotificationBell } from "@/components/notification-bell";
 import { SearchBox } from "@/components/search-box";
 import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
 import { useUI } from "@/components/ui-provider";
@@ -159,6 +160,7 @@ export function SiteHeader() {
                 </span>
               )}
             </Link>
+            <NotificationBell />
             <CartLink />
             <AccountMenu />
           </div>

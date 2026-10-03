@@ -6,6 +6,7 @@ import { ReferencePricesService } from '../reference-prices/reference-prices.ser
 import type { CreateVendorProfileDto } from './dto/create-vendor-profile.dto.js';
 import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
 import type { ReviewDto } from './dto/review.dto.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import type { UpdateVendorListingDto, UpdateVendorProfileDto } from './dto/update-vendor-listing.dto.js';
 
 /// RG-16 : fourchette autorisée autour du prix de référence — à confirmer avec la direction.
@@ -21,6 +22,7 @@ export class VendorService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly referencePrices: ReferencePricesService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   // ---------- Compte vendeur (VEN-01 à VEN-03) ----------
@@ -64,19 +66,23 @@ export class VendorService {
 
   async suspendVendor(id: string, reason?: string) {
     await this.findVendorOrThrow(id);
-    return this.prisma.vendorProfile.update({
+    const vendor = await this.prisma.vendorProfile.update({
       where: { id },
       data: { status: VendorStatus.SUSPENDU, rejectionReason: reason ?? null, reviewedAt: new Date() },
     });
+    await this.notifyVendor(id, 'Compte vendeur suspendu', reason ? `Motif : ${reason}. Vos annonces ne sont plus en vente.` : 'Vos annonces ne sont plus en vente. Contactez OBP Market.');
+    return vendor;
   }
 
   async reactivateVendor(id: string) {
     const vendor = await this.findVendorOrThrow(id);
     if (vendor.status !== VendorStatus.SUSPENDU) throw new BadRequestException("Ce compte n'est pas suspendu.");
-    return this.prisma.vendorProfile.update({
+    const updated = await this.prisma.vendorProfile.update({
       where: { id },
       data: { status: VendorStatus.ACTIF, rejectionReason: null, reviewedAt: new Date() },
     });
+    await this.notifyVendor(id, 'Compte vendeur réactivé', 'Votre compte vendeur est de nouveau actif.');
+    return updated;
   }
 
   private async findVendorOrThrow(id: string) {
@@ -97,18 +103,28 @@ export class VendorService {
     });
   }
 
-  approveVendor(id: string) {
-    return this.prisma.vendorProfile.update({
+  /** Prévient le vendeur (cloche du site, et WhatsApp s'il l'a accepté). */
+  private async notifyVendor(vendorId: string, title: string, body: string) {
+    const vendor = await this.prisma.vendorProfile.findUnique({ where: { id: vendorId }, select: { userId: true } });
+    if (vendor) await this.notifications.notify(vendor.userId, { title, body, href: '/vendeur' });
+  }
+
+  async approveVendor(id: string) {
+    const vendor = await this.prisma.vendorProfile.update({
       where: { id },
       data: { status: VendorStatus.ACTIF, reviewedAt: new Date(), rejectionReason: null },
     });
+    await this.notifyVendor(id, 'Compte vendeur validé', 'Votre compte vendeur est actif : vous pouvez publier votre première annonce.');
+    return vendor;
   }
 
-  rejectVendor(id: string, reason?: string) {
-    return this.prisma.vendorProfile.update({
+  async rejectVendor(id: string, reason?: string) {
+    const vendor = await this.prisma.vendorProfile.update({
       where: { id },
       data: { status: VendorStatus.REFUSE, reviewedAt: new Date(), rejectionReason: reason ?? null },
     });
+    await this.notifyVendor(id, 'Demande vendeur non retenue', reason ? `Motif : ${reason}. Vous pouvez refaire une demande.` : 'Vous pouvez refaire une demande.');
+    return vendor;
   }
 
   // ---------- Annonces (VEN-04 à VEN-13) ----------
@@ -222,7 +238,7 @@ export class VendorService {
   async approveListing(id: string, reviewedById: string) {
     const listing = await this.findListingOrThrow(id);
     this.assertAwaitingReview(listing.status);
-    return this.prisma.vendorListing.update({
+    const updated = await this.prisma.vendorListing.update({
       where: { id },
       data: {
         status: VendorListingStatus.VALIDEE,
@@ -232,13 +248,15 @@ export class VendorService {
       },
       include: WITH_LISTING_RELATIONS,
     });
+    await this.notifyVendor(updated.vendorId, 'Annonce validée', `« ${updated.product.name} » est validée. Déposez le stock au magasin OBP Market pour la mettre en vente.`);
+    return updated;
   }
 
   async requestCorrection(id: string, reviewedById: string, dto: ReviewDto) {
     const listing = await this.findListingOrThrow(id);
     this.assertAwaitingReview(listing.status);
     if (!dto.reason) throw new BadRequestException('Un motif est nécessaire pour demander une correction.');
-    return this.prisma.vendorListing.update({
+    const updated = await this.prisma.vendorListing.update({
       where: { id },
       data: {
         status: VendorListingStatus.A_CORRIGER,
@@ -248,13 +266,15 @@ export class VendorService {
       },
       include: WITH_LISTING_RELATIONS,
     });
+    await this.notifyVendor(updated.vendorId, 'Annonce à corriger', `« ${updated.product.name} » : ${dto.reason}`);
+    return updated;
   }
 
   async rejectListing(id: string, reviewedById: string, dto: ReviewDto) {
     const listing = await this.findListingOrThrow(id);
     this.assertAwaitingReview(listing.status);
     if (!dto.reason) throw new BadRequestException('Un motif est nécessaire pour refuser une annonce.');
-    return this.prisma.vendorListing.update({
+    const updated = await this.prisma.vendorListing.update({
       where: { id },
       data: {
         status: VendorListingStatus.REFUSEE,
@@ -264,6 +284,8 @@ export class VendorService {
       },
       include: WITH_LISTING_RELATIONS,
     });
+    await this.notifyVendor(updated.vendorId, 'Annonce refusée', `« ${updated.product.name} » : ${dto.reason}`);
+    return updated;
   }
 
   /** RG-14 : l'annonce ne devient achetable qu'à réception effective au magasin. */
@@ -276,7 +298,7 @@ export class VendorService {
     if (received > listing.quantity) {
       throw new BadRequestException(`La quantité reçue ne peut pas dépasser la quantité annoncée (${listing.quantity}).`);
     }
-    return this.prisma.vendorListing.update({
+    const updated = await this.prisma.vendorListing.update({
       where: { id },
       data: {
         status: VendorListingStatus.EN_VENTE,
@@ -285,6 +307,8 @@ export class VendorService {
       },
       include: WITH_LISTING_RELATIONS,
     });
+    await this.notifyVendor(updated.vendorId, 'Stock reçu, annonce en vente', `« ${updated.product.name} » : ${received} ${updated.product.unitLabel} en vente sur le site.`);
+    return updated;
   }
 
   private async findListingOrThrow(id: string) {

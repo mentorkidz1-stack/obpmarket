@@ -25,6 +25,10 @@ const SECTIONS = [
     text: "Votre navigateur conserve localement votre panier, vos favoris, votre devise d'affichage, votre session de connexion et les derniers produits consultés. Vous pouvez les effacer à tout moment depuis les réglages de votre navigateur.",
   },
   {
+    title: "Notifications et WhatsApp",
+    text: "Vos notifications (alertes de prix, ventes, suivi de commande) sont toujours disponibles dans votre compte. Vous pouvez choisir de les recevoir aussi par WhatsApp sur le numéro de votre compte ; ce choix est facultatif et modifiable à tout moment depuis la page Notifications.",
+  },
+  {
     title: "Mesure d'audience",
     text: "Nous mesurons la fréquentation du site (pages vues, provenance générale) avec un outil respectueux de la vie privée, sans cookie et sans identifier les visiteurs.",
   },

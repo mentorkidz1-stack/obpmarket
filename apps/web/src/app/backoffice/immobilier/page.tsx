@@ -20,7 +20,7 @@ import {
 } from "@/lib/api";
 import { formatFCFA, formatRelativeTime } from "@/lib/format";
 import { resizeImageFile } from "@/lib/image";
-import { AREA_UNITS, KIND_LABEL, PROPERTY_TYPES, RENT_PERIODS, formatArea, statusLabel, typeLabel } from "@/lib/property";
+import { AREA_UNITS, KIND_LABEL, PROPERTY_TYPES, RENT_PERIODS, formatArea, parseCoords, statusLabel, typeLabel } from "@/lib/property";
 import { useStaffSession } from "@/lib/staff-session";
 import { StaffBar } from "@/components/staff-bar";
 
@@ -37,6 +37,7 @@ interface FormState {
   district: string;
   areaValue: string;
   areaUnit: AreaUnit;
+  coords: string;
   bedrooms: string;
   bathrooms: string;
   titleDeed: string;
@@ -58,6 +59,7 @@ const EMPTY: FormState = {
   district: "",
   areaValue: "",
   areaUnit: "M2",
+  coords: "",
   bedrooms: "",
   bathrooms: "",
   titleDeed: "",
@@ -82,6 +84,7 @@ function toForm(p: Property): FormState {
     district: p.district ?? "",
     areaValue: p.areaValue != null ? String(p.areaValue) : "",
     areaUnit: p.areaUnit,
+    coords: p.latitude != null && p.longitude != null ? `${p.latitude}, ${p.longitude}` : "",
     bedrooms: p.bedrooms != null ? String(p.bedrooms) : "",
     bathrooms: p.bathrooms != null ? String(p.bathrooms) : "",
     titleDeed: p.titleDeed ?? "",
@@ -163,8 +166,16 @@ export default function PropertiesAdminPage() {
       return;
     }
 
+    const coords = form.coords.trim() === "" ? null : parseCoords(form.coords);
+    if (form.coords.trim() !== "" && !coords) {
+      setError("Position GPS invalide : écrivez « latitude, longitude » (ex. 6.3577, 2.3586) ou laissez vide.");
+      return;
+    }
+
     const housing = HOUSING.includes(form.type);
     const payload: PropertyInput = {
+      latitude: coords ? coords[0] : null,
+      longitude: coords ? coords[1] : null,
       title: form.title.trim(),
       type: form.type,
       kind: form.kind,
@@ -332,6 +343,20 @@ export default function PropertiesAdminPage() {
                   : "Saisissez librement : 500 m², 1 hectare, 3 ares…"}
               </p>
             </div>
+
+            <label className={lbl}>
+              Position GPS (facultatif) — pour afficher la carte
+              <input value={form.coords} onChange={(e) => set("coords", e.target.value)} placeholder="6.3577, 2.3586" className={field} />
+              <span className="font-normal">
+                {form.coords.trim() === "" ? (
+                  "Dans Google Maps : clic droit sur le lieu, puis cliquez sur les coordonnées pour les copier."
+                ) : parseCoords(form.coords) ? (
+                  <span className="text-up">Position valide ✓</span>
+                ) : (
+                  <span className="text-down">Format attendu : latitude, longitude (ex. 6.3577, 2.3586)</span>
+                )}
+              </span>
+            </label>
 
             {housing && (
               <div className="grid gap-4 sm:grid-cols-2">

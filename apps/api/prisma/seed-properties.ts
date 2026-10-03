@@ -13,6 +13,23 @@ const MARK = "Annonce d'exemple — à remplacer par vos vrais biens.";
 const M2 = { M2: 1, ARE: 100, HECTARE: 10_000 } as const;
 const img = (...names: string[]) => names.map((n) => `/immobilier/${n}.jpg`);
 
+/** Positions approximatives (quartier ou ville), pour montrer la carte sur les exemples — à remplacer par les vraies. */
+const COORDS: Record<string, [number, number]> = {
+  Fidjrossè: [6.3577, 2.3586],
+  Togba: [6.462, 2.33],
+  Ouando: [6.496, 2.629],
+  Cadjehoun: [6.356, 2.388],
+  Akpakpa: [6.359, 2.44],
+  'Bord de mer': [6.2833, 1.8167],
+  'Centre historique': [6.3667, 2.085],
+  Godomey: [6.398, 2.335],
+  Zinvié: [6.512, 2.257],
+  Banikanni: [9.34, 2.63],
+  Agbanou: [6.665, 2.151],
+  Lissèzoun: [7.1783, 2.0667],
+  Missèbo: [6.365, 2.416],
+};
+
 type Example = {
   title: string;
   type: 'PARCELLE' | 'MAISON' | 'APPARTEMENT' | 'CHAMBRE' | 'GUEST_HOUSE' | 'LOCAL_COMMERCIAL' | 'TERRAIN_AGRICOLE';
@@ -235,8 +252,11 @@ async function main() {
 
   for (const [i, e] of EXAMPLES.entries()) {
     const unit = e.areaUnit ?? 'M2';
+    const coords = COORDS[e.district ?? ''];
     await prisma.property.create({
       data: {
+        latitude: coords?.[0] ?? null,
+        longitude: coords?.[1] ?? null,
         title: e.title,
         type: e.type,
         kind: e.kind,

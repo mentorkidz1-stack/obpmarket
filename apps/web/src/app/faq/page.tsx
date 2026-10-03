@@ -24,6 +24,10 @@ const GROUPS = [
         a: "Le panier donne une estimation au prix du marché actuel. Le montant exact est fixé au moment de la validation de la commande, puis ne bouge plus.",
       },
       {
+        q: "Comment être prévenu quand un prix baisse ?",
+        a: "Sur la fiche d'un produit, cliquez sur « Me prévenir si le prix baisse » et indiquez le prix visé. Dès que le prix du marché passe sous ce seuil, vous recevez une notification dans votre compte (et sur WhatsApp si vous l'avez activé). L'alerte s'arrête ensuite ; vous pouvez en créer une nouvelle.",
+      },
+      {
         q: "Puis-je voir les prix dans une autre devise ?",
         a: "Oui : le menu « Devise » permet d'afficher les prix en euro, dollar, naira ou cedi, à titre indicatif. Le paiement s'effectue toujours en FCFA.",
       },

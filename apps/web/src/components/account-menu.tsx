@@ -7,6 +7,8 @@ import { useAuth } from "@/components/auth-provider";
 
 const LINKS = [
   { href: "/compte", label: "Mon compte" },
+  { href: "/notifications", label: "Notifications" },
+  { href: "/alertes", label: "Alertes de prix" },
   { href: "/commandes", label: "Mes commandes" },
   { href: "/mon-stock", label: "Mon stock" },
   { href: "/portefeuille", label: "Portefeuille" },

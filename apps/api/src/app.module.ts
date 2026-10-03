@@ -20,6 +20,8 @@ import { PaymentInfoModule } from './payment-info/payment-info.module.js';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module.js';
 import { ContactModule } from './contact/contact.module.js';
 import { PropertiesModule } from './properties/properties.module.js';
+import { NotificationsModule } from './notifications/notifications.module.js';
+import { PriceAlertsModule } from './price-alerts/price-alerts.module.js';
 
 @Module({
   imports: [
@@ -42,6 +44,8 @@ import { PropertiesModule } from './properties/properties.module.js';
     ExchangeRatesModule,
     ContactModule,
     PropertiesModule,
+    NotificationsModule,
+    PriceAlertsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -1,7 +1,10 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { randomInt } from 'node:crypto';
+import { Injectable, ServiceUnavailableException, UnauthorizedException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service.js';
+import { WhatsAppService } from '../notifications/whatsapp.service.js';
+import { SlidingLimiter } from './otp-limiter.js';
 import type { RequestOtpDto } from './dto/request-otp.dto.js';
 import type { VerifyOtpDto } from './dto/verify-otp.dto.js';
 import type { StaffLoginDto } from './dto/staff-login.dto.js';
@@ -19,26 +22,50 @@ function sanitizeUser<T extends { passwordHash: string | null }>(user: T) {
   return safe;
 }
 
+const TEN_MINUTES = 10 * 60 * 1000;
+
 @Injectable()
 export class AuthService {
+  /** 3 codes demandés par numéro et par fenêtre de 10 min ; 10 par adresse IP. */
+  private readonly requestsPerPhone = new SlidingLimiter(3, TEN_MINUTES, 'Trop de codes demandés. Réessayez dans quelques minutes.');
+  private readonly requestsPerIp = new SlidingLimiter(10, TEN_MINUTES, 'Trop de demandes depuis cet appareil. Réessayez dans quelques minutes.');
+  /** 5 codes erronés par numéro et par fenêtre de 10 min, puis blocage temporaire. */
+  private readonly failedAttempts = new SlidingLimiter(5, TEN_MINUTES, 'Trop de tentatives. Demandez un nouveau code dans quelques minutes.');
+
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly whatsapp: WhatsAppService,
   ) {}
 
   /**
-   * CPT-01 : envoie un code à usage unique par SMS. Aucune passerelle SMS n'est
-   * encore branchée (docs/decisions/0002-otp-dev-mode.md) : en développement,
-   * le code est renvoyé directement dans la réponse au lieu d'être envoyé.
+   * CPT-01 : envoie un code à usage unique. Par WhatsApp dès que le canal est configuré
+   * (docs/decisions/0014-notifications.md) ; en mode démonstration (OTP_DEV_MODE), le code est
+   * aussi renvoyé dans la réponse. En production réelle, mettre OTP_DEV_MODE=false.
    */
-  async requestOtp(dto: RequestOtpDto) {
-    const code = String(Math.floor(100000 + Math.random() * 900000));
+  async requestOtp(dto: RequestOtpDto, ip = 'inconnu') {
+    this.requestsPerIp.hit(ip);
+    this.requestsPerPhone.hit(dto.phone);
+
+    const code = String(randomInt(100000, 1000000));
     const expiresAt = new Date(Date.now() + OTP_TTL_MINUTES * 60 * 1000);
 
     await this.prisma.otpCode.create({ data: { phone: dto.phone, code, expiresAt } });
 
+    let delivered = false;
+    if (this.whatsapp.isConfigured()) {
+      delivered = await this.whatsapp.sendOtp(dto.phone, code);
+      if (!delivered && !otpDevMode) {
+        throw new ServiceUnavailableException("Impossible d'envoyer le code pour le moment. Réessayez dans un instant.");
+      }
+    } else if (!otpDevMode) {
+      // Aucun canal d'envoi et pas de mode démonstration : le code ne pourrait jamais arriver.
+      throw new ServiceUnavailableException("L'envoi du code n'est pas encore disponible.");
+    }
+
     return {
       sent: true,
+      delivered,
       expiresInMinutes: OTP_TTL_MINUTES,
       devCode: otpDevMode ? code : undefined,
     };
@@ -46,11 +73,17 @@ export class AuthService {
 
   /** Valide le code, crée le compte client au premier passage (CPT-01), délivre un jeton. */
   async verifyOtp(dto: VerifyOtpDto) {
+    this.failedAttempts.assertBelow(dto.phone);
+
     const otp = await this.prisma.otpCode.findFirst({
       where: { phone: dto.phone, code: dto.code, consumedAt: null, expiresAt: { gt: new Date() } },
       orderBy: { createdAt: 'desc' },
     });
-    if (!otp) throw new UnauthorizedException('Code invalide ou expiré.');
+    if (!otp) {
+      this.failedAttempts.hit(dto.phone);
+      throw new UnauthorizedException('Code invalide ou expiré.');
+    }
+    this.failedAttempts.reset(dto.phone);
 
     await this.prisma.otpCode.update({ where: { id: otp.id }, data: { consumedAt: new Date() } });
 

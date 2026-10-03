@@ -11,6 +11,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SAFE_USER_SELECT } from '../common/safe-user.select.js';
 import { ReferencePricesService } from '../reference-prices/reference-prices.service.js';
+import { NotificationsService } from '../notifications/notifications.service.js';
 import { NyoleService, type NyoleWebhookEvent } from '../nyole/nyole.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import type { SubmitPaymentReferenceDto } from './dto/submit-payment-reference.dto.js';
@@ -34,6 +35,7 @@ export class OrdersService {
     private readonly prisma: PrismaService,
     private readonly referencePrices: ReferencePricesService,
     private readonly nyole: NyoleService,
+    private readonly notifications: NotificationsService,
   ) {}
 
   /**
@@ -341,10 +343,22 @@ export class OrdersService {
       throw new BadRequestException("Cette commande n'est pas en attente de paiement.");
     }
 
+    // Vendeurs à prévenir une fois la transaction réussie.
+    const sellerNotices: { sellerId: string; text: string }[] = [];
+
     await this.prisma.$transaction(async (tx) => {
       for (const item of order.items) {
         for (const fill of item.fills) {
           if (fill.settledAt) continue;
+
+          if (fill.sellerId && (fill.source === OrderFillSource.REVENTE || fill.source === OrderFillSource.VENDEUR)) {
+            const rate = fill.source === OrderFillSource.REVENTE ? RESALE_COMMISSION_RATE : VENDOR_COMMISSION_RATE;
+            const net = fill.unitPrice * fill.quantity * (1 - rate);
+            sellerNotices.push({
+              sellerId: fill.sellerId,
+              text: `${fill.quantity} ${item.product.unitLabel} de ${item.product.name} vendu(s) : ${Math.round(net).toLocaleString('fr-FR')} F crédités sur votre portefeuille.`,
+            });
+          }
 
           if (fill.source === OrderFillSource.REVENTE && fill.sellerId) {
             const gross = fill.unitPrice * fill.quantity;
@@ -419,6 +433,15 @@ export class OrdersService {
       });
     });
 
+    await this.notifications.notify(order.clientId, {
+      title: 'Paiement confirmé',
+      body: 'Votre commande est payée. Retrouvez vos bons de retrait ou vos produits en dépôt.',
+      href: `/commandes/${orderId}`,
+    });
+    for (const n of sellerNotices) {
+      await this.notifications.notify(n.sellerId, { title: 'Vous avez fait une vente', body: n.text, href: '/portefeuille' });
+    }
+
     return this.prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: WITH_PRODUCT });
   }
 
@@ -474,6 +497,12 @@ export class OrdersService {
           rejectionReason: reason ?? null,
         },
       });
+    });
+
+    await this.notifications.notify(order.clientId, {
+      title: 'Paiement non retrouvé',
+      body: reason ? `Votre commande a été annulée : ${reason}` : "Votre commande a été annulée car le paiement n'a pas pu être vérifié. Contactez-nous si vous avez payé.",
+      href: `/commandes/${orderId}`,
     });
 
     return this.prisma.order.findUniqueOrThrow({ where: { id: orderId }, include: WITH_PRODUCT });

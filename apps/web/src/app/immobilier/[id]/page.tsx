@@ -8,7 +8,7 @@ import { PropertyGallery } from "@/components/property-gallery";
 import { PropertyInquiryForm } from "@/components/property-inquiry-form";
 import { ShareButton } from "@/components/share-button";
 import { SITE } from "@/lib/site";
-import { KIND_LABEL, areaEquivalent, formatArea, mapsUrl, pricePerM2, propertyRef, rentShort, statusLabel, typeLabel } from "@/lib/property";
+import { KIND_LABEL, areaEquivalent, formatArea, mapsUrl, osmEmbedUrl, pricePerM2, propertyRef, rentShort, statusLabel, typeLabel } from "@/lib/property";
 
 async function load(id: string): Promise<Property | null> {
   try {
@@ -139,6 +139,21 @@ export default async function PropertyPage(props: PageProps<"/immobilier/[id]">)
             <section className="mt-8">
               <h2 className="font-display text-xl font-extrabold">Description</h2>
               <p className="mt-3 whitespace-pre-line leading-relaxed text-ink-2">{p.description}</p>
+            </section>
+          )}
+
+          {p.latitude != null && p.longitude != null && (
+            <section className="mt-8">
+              <h2 className="font-display text-xl font-extrabold">Localisation</h2>
+              <div className="mt-3 overflow-hidden rounded-2xl border border-line">
+                <iframe
+                  title={`Carte : ${[p.district, p.city].filter(Boolean).join(", ")}`}
+                  src={osmEmbedUrl(p.latitude, p.longitude)}
+                  loading="lazy"
+                  className="h-72 w-full border-0"
+                />
+              </div>
+              <p className="mt-2 text-xs text-ink-2">Position indicative du quartier. L&apos;adresse exacte est communiquée lors de la visite.</p>
             </section>
           )}
 

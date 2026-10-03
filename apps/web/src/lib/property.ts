@@ -56,6 +56,22 @@ export function pricePerM2(p: Pick<Property, "kind" | "price" | "areaM2">): numb
 export const mapsUrl = (p: Pick<Property, "district" | "city">) =>
   `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent([p.district, p.city, "Bénin"].filter(Boolean).join(", "))}`;
 
+/** Carte OpenStreetMap intégrée (gratuite, sans clé) centrée sur le bien. */
+export function osmEmbedUrl(lat: number, lon: number): string {
+  const dLon = 0.012;
+  const dLat = 0.008;
+  return `https://www.openstreetmap.org/export/embed.html?bbox=${lon - dLon}%2C${lat - dLat}%2C${lon + dLon}%2C${lat + dLat}&layer=mapnik&marker=${lat}%2C${lon}`;
+}
+
+/** Lit « 6.3577, 2.3586 » (coller depuis Google Maps) → [lat, lon] valides, sinon null. */
+export function parseCoords(input: string): [number, number] | null {
+  const m = input.trim().match(/^(-?\d+(?:[.,]\d+)?)\s*[,; ]\s*(-?\d+(?:[.,]\d+)?)$/);
+  if (!m) return null;
+  const lat = Number(m[1].replace(",", "."));
+  const lon = Number(m[2].replace(",", "."));
+  return Math.abs(lat) <= 90 && Math.abs(lon) <= 180 ? [lat, lon] : null;
+}
+
 /** Équivalent en m² quand la superficie n'est pas saisie en m². */
 export function areaEquivalent(p: Pick<Property, "areaUnit" | "areaM2">): string | null {
   return p.areaUnit !== "M2" && p.areaM2 != null ? `≈ ${nf(p.areaM2)} m²` : null;

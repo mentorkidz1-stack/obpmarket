@@ -385,6 +385,64 @@ export function getExchangeRates() {
   return apiFetch<ExchangeRates>("/exchange-rates");
 }
 
+export interface NotificationRecord {
+  id: string;
+  title: string;
+  body: string;
+  href: string | null;
+  readAt: string | null;
+  createdAt: string;
+}
+
+export function getNotifications(token: string) {
+  return authFetch<{ items: NotificationRecord[]; unread: number }>("/notifications", token);
+}
+
+export function getUnreadCount(token: string) {
+  return authFetch<{ unread: number }>("/notifications/unread-count", token);
+}
+
+export function markAllNotificationsRead(token: string) {
+  return authJson<{ ok: boolean }>("/notifications/read-all", token, "POST");
+}
+
+export interface NotificationPrefs {
+  whatsappOptIn: boolean;
+  /** Le canal WhatsApp est-il configuré côté serveur ? */
+  whatsappAvailable: boolean;
+}
+
+export function getNotificationPrefs(token: string) {
+  return authFetch<NotificationPrefs>("/notifications/preferences", token);
+}
+
+export function setNotificationPrefs(token: string, whatsappOptIn: boolean) {
+  return authJson<NotificationPrefs>("/notifications/preferences", token, "PATCH", { whatsappOptIn });
+}
+
+export interface PriceAlertRecord {
+  id: string;
+  productId: string;
+  targetPrice: number;
+  active: boolean;
+  createdAt: string;
+  triggeredAt: string | null;
+  currentPrice: number | null;
+  product: { id: string; name: string; unitLabel: string };
+}
+
+export function getPriceAlerts(token: string) {
+  return authFetch<PriceAlertRecord[]>("/price-alerts", token);
+}
+
+export function savePriceAlert(token: string, productId: string, targetPrice: number) {
+  return authJson<PriceAlertRecord>("/price-alerts", token, "POST", { productId, targetPrice });
+}
+
+export function deletePriceAlert(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/price-alerts/${id}`, token, { method: "DELETE" });
+}
+
 export interface MarketPrice {
   marketId: string;
   name: string;
@@ -442,6 +500,9 @@ export interface Property {
   areaValue: number | null;
   areaUnit: AreaUnit;
   areaM2: number | null;
+  /** Position GPS (facultative) pour la carte de la fiche. */
+  latitude: number | null;
+  longitude: number | null;
   bedrooms: number | null;
   bathrooms: number | null;
   titleDeed: string | null;
@@ -455,8 +516,10 @@ export interface Property {
 }
 
 export type PropertyInput = Partial<
-  Omit<Property, "id" | "photos" | "areaM2" | "createdAt" | "updatedAt" | "district" | "titleDeed" | "areaValue" | "bedrooms" | "bathrooms" | "rentPeriod">
+  Omit<Property, "id" | "photos" | "areaM2" | "createdAt" | "updatedAt" | "district" | "titleDeed" | "areaValue" | "bedrooms" | "bathrooms" | "rentPeriod" | "latitude" | "longitude">
 > & {
+  latitude?: number | null;
+  longitude?: number | null;
   district?: string | null;
   titleDeed?: string | null;
   areaValue?: number | null;

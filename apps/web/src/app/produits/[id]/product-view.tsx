@@ -16,6 +16,7 @@ import { useUI } from "@/components/ui-provider";
 import { useCart, type Fulfillment } from "@/components/cart-provider";
 import { ProductImage } from "@/components/product-image";
 import { Photo } from "@/components/photo";
+import { PriceAlertButton } from "@/components/price-alert-button";
 import { ProductCard } from "@/components/product-card";
 import { PriceChart } from "@/components/price-chart";
 import { PriceTrend } from "@/components/price-trend";
@@ -304,6 +305,12 @@ export function ProductView({
               </button>
             </div>
           </div>
+
+          {latest && (
+            <div className="mt-4">
+              <PriceAlertButton productId={product.id} currentPrice={latest.value} />
+            </div>
+          )}
 
           <ul className="mt-6 grid gap-2.5 rounded-2xl border border-line bg-surface p-4">
             {GUARANTEES.map((g) => (

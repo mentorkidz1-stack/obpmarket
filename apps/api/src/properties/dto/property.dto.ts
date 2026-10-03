@@ -9,6 +9,7 @@ import {
   IsOptional,
   IsString,
   Length,
+  Max,
   MaxLength,
   Min,
 } from 'class-validator';
@@ -65,6 +66,19 @@ export class CreatePropertyDto {
   @IsIn(AREA_UNITS)
   areaUnit?: (typeof AREA_UNITS)[number];
 
+  /** Position GPS facultative (carte sur la fiche du bien). */
+  @IsOptional()
+  @IsNumber()
+  @Min(-90)
+  @Max(90)
+  latitude?: number | null;
+
+  @IsOptional()
+  @IsNumber()
+  @Min(-180)
+  @Max(180)
+  longitude?: number | null;
+
   @IsOptional()
   @IsInt()
   @Min(0)
@@ -111,6 +125,8 @@ export class UpdatePropertyDto {
   @IsOptional() @IsString() @MaxLength(120) district?: string;
   @IsOptional() @IsNumber() @Min(0) areaValue?: number;
   @IsOptional() @IsIn(AREA_UNITS) areaUnit?: (typeof AREA_UNITS)[number];
+  @IsOptional() @IsNumber() @Min(-90) @Max(90) latitude?: number | null;
+  @IsOptional() @IsNumber() @Min(-180) @Max(180) longitude?: number | null;
   @IsOptional() @IsInt() @Min(0) bedrooms?: number;
   @IsOptional() @IsInt() @Min(0) bathrooms?: number;
   @IsOptional() @IsString() @MaxLength(300) titleDeed?: string;

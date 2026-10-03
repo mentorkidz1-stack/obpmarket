@@ -97,6 +97,9 @@ model Property {
   areaValue   Float?
   areaUnit    AreaUnit       @default(M2)
   areaM2      Float?
+  /// Position GPS (optionnelle) pour afficher la carte sur la fiche du bien.
+  latitude    Float?
+  longitude   Float?
   bedrooms    Int?
   bathrooms   Int?
   /// Situation foncière / documents : titre foncier, permis d'habiter, convention de vente…
@@ -162,7 +165,12 @@ model User {
   /// de mot de passe : ils se connectent par OTP (CPT-01), ce champ reste nul pour eux.
   passwordHash String?
   createdAt    DateTime @default(now())
+  /// Consentement explicite à recevoir les notifications par WhatsApp (exigé par WhatsApp Business).
+  /// Les notifications dans le site, elles, sont toujours créées.
+  whatsappOptIn Boolean @default(false)
 
+  notifications     Notification[]
+  priceAlerts       PriceAlert[]
   readings          PriceReading[]    @relation("AgentReadings")
   reviewedReadings  PriceReading[]    @relation("ReviewedBy")
   marketAssignments MarketAssignment[]
@@ -251,8 +259,40 @@ model Product {
   liquidityRequests LiquidityRequest[]
   resaleListings  ResaleListing[]
   vendorListings  VendorListing[]
+  priceAlerts     PriceAlert[]
 
   @@unique([name, unitLabel])
+}
+
+/// Notification affichée dans le site (cloche) et, si le client l'a accepté, envoyée par WhatsApp.
+model Notification {
+  id        String    @id @default(cuid())
+  userId    String
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title     String
+  body      String
+  /// Page vers laquelle mène la notification (ex. « /produits/xxx »).
+  href      String?
+  readAt    DateTime?
+  createdAt DateTime  @default(now())
+
+  @@index([userId, createdAt])
+}
+
+/// « Prévenez-moi quand le prix passe sous X » : une alerte par client et par produit, désactivée une fois déclenchée.
+model PriceAlert {
+  id          String    @id @default(cuid())
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+  targetPrice Float
+  active      Boolean   @default(true)
+  createdAt   DateTime  @default(now())
+  triggeredAt DateTime?
+
+  @@unique([userId, productId])
+  @@index([productId, active])
 }
 
 /// Mode de retrait choisi à la commande — CMD-02. DEPOT n'est proposé que pour les

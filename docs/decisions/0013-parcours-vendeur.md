@@ -27,5 +27,5 @@ dans la base utilisée par l'API : à supprimer ensuite si cette base est partag
 
 ## Reste hors périmètre
 
-Notifications au vendeur (SMS/WhatsApp) lors d'un changement de statut ; stockage des photos d'annonces hors de la base ;
-commission de la plateforme (aucune règle financière n'a été fournie : rien n'est affiché à ce sujet).
+Stockage des photos d'annonces hors de la base. Les notifications au vendeur sont traitées dans `0014-notifications.md`.
+Les commissions (5 % revente, 8 % vendeurs partenaires, par défaut) existent déjà dans le code ; rien n'est affiché à ce sujet sur les pages de présentation, à la demande d'OBP.
