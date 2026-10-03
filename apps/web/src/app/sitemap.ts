@@ -1,10 +1,10 @@
 import type { MetadataRoute } from "next";
-import { getProducts } from "@/lib/api";
+import { getProducts, getProperties } from "@/lib/api";
 import { SITE } from "@/lib/site";
 
 export const dynamic = "force-dynamic";
 
-const PAGES = ["", "/boutique", "/comment-ca-marche", "/faq", "/contact", "/vendeur", "/conditions", "/confidentialite"];
+const PAGES = ["", "/boutique", "/immobilier", "/comment-ca-marche", "/faq", "/contact", "/vendeur", "/conditions", "/confidentialite"];
 
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const now = new Date();
@@ -15,10 +15,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: p === "" ? 1 : p === "/boutique" ? 0.9 : 0.5,
   }));
 
-  try {
-    const products = await getProducts();
-    return [...pages, ...products.map((p) => ({ url: `${SITE.url}/produits/${p.id}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 }))];
-  } catch {
-    return pages;
-  }
+  const [products, properties] = await Promise.all([getProducts().catch(() => []), getProperties().catch(() => [])]);
+  return [
+    ...pages,
+    ...products.map((p) => ({ url: `${SITE.url}/produits/${p.id}`, lastModified: now, changeFrequency: "daily" as const, priority: 0.7 })),
+    ...properties.map((p) => ({ url: `${SITE.url}/immobilier/${p.id}`, lastModified: new Date(p.updatedAt), changeFrequency: "weekly" as const, priority: 0.7 })),
+  ];
 }

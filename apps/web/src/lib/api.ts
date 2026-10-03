@@ -369,6 +369,102 @@ export function sendContactMessage(data: {
   return postJson<{ received: boolean }>("/contact", data);
 }
 
+export type PropertyType = "PARCELLE" | "MAISON" | "APPARTEMENT" | "CHAMBRE" | "GUEST_HOUSE" | "LOCAL_COMMERCIAL" | "TERRAIN_AGRICOLE";
+export type PropertyKind = "VENTE" | "LOCATION";
+export type PropertyStatus = "DISPONIBLE" | "RESERVE" | "CONCLU";
+export type AreaUnit = "M2" | "ARE" | "HECTARE";
+export type RentPeriod = "NUIT" | "MOIS" | "AN";
+
+export interface Property {
+  id: string;
+  title: string;
+  type: PropertyType;
+  kind: PropertyKind;
+  status: PropertyStatus;
+  published: boolean;
+  featured: boolean;
+  description: string;
+  city: string;
+  district: string | null;
+  areaValue: number | null;
+  areaUnit: AreaUnit;
+  areaM2: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  titleDeed: string | null;
+  price: number;
+  rentPeriod: RentPeriod | null;
+  negotiable: boolean;
+  /** JSON.stringify d'un tableau de data URI — utiliser parseProductPhotos(). */
+  photos: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export type PropertyInput = Partial<
+  Omit<Property, "id" | "photos" | "areaM2" | "createdAt" | "updatedAt" | "district" | "titleDeed" | "areaValue" | "bedrooms" | "bathrooms" | "rentPeriod">
+> & {
+  district?: string | null;
+  titleDeed?: string | null;
+  areaValue?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  rentPeriod?: RentPeriod | null;
+  photos?: string[];
+};
+
+export interface PropertyInquiryRecord {
+  id: string;
+  propertyId: string;
+  property: { id: string; title: string; city: string };
+  name: string;
+  phone: string;
+  email: string | null;
+  message: string | null;
+  status: "NOUVEAU" | "TRAITE";
+  createdAt: string;
+  handledAt: string | null;
+}
+
+export function getProperties() {
+  return apiFetch<Property[]>("/properties");
+}
+
+export function getProperty(id: string) {
+  return apiFetch<Property>(`/properties/${id}`);
+}
+
+export function sendPropertyInquiry(
+  propertyId: string,
+  data: { name: string; phone: string; email?: string; message?: string; website?: string },
+) {
+  return postJson<{ received: boolean }>(`/properties/${propertyId}/inquiries`, data);
+}
+
+export function getAllProperties(token: string) {
+  return authFetch<Array<Property & { _count: { inquiries: number } }>>("/properties/admin/all", token);
+}
+
+export function createProperty(token: string, data: PropertyInput) {
+  return authJson<Property>("/properties", token, "POST", data);
+}
+
+export function updateProperty(token: string, id: string, data: PropertyInput) {
+  return authJson<Property>(`/properties/${id}`, token, "PATCH", data);
+}
+
+export function deleteProperty(token: string, id: string) {
+  return authFetch<{ deleted: boolean }>(`/properties/${id}`, token, { method: "DELETE" });
+}
+
+export function getPropertyInquiries(token: string) {
+  return authFetch<PropertyInquiryRecord[]>("/properties/admin/inquiries", token);
+}
+
+export function setPropertyInquiryHandled(token: string, id: string, handled: boolean) {
+  return authJson<PropertyInquiryRecord>(`/properties/inquiries/${id}/handled`, token, "PATCH", { handled });
+}
+
 export function getContactMessages(token: string) {
   return authFetch<ContactMessageRecord[]>("/contact", token);
 }

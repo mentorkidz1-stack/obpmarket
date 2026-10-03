@@ -165,6 +165,7 @@ export function SiteHeader() {
           <div className="ml-2 flex items-center gap-0.5">
             <NavLink href="/">Accueil</NavLink>
             <NavLink href="/boutique">Boutique</NavLink>
+            <NavLink href="/immobilier">Immobilier</NavLink>
             <NavLink href="/mon-stock">Mon stock</NavLink>
             <NavLink href="/commandes">Mes commandes</NavLink>
             <NavLink href="/vendeur">Devenir vendeur</NavLink>

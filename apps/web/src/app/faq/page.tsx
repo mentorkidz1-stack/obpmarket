@@ -64,6 +64,27 @@ const GROUPS = [
     ],
   },
   {
+    title: "Immobilier",
+    items: [
+      {
+        q: "Qui propose les parcelles et les biens immobiliers ?",
+        a: "Les parcelles, terrains, maisons, chambres et guest houses de la rubrique Immobilier sont proposés directement par OBP Market.",
+      },
+      {
+        q: "Comment visiter un bien ?",
+        a: "Sur la fiche du bien, cliquez sur « Être rappelé(e) » et laissez votre numéro. L'équipe OBP Market vous rappelle pour organiser la visite et vous communiquer les documents disponibles.",
+      },
+      {
+        q: "Peut-on payer un bien en ligne ?",
+        a: "Non : l'achat ou la location d'un bien immobilier se conclut avec l'équipe OBP Market après la visite. Aucun paiement n'est demandé sur le site pour l'immobilier.",
+      },
+      {
+        q: "Comment est indiquée la superficie ?",
+        a: "Elle est indiquée par OBP Market dans l'unité du bien : mètres carrés, ares ou hectares. Quand ce n'est pas en m², l'équivalent en m² est affiché à côté.",
+      },
+    ],
+  },
+  {
     title: "Devenir vendeur",
     items: [
       {

@@ -10,6 +10,7 @@ const COLUMNS = [
     links: [
       { href: "/boutique", label: "Toute la boutique" },
       { href: "/boutique?tri=hausse", label: "Variations de prix" },
+      { href: "/immobilier", label: "Immobilier" },
       { href: "/favoris", label: "Mes favoris" },
       { href: "/panier", label: "Mon panier" },
       { href: "/commandes", label: "Mes commandes" },

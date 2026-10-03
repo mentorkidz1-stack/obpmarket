@@ -9,6 +9,7 @@ import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-pr
 
 const PAGES = [
   { href: "/boutique", label: "Boutique" },
+  { href: "/immobilier", label: "Immobilier" },
   { href: "/comment-ca-marche", label: "Comment ça marche" },
   { href: "/mon-stock", label: "Mon stock" },
   { href: "/commandes", label: "Mes commandes" },

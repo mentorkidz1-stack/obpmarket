@@ -14,6 +14,14 @@ Le client veut une boutique qui ait le niveau d'un thème e-commerce abouti (ré
 - **Canaux de contact** : variables `NEXT_PUBLIC_WHATSAPP`, `NEXT_PUBLIC_CONTACT_PHONE`, `NEXT_PUBLIC_CONTACT_EMAIL`, `NEXT_PUBLIC_CONTACT_ADDRESS` ; un canal vide n'est pas affiché.
 - **Technique** : `not-found`, `error` (prop `retry` dans cette version de Next), `loading`, `sitemap`, `robots`, `manifest`, métadonnées Open Graph.
 
+## Immobilier (parcelles, maisons, chambres, guest houses)
+
+- **OBP Market est le vendeur** : pas de flux vendeur ni de modération tierce. Le personnel (MODERATEUR / ADMIN) publie les biens depuis `/backoffice/immobilier`.
+- **Pas de panier ni de paiement en ligne** : le visiteur demande une visite (« Être rappelé(e) ») → table `PropertyInquiry` → onglet « Demandes » du back-office. Hypothèse retenue, à confirmer avec le client ; un acompte via Nyole pourrait s'ajouter plus tard.
+- **Superficie libre** : valeur + unité (m², are, hectare), affichée telle que saisie ; `areaM2` (calculé côté API) sert au filtre et au tri, et l'équivalent m² est affiché quand l'unité n'est pas le m².
+- **Prix fixé par OBP** (pas de prix de référence) ; pour une location, une période est obligatoire (nuit, mois, an).
+- Types : parcelle, terrain agricole, maison/villa, appartement, chambre, guest house, local commercial. Statuts : disponible, réservé, vendu/loué. Un bien masqué ou supprimé disparaît du site.
+
 ## Conséquences
 
 - Le stockage navigateur (panier, favoris, devise, session, récents) est décrit dans la page Confidentialité ; tout nouveau stockage doit y être ajouté.

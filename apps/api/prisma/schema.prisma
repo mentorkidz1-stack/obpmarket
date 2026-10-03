@@ -45,6 +45,94 @@ model ContactMessage {
   @@index([status, createdAt])
 }
 
+enum PropertyType {
+  PARCELLE
+  MAISON
+  APPARTEMENT
+  CHAMBRE
+  GUEST_HOUSE
+  LOCAL_COMMERCIAL
+  TERRAIN_AGRICOLE
+}
+
+enum PropertyKind {
+  VENTE
+  LOCATION
+}
+
+enum PropertyStatus {
+  DISPONIBLE
+  RESERVE
+  /// Vendu (vente) ou loué (location).
+  CONCLU
+}
+
+enum AreaUnit {
+  M2
+  ARE
+  HECTARE
+}
+
+enum RentPeriod {
+  NUIT
+  MOIS
+  AN
+}
+
+/// Bien immobilier publié par OBP Market elle-même (parcelles, maisons, chambres, guest houses…).
+/// Pas de panier : le visiteur demande une visite (PropertyInquiry).
+model Property {
+  id          String         @id @default(cuid())
+  title       String
+  type        PropertyType
+  kind        PropertyKind
+  status      PropertyStatus @default(DISPONIBLE)
+  /// Visible sur le site tant que true.
+  published   Boolean        @default(true)
+  featured    Boolean        @default(false)
+  description String         @default("")
+  city        String
+  district    String?
+  /// Superficie saisie librement (500 m², 1 hectare…) ; areaM2 en est l'équivalent pour filtrer et trier.
+  areaValue   Float?
+  areaUnit    AreaUnit       @default(M2)
+  areaM2      Float?
+  bedrooms    Int?
+  bathrooms   Int?
+  /// Situation foncière / documents : titre foncier, permis d'habiter, convention de vente…
+  titleDeed   String?
+  /// Prix en FCFA ; pour une location, par période (rentPeriod).
+  price       Float
+  rentPeriod  RentPeriod?
+  negotiable  Boolean        @default(false)
+  /// JSON.stringify d'un tableau de data URI.
+  photos      String         @default("[]")
+  createdAt   DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  inquiries PropertyInquiry[]
+
+  @@index([published, status, createdAt])
+  @@index([type, kind])
+}
+
+/// Demande de visite / de rappel sur un bien.
+model PropertyInquiry {
+  id         String        @id @default(cuid())
+  propertyId String
+  property   Property      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  name       String
+  phone      String
+  email      String?
+  message    String?
+  status     ContactStatus @default(NOUVEAU)
+  createdAt  DateTime      @default(now())
+  handledAt  DateTime?
+
+  @@index([status, createdAt])
+  @@index([propertyId])
+}
+
 /// Rôles du cahier des charges, §3. L'authentification n'est pas encore implémentée :
 /// ce champ sert à préparer les permissions du back-office.
 enum Role {

@@ -1,4 +1,5 @@
-import { getBanners, getLatestReferencePrices, getMarkets, getProducts, parseProductPhotos } from "@/lib/api";
+import { getBanners, getLatestReferencePrices, getMarkets, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
+import { PropertyCard } from "@/components/property-card";
 import { formatRelativeTime } from "@/lib/format";
 import Link from "next/link";
 import { ProductCard } from "@/components/product-card";
@@ -12,13 +13,14 @@ import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
 export default async function Home() {
-  let products, prices, markets, banners;
+  let products, prices, markets, banners, properties;
   try {
-    [products, prices, markets, banners] = await Promise.all([
+    [products, prices, markets, banners, properties] = await Promise.all([
       getProducts(),
       getLatestReferencePrices(),
       getMarkets(),
       getBanners(),
+      getProperties().catch(() => []),
     ]);
   } catch {
     return (
@@ -142,6 +144,28 @@ export default async function Home() {
               <Link href="/boutique" className="inline-block rounded-xl border-2 border-ink px-8 py-3 text-sm font-bold hover:bg-ink hover:text-app">
                 Voir les {products.length} produits
               </Link>
+            </div>
+          </section>
+
+          <section className="mt-10 overflow-hidden rounded-3xl bg-ink text-app">
+            <div className="grid gap-6 p-6 sm:p-9 lg:grid-cols-[320px_1fr] lg:items-center">
+              <div>
+                <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-app/60">Nouveau</p>
+                <h2 className="mt-2 font-display text-2xl font-extrabold leading-tight sm:text-3xl">Parcelles et immobilier</h2>
+                <p className="mt-3 text-sm leading-relaxed text-app/75">
+                  Terrains, maisons, chambres et guest houses proposés directement par OBP Market.
+                </p>
+                <Link href="/immobilier" className="mt-5 inline-block rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#15172b]">
+                  Voir les annonces
+                </Link>
+              </div>
+              {properties.length > 0 && (
+                <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 [&_article]:bg-surface [&_article]:text-ink">
+                  {properties.slice(0, 3).map((p) => (
+                    <PropertyCard key={p.id} property={p} />
+                  ))}
+                </div>
+              )}
             </div>
           </section>
 

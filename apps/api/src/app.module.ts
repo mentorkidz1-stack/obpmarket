@@ -19,6 +19,7 @@ import { BannersModule } from './banners/banners.module.js';
 import { PaymentInfoModule } from './payment-info/payment-info.module.js';
 import { ExchangeRatesModule } from './exchange-rates/exchange-rates.module.js';
 import { ContactModule } from './contact/contact.module.js';
+import { PropertiesModule } from './properties/properties.module.js';
 
 @Module({
   imports: [
@@ -40,6 +41,7 @@ import { ContactModule } from './contact/contact.module.js';
     PaymentInfoModule,
     ExchangeRatesModule,
     ContactModule,
+    PropertiesModule,
   ],
   controllers: [AppController],
   providers: [AppService],

@@ -11,6 +11,7 @@ const LINKS = [
   { href: "/backoffice/paiements", label: "Paiements" },
   { href: "/backoffice/produits", label: "Photos" },
   { href: "/backoffice/bannieres", label: "Bannières" },
+  { href: "/backoffice/immobilier", label: "Immobilier" },
   { href: "/backoffice/messages", label: "Messages" },
 ];
 
