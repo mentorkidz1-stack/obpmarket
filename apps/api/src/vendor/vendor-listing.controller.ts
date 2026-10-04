@@ -1,5 +1,7 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post, Req, UseGuards } from '@nestjs/common';
+import { Body, Controller, Delete, Get, NotFoundException, Param, Patch, Post, Req, Res, UseGuards } from '@nestjs/common';
 import { Role } from '@prisma/client';
+import type { Response } from 'express';
+import { sendDataUri } from '../common/photos.js';
 import { VendorService } from './vendor.service.js';
 import { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
 import { MarkReceivedDto, UpdateVendorListingDto } from './dto/update-vendor-listing.dto.js';
@@ -15,6 +17,13 @@ export class VendorListingController {
     private readonly vendor: VendorService,
     private readonly audit: AuditService,
   ) {}
+
+  /** Photo d'une annonce en vente, servie avec un cache long (vitrine publique). */
+  @Get(':id/photo/:index')
+  async photo(@Param('id') id: string, @Param('index') index: string, @Res() res: Response) {
+    const value = await this.vendor.publicListingPhoto(id, Number(index));
+    if (!sendDataUri(res, value)) throw new NotFoundException('Photo introuvable.');
+  }
 
   @Post()
   @UseGuards(JwtAuthGuard)

@@ -66,7 +66,7 @@ export default function CartPage() {
     try {
       const order = await createOrder(
         token,
-        lines.map((l) => ({ productId: l.product.id, quantity: l.quantity, fulfillment: l.fulfillment })),
+        lines.map((l) => ({ productId: l.product.id, quantity: l.quantity, fulfillment: l.fulfillment, vendorListingId: l.vendorListingId })),
         delivering
           ? { deliveryMode: "LIVRAISON", deliveryZoneId: zoneId, deliveryAddress: address.trim(), deliveryPhone: contactPhone.trim() || undefined, deliveryNote: note.trim() || undefined }
           : { deliveryMode: "RETRAIT", depotId: hasPickup && depotId ? depotId : undefined },
@@ -133,7 +133,7 @@ export default function CartPage() {
                     <button
                       type="button"
                       onClick={() => setQuantity(line.product.id, line.quantity + 1)}
-                      disabled={line.quantity >= line.product.stockQuantity}
+                      disabled={line.quantity >= Math.max(line.product.stockQuantity, line.maxQuantity ?? 0)}
                       className="px-3 py-2 text-base font-bold disabled:opacity-40"
                       aria-label={`Augmenter la quantité de ${line.product.name}`}
                     >

@@ -25,7 +25,7 @@ OBP garde la main sur l'argent et sur la marchandise ; le vendeur apporte sa cli
   notifie le vendeur et est consignée au journal d'activité.
 - L'ancien retrait instantané (débit sans validation) est remplacé.
 
-## Suite (phases suivantes)
+## Suite (phases suivantes, réalisées dans la décision 0017)
 
 - **Phase 2** : choix retrait / livraison au paiement, frais de la zone ajoutés à la commande, adresse du
   client, suivi de livraison (préparée, en route, livrée) dans le back-office.

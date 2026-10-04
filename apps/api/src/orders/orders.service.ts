@@ -102,7 +102,26 @@ export class OrdersService {
           orderBy: { createdAt: 'asc' },
         });
 
-        let remaining = line.quantity;
+        // Achat depuis la vitrine d'un vendeur : son annonce est servie en premier (au même prix de référence).
+        let preferred: { listingId: string; sellerUserId: string; qty: number; remainingAfter: number } | null = null;
+        if (line.vendorListingId) {
+          const chosen = await tx.vendorListing.findFirst({
+            where: {
+              id: line.vendorListingId,
+              productId: product.id,
+              status: VendorListingStatus.EN_VENTE,
+              receivedQuantity: { gt: 0 },
+              vendor: { status: 'ACTIF', userId: { not: clientId } },
+            },
+            include: { vendor: { select: { userId: true } } },
+          });
+          if (chosen) {
+            const qty = Math.min(line.quantity, chosen.receivedQuantity);
+            preferred = { listingId: chosen.id, sellerUserId: chosen.vendor.userId, qty, remainingAfter: chosen.receivedQuantity - qty };
+          }
+        }
+
+        let remaining = line.quantity - (preferred?.qty ?? 0);
         const fills: { listingId: string; sellerId: string; qty: number; listingQty: number }[] = [];
         for (const listing of listings) {
           if (remaining <= 0) break;
@@ -116,13 +135,19 @@ export class OrdersService {
           remaining > 0
             ? await tx.vendorListing.findMany({
                 // Les annonces d'un vendeur suspendu ne se vendent plus.
-                where: { productId: product.id, status: VendorListingStatus.EN_VENTE, receivedQuantity: { gt: 0 }, vendor: { status: 'ACTIF' } },
+                where: {
+                  productId: product.id,
+                  status: VendorListingStatus.EN_VENTE,
+                  receivedQuantity: { gt: 0 },
+                  vendor: { status: 'ACTIF' },
+                  ...(preferred ? { id: { not: preferred.listingId } } : {}),
+                },
                 include: { vendor: { select: { userId: true } } },
                 orderBy: { createdAt: 'asc' },
               })
             : [];
 
-        const vendorFills: { listingId: string; sellerUserId: string; qty: number; remainingAfter: number }[] = [];
+        const vendorFills: { listingId: string; sellerUserId: string; qty: number; remainingAfter: number }[] = preferred ? [preferred] : [];
         for (const listing of vendorListings) {
           if (remaining <= 0) break;
           const qty = Math.min(remaining, listing.receivedQuantity);

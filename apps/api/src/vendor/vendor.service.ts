@@ -2,6 +2,7 @@ import { BadRequestException, ConflictException, ForbiddenException, Injectable,
 import { VendorListingStatus, VendorStatus } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { SAFE_USER_SELECT } from '../common/safe-user.select.js';
+import { parsePhotoArray } from '../common/photos.js';
 import { ReferencePricesService } from '../reference-prices/reference-prices.service.js';
 import type { CreateVendorProfileDto } from './dto/create-vendor-profile.dto.js';
 import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
@@ -289,6 +290,14 @@ export class VendorService {
     });
     await this.notifyVendor(updated.vendorId, 'Annonce refusée', `« ${updated.product.name} » : ${dto.reason}`);
     return updated;
+  }
+
+  /** Photo d'une annonce en vente (affichée sur la vitrine publique) ; rien pour une annonce non publique. */
+  async publicListingPhoto(id: string, index: number): Promise<string | undefined> {
+    const listing = await this.prisma.vendorListing.findUnique({ where: { id }, select: { photos: true, status: true, vendor: { select: { status: true } } } });
+    if (!listing || listing.vendor.status !== 'ACTIF') return undefined;
+    if (listing.status !== VendorListingStatus.EN_VENTE && listing.status !== VendorListingStatus.EPUISEE) return undefined;
+    return parsePhotoArray(listing.photos)[index];
   }
 
   /** RG-14 : l'annonce ne devient achetable qu'à réception effective au magasin. */

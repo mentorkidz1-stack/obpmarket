@@ -23,7 +23,8 @@ const COLUMNS = [
       { href: "/compte", label: "Mon compte" },
       { href: "/mon-stock", label: "Mon stock" },
       { href: "/portefeuille", label: "Portefeuille" },
-      { href: "/vendeur", label: "Devenir vendeur" },
+      { href: "/boutiques", label: "Boutiques vendeurs" },
+  { href: "/vendeur", label: "Devenir vendeur" },
     ],
   },
   {

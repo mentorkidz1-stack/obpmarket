@@ -18,6 +18,7 @@ import { formatRelativeTime } from "@/lib/format";
 import { Money } from "@/components/money";
 import { ProductImage } from "@/components/product-image";
 import { VendorLanding } from "@/components/vendor-landing";
+import { VendorShopPanel } from "@/components/vendor-shop-panel";
 import { LoadError, PageLoading } from "@/components/page-state";
 
 const TYPE_LABEL: Record<VendorType, { title: string; desc: string }> = {
@@ -362,6 +363,8 @@ export default function VendorPage() {
       </div>
 
       <ProfileCard token={token} profile={profile} onSaved={() => reload(token)} />
+
+      <VendorShopPanel token={token} />
 
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {stats.map((s) => (

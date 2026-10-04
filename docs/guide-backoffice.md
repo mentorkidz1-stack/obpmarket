@@ -18,6 +18,8 @@ Chaque personne change son mot de passe provisoire dans **Mon compte**.
 - **Stock** : fixer le nouveau total d'un produit avec un motif (réception, casse, inventaire).
 - **Dépôts et livraison** : créez les magasins et dépôts OBP (adresse, téléphone) et les zones de livraison
   à domicile avec leurs frais. À la réception d'une annonce vendeur, on choisit le dépôt qui a reçu la marchandise.
+- **Livraisons à domicile** : commandes payées à livrer. Cliquez « Commande préparée », « Partie en livraison », puis
+  « Remise au client » en saisissant le code à 6 chiffres que le client donne au livreur.
 - **Retraits à verser** : demandes de retrait des vendeurs. Envoyez l'argent par Mobile Money au numéro indiqué,
   puis cliquez « J'ai versé les fonds » avec la référence ; ou refusez avec un motif (le montant est recrédité).
 - **Demandes de liquidité**, **Clients** (export CSV, désactivation par l'administrateur).

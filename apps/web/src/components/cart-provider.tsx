@@ -9,12 +9,21 @@ export interface CartLine {
   product: Product;
   quantity: number;
   fulfillment: Fulfillment;
+  /** Achat depuis la vitrine d'un vendeur : son annonce est servie en priorité. */
+  vendorListingId?: string;
+  /** Quantité maximale réellement disponible pour cette ligne (annonce du vendeur comprise). */
+  maxQuantity?: number;
+}
+
+export interface AddItemOptions {
+  vendorListingId?: string;
+  maxQuantity?: number;
 }
 
 interface CartState {
   lines: CartLine[];
   ready: boolean;
-  addItem: (product: Product, quantity?: number, fulfillment?: Fulfillment) => void;
+  addItem: (product: Product, quantity?: number, fulfillment?: Fulfillment, options?: AddItemOptions) => void;
   setQuantity: (productId: string, quantity: number) => void;
   setFulfillment: (productId: string, fulfillment: Fulfillment) => void;
   removeItem: (productId: string) => void;
@@ -50,18 +59,19 @@ export function CartProvider({ children }: { children: ReactNode }) {
     }
   }, [lines, ready]);
 
-  function addItem(product: Product, quantity = 1, fulfillment: Fulfillment = "RETRAIT") {
+  function addItem(product: Product, quantity = 1, fulfillment: Fulfillment = "RETRAIT", options: AddItemOptions = {}) {
     setLines((prev) => {
       const existing = prev.find((l) => l.product.id === product.id);
-      const max = product.stockQuantity;
+      const max = Math.max(product.stockQuantity, options.maxQuantity ?? 0, existing?.maxQuantity ?? 0);
+      const vendor = options.vendorListingId ? { vendorListingId: options.vendorListingId, maxQuantity: max } : {};
       if (existing) {
         return prev.map((l) =>
           l.product.id === product.id
-            ? { ...l, quantity: Math.min(l.quantity + quantity, max), fulfillment }
+            ? { ...l, quantity: Math.min(l.quantity + quantity, max), fulfillment, ...vendor }
             : l,
         );
       }
-      return [...prev, { product, quantity: Math.min(quantity, max), fulfillment }];
+      return [...prev, { product, quantity: Math.min(quantity, max), fulfillment, ...vendor }];
     });
   }
 
@@ -72,7 +82,7 @@ export function CartProvider({ children }: { children: ReactNode }) {
   function setQuantity(productId: string, quantity: number) {
     setLines((prev) =>
       prev
-        .map((l) => (l.product.id === productId ? { ...l, quantity: Math.max(1, Math.min(quantity, l.product.stockQuantity)) } : l))
+        .map((l) => (l.product.id === productId ? { ...l, quantity: Math.max(1, Math.min(quantity, Math.max(l.product.stockQuantity, l.maxQuantity ?? 0))) } : l))
         .filter((l) => l.quantity > 0),
     );
   }

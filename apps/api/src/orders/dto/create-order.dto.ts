@@ -14,6 +14,11 @@ class OrderItemInput {
   @IsOptional()
   @IsIn([FulfillmentMode.RETRAIT, FulfillmentMode.DEPOT])
   fulfillment?: FulfillmentMode;
+
+  /** Achat depuis la vitrine d'un vendeur : son annonce est servie en priorité, au même prix de référence. */
+  @IsOptional()
+  @IsString()
+  vendorListingId?: string;
 }
 
 export class CreateOrderDto {

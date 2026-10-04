@@ -703,8 +703,33 @@ model VendorProfile {
   createdAt       DateTime     @default(now())
   reviewedAt      DateTime?
 
-  user     User            @relation(fields: [userId], references: [id])
+  /// Vitrine publique du vendeur (/boutique-de/<slug>). Le lien reste stable une fois créé : il est partagé par le vendeur.
+  slug            String?      @unique
+  shopName        String?
+  shopDescription String?
+  /// Numéro WhatsApp affiché sur la vitrine pour poser des questions (chiffres, indicatif compris).
+  shopWhatsapp    String?
+  /// La vitrine n'est visible que si elle est publiée ET que le compte vendeur est actif.
+  shopPublished   Boolean      @default(false)
+
+  user     User              @relation(fields: [userId], references: [id])
   listings VendorListing[]
+  stats    VendorDailyStat[]
+}
+
+/// Compteurs quotidiens de la vitrine d'un vendeur : visites, partages, demandes de contact WhatsApp.
+model VendorDailyStat {
+  id       String   @id @default(cuid())
+  vendorId String
+  /// Jour (heure du Bénin) sans l'heure.
+  day      DateTime @db.Date
+  views    Int      @default(0)
+  shares   Int      @default(0)
+  contacts Int      @default(0)
+
+  vendor VendorProfile @relation(fields: [vendorId], references: [id], onDelete: Cascade)
+
+  @@unique([vendorId, day])
 }
 
 enum VendorListingStatus {

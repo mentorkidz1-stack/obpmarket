@@ -26,7 +26,7 @@ export function parsePhotoArray(raw: string | null | undefined): string[] {
  * Sans cela, les photos en base64 alourdiraient chaque liste de plusieurs mégaoctets.
  * Les chemins et URL déjà publics (« /promos/x.jpg ») sont conservés tels quels.
  */
-export function publicPhotoUrls(req: Request, kind: 'products' | 'properties', id: string, raw: string): string {
+export function publicPhotoUrls(req: Request, kind: 'products' | 'properties' | 'vendor-listings', id: string, raw: string): string {
   const urls = parsePhotoArray(raw).map((p, i) => (p.startsWith('data:') ? `${baseUrl(req)}/${kind}/${id}/photo/${i}?v=${version(p)}` : p));
   return JSON.stringify(urls);
 }

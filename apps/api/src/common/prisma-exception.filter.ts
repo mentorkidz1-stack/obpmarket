@@ -1,4 +1,4 @@
-import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus } from '@nestjs/common';
+import { ArgumentsHost, Catch, ExceptionFilter, HttpStatus, Logger } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import type { Response } from 'express';
 
@@ -8,6 +8,8 @@ import type { Response } from 'express';
  */
 @Catch(Prisma.PrismaClientKnownRequestError)
 export class PrismaExceptionFilter implements ExceptionFilter {
+  private readonly logger = new Logger(PrismaExceptionFilter.name);
+
   catch(exception: Prisma.PrismaClientKnownRequestError, host: ArgumentsHost) {
     const res = host.switchToHttp().getResponse<Response>();
 
@@ -17,6 +19,8 @@ export class PrismaExceptionFilter implements ExceptionFilter {
       P2003: [HttpStatus.CONFLICT, "Cet élément est encore utilisé ailleurs : il ne peut pas être supprimé ou modifié ainsi."],
     };
     const [status, message] = map[exception.code] ?? [HttpStatus.INTERNAL_SERVER_ERROR, 'Erreur interne du serveur.'];
+    // Une erreur inattendue ne doit jamais disparaître sans trace : on la consigne pour pouvoir la diagnostiquer.
+    if (status === HttpStatus.INTERNAL_SERVER_ERROR) this.logger.error(`${exception.code} : ${exception.message}`);
 
     res.status(status).json({ statusCode: status, message, error: status === 500 ? 'Internal Server Error' : undefined });
   }

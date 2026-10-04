@@ -882,7 +882,7 @@ export interface DeliveryChoice {
 
 export function createOrder(
   token: string,
-  items: Array<{ productId: string; quantity: number; fulfillment?: "RETRAIT" | "DEPOT" }>,
+  items: Array<{ productId: string; quantity: number; fulfillment?: "RETRAIT" | "DEPOT"; vendorListingId?: string }>,
   delivery: DeliveryChoice = {},
 ) {
   return authJson<Order>("/orders", token, "POST", { items, ...delivery });
@@ -905,6 +905,74 @@ export interface DeliveryOrder {
   items: Array<{ id: string; quantity: number; fulfillment: "RETRAIT" | "DEPOT"; product: { id: string; name: string; unitLabel: string } }>;
 }
 
+// ---- Vitrines des vendeurs ----
+
+export interface ShopSummary {
+  slug: string;
+  name: string;
+  description: string | null;
+  whatsapp: string | null;
+  zone: string;
+  type: VendorType;
+  memberSince: string;
+}
+
+export interface ShopListing {
+  id: string;
+  productId: string;
+  productName: string;
+  category: string;
+  unitLabel: string;
+  available: number;
+  /** Prix réellement payé par le client : le prix de référence du jour. */
+  price: number;
+  photo: string | null;
+  depot: string | null;
+}
+
+export interface Shop extends ShopSummary {
+  listings: ShopListing[];
+}
+
+export interface MyShop {
+  slug: string | null;
+  shopName: string | null;
+  shopDescription: string | null;
+  shopWhatsapp: string | null;
+  shopPublished: boolean;
+  vendorStatus: VendorStatus;
+  stats: {
+    last30Days: { views: number; shares: number; contacts: number };
+    series: Array<{ date: string; views: number }>;
+    sales30Days: { units: number; amount: number };
+  };
+}
+
+export function getShops() {
+  return apiFetch<Array<ShopSummary & { liveListings: number }>>("/shops");
+}
+
+export function getShop(slug: string) {
+  return apiFetch<Shop>(`/shops/${encodeURIComponent(slug)}`);
+}
+
+/** Compteur anonyme (visite, partage, clic WhatsApp) : un échec ne doit jamais gêner le visiteur. */
+export function recordShopEvent(slug: string, kind: "VUE" | "PARTAGE" | "CONTACT") {
+  return fetch(`${API_URL}/shops/${encodeURIComponent(slug)}/events`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ kind }),
+    keepalive: true,
+  }).catch(() => undefined);
+}
+
+export function getMyShop(token: string) {
+  return authFetch<MyShop>("/shops/mine", token);
+}
+
+export function saveMyShop(token: string, data: Partial<{ shopName: string; shopDescription: string; shopWhatsapp: string; shopPublished: boolean }>) {
+  return authJson<MyShop>("/shops/mine", token, "PUT", data);
+}
 export function getDeliveries(token: string, done = false) {
   return authFetch<DeliveryOrder[]>(`/orders/deliveries${done ? "?done=1" : ""}`, token);
 }
