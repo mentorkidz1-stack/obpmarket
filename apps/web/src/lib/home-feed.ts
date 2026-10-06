@@ -19,6 +19,17 @@ const EXTRA_TILES: GalleryTile[] = [
   { key: "x-depot", src: "/promos/promo-depot.jpg", alt: "Sacs de marchandises empilés dans un dépôt", href: "/comment-ca-marche", label: "Vos produits en sécurité dans nos dépôts", tag: "Dépôts" },
   { key: "x-paiement", src: "/promos/promo-paiement.jpg", alt: "Cliente qui paie avec son téléphone", href: "/comment-ca-marche", label: "Paiement Mobile Money", tag: "Paiement" },
   { key: "x-vendeur", src: "/promos/promo-vendeur.jpg", alt: "Vendeuse de bananes plantains", href: "/vendeur", label: "Devenir vendeur partenaire", tag: "Vendeurs" },
+  // Photos libres de droits (Unsplash), voir docs/credits-photos.md.
+  { key: "x-commercante", src: "/galerie/commercante-marche.jpg", alt: "Commerçante souriante sur un marché, téléphone en main", href: "/vendeur", label: "Commerçante sur un marché", tag: "Vendeurs" },
+  { key: "x-legumes", src: "/galerie/marche-legumes.jpg", alt: "Étals de légumes frais sur un grand marché", href: "/boutique", label: "Légumes frais du marché", tag: "Marchés" },
+  { key: "x-frigo-legumes", src: "/galerie/frigo-legumes.jpg", alt: "Réfrigérateur rempli de légumes, de fruits et de boîtes de conservation", href: "/boutique", label: "Bien conserver ses produits", tag: "Conservation" },
+  { key: "x-grain", src: "/galerie/grain-sechage.jpg", alt: "Grains qui sèchent au soleil sur des bâches au bord d'une route", href: "/boutique", label: "Les grains sèchent au soleil", tag: "Récoltes" },
+  { key: "x-transport", src: "/galerie/transport-sacs.jpg", alt: "Tricycle chargé de sacs de marchandises", href: "/comment-ca-marche", label: "Du marché jusqu'à vous", tag: "Transport" },
+  { key: "x-refrigerateur", src: "/galerie/refrigerateur.jpg", alt: "Réfrigérateur américain dans un salon lumineux", href: "/boutique", label: "Réfrigérateurs", tag: "Électroménager" },
+  { key: "x-cuisine", src: "/galerie/cuisine-equipee.jpg", alt: "Cuisine équipée avec réfrigérateur et cuisinière", href: "/boutique", label: "Cuisine équipée", tag: "Électroménager" },
+  { key: "x-lave-linge", src: "/galerie/machine-a-laver.jpg", alt: "Machine à laver dans une buanderie", href: "/boutique", label: "Machines à laver", tag: "Électroménager" },
+  { key: "x-mixeur", src: "/galerie/mixeur.jpg", alt: "Mixeur blanc sur un plan de travail rose", href: "/boutique", label: "Mixeurs", tag: "Électroménager" },
+  { key: "x-mixeur-fruits", src: "/galerie/mixeur-fruits.jpg", alt: "Bol de mixeur rempli de légumes verts et de mangue", href: "/boutique", label: "Smoothies et jus frais", tag: "Électroménager" },
 ];
 
 /**
