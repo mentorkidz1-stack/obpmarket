@@ -29,6 +29,8 @@
     "seed": "node --experimental-strip-types prisma/seed.ts",
     "provision:staff": "node scripts/provision-staff.mjs",
     "seed:properties": "node --experimental-strip-types prisma/seed-properties.ts",
+    "seed:catalog": "node --experimental-strip-types prisma/seed-catalog.ts",
+    "unseed:catalog": "node --experimental-strip-types prisma/seed-catalog.ts remove",
     "unseed:properties": "node --experimental-strip-types prisma/seed-properties.ts remove"
   },
   "dependencies": {
