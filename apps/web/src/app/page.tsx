@@ -1,8 +1,9 @@
 import { getBanners, getLatestReferencePrices, getMarkets, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
 import { HomeFeed } from "@/components/home-feed";
-import { PROPERTY_TYPES } from "@/lib/property";
+import { PROPERTY_TYPES, typeLabel } from "@/lib/property";
 import { formatRelativeTime } from "@/lib/format";
-import { buildHomeFeed } from "@/lib/home-feed";
+import { buildGallery, buildHomeFeed } from "@/lib/home-feed";
+import { HomeGallery } from "@/components/home-gallery";
 import { HowItWorks } from "@/components/how-it-works";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategorySidebar } from "@/components/category-sidebar";
@@ -56,6 +57,7 @@ export default async function Home() {
   const categories = [...categoryCounts.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
   const feed = buildHomeFeed(products, priceByProduct, properties);
+  const gallery = buildGallery(products, properties, (p) => typeLabel(p.type));
 
   const stats = [
     { label: "Produits", value: products.length },
@@ -126,6 +128,8 @@ export default async function Home() {
           />
 
           <HowItWorks />
+
+          <HomeGallery tiles={gallery} />
 
           <PromoBanners />
           <TrustStrip />

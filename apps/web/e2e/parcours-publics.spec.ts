@@ -28,6 +28,18 @@ test.describe("Accueil", () => {
     expect(hrefs.slice(firstBien)).toContain("produit");
   });
 
+  test("la galerie présente plus de 30 photos du catalogue, chacune menant à sa fiche", async ({ page }) => {
+    await page.goto("/");
+    const tiles = page.locator("#en-images a:has(img)");
+    const count = await tiles.count();
+    expect(count).toBeGreaterThan(30);
+    expect(count).toBeLessThanOrEqual(50);
+    const hrefs = await tiles.evaluateAll((links) => links.map((l) => l.getAttribute("href") ?? ""));
+    expect(hrefs.every((h) => h.startsWith("/produits/") || h.startsWith("/immobilier/") || ["/boutique", "/vendeur", "/comment-ca-marche"].includes(h))).toBe(true);
+    expect(hrefs.some((h) => h.startsWith("/produits/"))).toBe(true);
+    expect(hrefs.some((h) => h.startsWith("/immobilier/"))).toBe(true);
+  });
+
   test("la recherche propose des produits", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("searchbox").or(page.getByLabel("Rechercher un produit")).first().fill("maïs");
