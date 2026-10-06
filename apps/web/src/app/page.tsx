@@ -1,9 +1,8 @@
 import { getBanners, getLatestReferencePrices, getMarkets, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
-import { HomeRealEstate } from "@/components/home-real-estate";
+import { HomeFeed } from "@/components/home-feed";
 import { PROPERTY_TYPES } from "@/lib/property";
 import { formatRelativeTime } from "@/lib/format";
-import Link from "next/link";
-import { ProductCard } from "@/components/product-card";
+import { buildHomeFeed } from "@/lib/home-feed";
 import { HowItWorks } from "@/components/how-it-works";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategorySidebar } from "@/components/category-sidebar";
@@ -56,18 +55,7 @@ export default async function Home() {
   }
   const categories = [...categoryCounts.values()].sort((a, b) => a.name.localeCompare(b.name, "fr"));
 
-  // Les produits déjà montrés dans « Variations de prix » ne sont pas répétés dessous.
-  const moverIds = new Set(
-    products
-      .flatMap((p) => {
-        const change = priceByProduct.get(p.id)?.changePct7d;
-        return change == null ? [] : [{ id: p.id, abs: Math.abs(change) }];
-      })
-      .sort((a, b) => b.abs - a.abs)
-      .slice(0, 4)
-      .map((m) => m.id),
-  );
-  const featured = (moverIds.size >= 2 ? products.filter((p) => !moverIds.has(p.id)) : products).slice(0, 8);
+  const feed = buildHomeFeed(products, priceByProduct, properties);
 
   const stats = [
     { label: "Produits", value: products.length },
@@ -121,7 +109,7 @@ export default async function Home() {
 
       <CategoryTiles categories={categories} realEstate={{ count: properties.length, photo: propertyPhoto }} />
 
-      <HomeRealEstate properties={properties} />
+      <HomeFeed items={feed} productCount={products.length} propertyCount={properties.length} />
 
       {products.length === 0 ? (
         <p className="py-16 text-center text-sm text-ink-2">
@@ -138,27 +126,6 @@ export default async function Home() {
           />
 
           <HowItWorks />
-
-          <section className="mt-10">
-            <div className="flex items-baseline justify-between gap-3">
-              <h2 className="font-display text-xl font-extrabold">{featured.length < products.length ? "Découvrez aussi" : "Nos produits"}</h2>
-              <Link href="/boutique" className="flex-none text-sm font-semibold text-brand">
-                Toute la boutique →
-              </Link>
-            </div>
-            {featured.length > 0 && (
-              <div className="mt-4 grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
-                {featured.map((p) => (
-                  <ProductCard key={p.id} product={p} price={priceByProduct.get(p.id)} />
-                ))}
-              </div>
-            )}
-            <div className="mt-6 text-center">
-              <Link href="/boutique" className="inline-block rounded-xl border-2 border-ink px-8 py-3 text-sm font-bold hover:bg-ink hover:text-app">
-                Voir les {products.length} produits
-              </Link>
-            </div>
-          </section>
 
           <PromoBanners />
           <TrustStrip />

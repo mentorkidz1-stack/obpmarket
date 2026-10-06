@@ -10,8 +10,22 @@ test.describe("Accueil", () => {
     await expect(page.getByRole("link", { name: "OBP Market, accueil" })).toBeVisible();
     await expect(page.getByRole("heading", { level: 1 })).toContainText("immobilier");
     await expect(page.getByRole("heading", { name: "Acheter par catégorie" })).toBeVisible();
-    await expect(page.locator("#immobilier")).toBeVisible();
+    await expect(page.locator("#a-la-une")).toBeVisible();
     await expect(page.getByText("Biens immobiliers", { exact: true })).toBeVisible();
+  });
+
+  test("la une mélange produits et biens immobiliers", async ({ page }) => {
+    await page.goto("/");
+    const cards = page.locator("#a-la-une article");
+    expect(await cards.count()).toBeGreaterThanOrEqual(6);
+    const hrefs = await page.locator("#a-la-une article a[href^='/produits/'], #a-la-une article a[href^='/immobilier/']").evaluateAll((links) =>
+      links.map((l) => (l.getAttribute("href") ?? "").startsWith("/produits/") ? "produit" : "bien"),
+    );
+    // Un bien ne doit pas être regroupé avec les autres : il apparaît entre des produits.
+    const firstBien = hrefs.indexOf("bien");
+    expect(firstBien).toBeGreaterThan(0);
+    expect(hrefs.slice(0, firstBien)).not.toContain("bien");
+    expect(hrefs.slice(firstBien)).toContain("produit");
   });
 
   test("la recherche propose des produits", async ({ page }) => {
