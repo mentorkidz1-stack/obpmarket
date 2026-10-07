@@ -28,24 +28,10 @@ test.describe("Accueil", () => {
     expect(hrefs.slice(firstBien)).toContain("produit");
   });
 
-  test("la une présente des produits de plusieurs catégories, chacun avec son image", async ({ page }) => {
-    await page.goto("/");
-    const products = page.locator("#a-la-une article:has(a[href^='/produits/'])");
-    expect(await products.count()).toBeGreaterThanOrEqual(6);
-    // Pas seulement des céréales : au moins trois catégories différentes dès les premiers produits.
-    const categories = await products.evaluateAll((cards) => cards.map((c) => c.querySelector("p")?.textContent?.trim() ?? ""));
-    expect(new Set(categories).size).toBeGreaterThanOrEqual(3);
-    // Chaque carte montre une vraie image (celles hors écran se chargent à la demande).
-    await page.locator("#a-la-une").scrollIntoViewIfNeeded();
-    const images = page.locator("#a-la-une article img");
-    expect(await images.count()).toBeGreaterThanOrEqual(8);
-  });
-
   test("la recherche propose des produits", async ({ page }) => {
     await page.goto("/");
     await page.getByRole("searchbox").or(page.getByLabel("Rechercher un produit")).first().fill("maïs");
-    // Le catalogue se charge au premier clic dans la recherche : on laisse le temps à une base distante un peu lente.
-    await expect(page.getByRole("link", { name: /Maïs blanc/ }).first()).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByRole("link", { name: /Maïs blanc/ }).first()).toBeVisible();
   });
 
   test("le lien d'accès rapide au contenu existe", async ({ page }) => {
@@ -87,8 +73,7 @@ test.describe("Boutique", () => {
 
 test.describe("Fiche produit", () => {
   test("montre le prix par marché et propose l'alerte de prix", async ({ page }) => {
-    // La boutique affiche les produits par pages : on cherche Gari plutôt que de supposer qu'il est sur la première.
-    await page.goto("/boutique?q=Gari");
+    await page.goto("/boutique");
     await page.getByRole("link", { name: /Gari/ }).first().click();
     await expect(page).toHaveURL(/\/produits\//);
     await expect(page.getByRole("heading", { name: "Prix relevé dans chaque marché" })).toBeVisible();

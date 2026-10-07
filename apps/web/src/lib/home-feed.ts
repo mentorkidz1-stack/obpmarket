@@ -7,7 +7,7 @@ export type FeedItem = { kind: "product"; product: Product; price: ReferencePric
  * ne passent en premier. Un bien tous les trois éléments ; les produits viennent de toutes les catégories à tour
  * de rôle (un céréale, un tubercule, une huile…), en commençant par ceux qui ont une photo et du stock.
  */
-export function buildHomeFeed(products: Product[], prices: Map<string, ReferencePrice>, properties: Property[], total = 16): FeedItem[] {
+export function buildHomeFeed(products: Product[], prices: Map<string, ReferencePrice>, properties: Property[], total = 12): FeedItem[] {
   const sellable = products.filter((p) => prices.has(p.id) && p.stockQuantity > 0);
 
   const byCategory = new Map<string, Product[]>();
