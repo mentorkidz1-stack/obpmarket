@@ -1,39 +1,39 @@
 @import "tailwindcss";
 
-/* Palette alignée sur la maquette Motta validée : fonds clairs, encre bleu nuit, accent bleu. */
+/* Charte graphique OBP : vert foncé #005826 (marque) et rouge #E5161F (accent), sur fonds clairs. */
 :root {
-  --bg: #f5f6fa;
+  --bg: #f5f8f6;
   --surface: #ffffff;
-  --surface-2: #f0f2f8;
-  --ink: #15172b;
-  --ink-2: #6b7185;
-  --line: #e6e8f0;
-  --brand: #2b3fae;
+  --surface-2: #eef3f0;
+  --ink: #0a2f1d;
+  --ink-2: #5b6e64;
+  --line: #e0e8e3;
+  --brand: #005826;
   --on-brand: #ffffff;
-  --brand-soft: #e8ebfb;
-  --accent: #ea580c;
+  --brand-soft: #e3f1ea;
+  --accent: #e5161f;
   --on-accent: #ffffff;
-  --accent-soft: #ffedd5;
-  --up: #0f8a5e;
-  --down: #dc2626;
+  --accent-soft: #fde6e7;
+  --up: #0b7a3b;
+  --down: #e5161f;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #0d0f1c;
-    --surface: #161a2e;
-    --surface-2: #1d2240;
-    --ink: #eceefb;
-    --ink-2: #9aa1c0;
-    --line: #272d4d;
-    --brand: #7c8cff;
-    --on-brand: #0d1030;
-    --brand-soft: #21285a;
-    --accent: #fb923c;
-    --on-accent: #2a1300;
-    --accent-soft: #3a2410;
+    --bg: #07140d;
+    --surface: #0f2218;
+    --surface-2: #153021;
+    --ink: #e9f4ee;
+    --ink-2: #9db8a9;
+    --line: #1f3a2b;
+    --brand: #3fbf7a;
+    --on-brand: #04170d;
+    --brand-soft: #123a25;
+    --accent: #ff5a61;
+    --on-accent: #2a0507;
+    --accent-soft: #3a1214;
     --up: #4ade80;
-    --down: #f87171;
+    --down: #ff6b72;
   }
 }
 

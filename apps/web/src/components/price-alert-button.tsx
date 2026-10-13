@@ -8,7 +8,8 @@ import { useCurrency } from "@/components/currency-provider";
 import { savePriceAlert } from "@/lib/api";
 
 /** « Me prévenir si le prix baisse » : un seuil en FCFA, notifié dans le site (et par WhatsApp si le client l'a accepté). */
-export function PriceAlertButton({ productId, currentPrice }: { productId: string; currentPrice: number }) {
+/** `currentPrice` est le prix affiché (avec ou sans taxe) ; `factor` le ramène hors taxe (1 + TVA quand l'affichage est TTC). */
+export function PriceAlertButton({ productId, currentPrice, factor = 1 }: { productId: string; currentPrice: number; factor?: number }) {
   const { token, ready } = useAuth();
   const { notify } = useUI();
   const { currency } = useCurrency();
@@ -40,7 +41,7 @@ export function PriceAlertButton({ productId, currentPrice }: { productId: strin
     setBusy(true);
     setError(null);
     try {
-      await savePriceAlert(token, productId, target);
+      await savePriceAlert(token, productId, target / factor);
       notify("Alerte enregistrée", { label: "Mes alertes", href: "/alertes" });
       setOpen(false);
     } catch (err) {

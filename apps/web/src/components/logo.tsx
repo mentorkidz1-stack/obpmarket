@@ -5,11 +5,11 @@
 export function LogoMark({ className = "size-10" }: { className?: string }) {
   return (
     <svg viewBox="0 0 48 48" className={className} role="img" aria-label="OBP Market" xmlns="http://www.w3.org/2000/svg">
-      <rect width="48" height="48" rx="12" fill="#2b3fae" />
+      <rect width="48" height="48" rx="12" fill="#005826" />
       <rect x="11" y="26" width="7" height="12" rx="2" fill="#fff" />
       <rect x="20.5" y="19" width="7" height="19" rx="2" fill="#fff" />
       <rect x="30" y="12" width="7" height="26" rx="2" fill="#fff" />
-      <path d="M14.5 8.5v8M10.5 12.5h8" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
+      <path d="M14.5 8.5v8M10.5 12.5h8" stroke="#E5161F" strokeWidth="3" strokeLinecap="round" />
     </svg>
   );
 }

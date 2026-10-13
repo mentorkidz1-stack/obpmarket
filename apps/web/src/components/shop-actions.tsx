@@ -6,6 +6,7 @@ import { Money } from "@/components/money";
 import { useCart } from "@/components/cart-provider";
 import { useUI } from "@/components/ui-provider";
 import { recordShopEvent, type Product, type ShopListing } from "@/lib/api";
+import { useTax } from "@/components/tax-provider";
 import { SITE } from "@/lib/site";
 
 export const shopUrl = (slug: string) => `${SITE.url}/boutique-de/${slug}`;
@@ -98,6 +99,7 @@ export function ShopContact({ slug, whatsapp, name }: { slug: string; whatsapp: 
 export function ShopListingCard({ listing, product, slug, shopName }: { listing: ShopListing; product: Product | undefined; slug: string; shopName: string }) {
   const { addItem } = useCart();
   const { notify } = useUI();
+  const tax = useTax();
   const [qty, setQty] = useState(1);
 
   function add() {
@@ -106,7 +108,7 @@ export function ShopListingCard({ listing, product, slug, shopName }: { listing:
     notify(`${qty} × ${listing.productName} ajouté au panier`, { label: "Voir le panier", href: "/panier" });
   }
 
-  const shareText = `${listing.productName} chez « ${shopName} » : ${Math.round(listing.price).toLocaleString("fr-FR")} F / ${listing.unitLabel}, disponible sur ${SITE.name}.`;
+  const shareText = `${listing.productName} chez « ${shopName} » : ${Math.round(tax.show(listing.price, product)).toLocaleString("fr-FR")} F${tax.label ? ` ${tax.label}` : ""} / ${listing.unitLabel}, disponible sur ${SITE.name}.`;
 
   return (
     <article id={`a-${listing.id}`} className="flex flex-col overflow-hidden rounded-2xl border border-line bg-surface">
@@ -129,7 +131,7 @@ export function ShopListingCard({ listing, product, slug, shopName }: { listing:
           </p>
         </div>
         <p className="font-display text-xl font-extrabold tabular-nums">
-          <Money value={listing.price} unitClassName="text-xs text-ink-2" /> <span className="text-xs font-semibold text-ink-2">/ {listing.unitLabel}</span>
+          <Money value={tax.show(listing.price, product)} unitClassName="text-xs text-ink-2" /> <span className="text-xs font-semibold text-ink-2">/ {listing.unitLabel}</span>
         </p>
         <div className="mt-auto flex items-center gap-2">
           <div className="flex items-center rounded-xl border border-line">

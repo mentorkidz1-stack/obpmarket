@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Photo } from "@/components/photo";
 
 const CARDS = [
@@ -43,7 +43,7 @@ export function PromoBanners() {
               <p className="mt-1.5 max-w-xs text-[13px] leading-snug text-white/85">{c.text}</p>
               <Link
                 href={c.href}
-                className="mt-3.5 inline-flex w-fit items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#15172b]"
+                className="mt-3.5 inline-flex w-fit items-center gap-1.5 rounded-lg bg-white px-4 py-2 text-sm font-bold text-[#0a2f1d]"
               >
                 {c.cta}
                 <svg viewBox="0 0 24 24" className="size-3.5" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

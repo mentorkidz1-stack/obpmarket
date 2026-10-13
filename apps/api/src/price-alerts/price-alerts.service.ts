@@ -1,6 +1,7 @@
 import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
+import { SettingsService } from '../settings/settings.service.js';
 
 const nf = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 0 });
 
@@ -9,6 +10,7 @@ export class PriceAlertsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly notifications: NotificationsService,
+    private readonly settings: SettingsService,
   ) {}
 
   /** Crée ou remplace l'alerte du client sur ce produit (une alerte par produit). */
@@ -32,10 +34,11 @@ export class PriceAlertsService {
       orderBy: { createdAt: 'desc' },
       include: { product: { select: { id: true, name: true, unitLabel: true } } },
     });
+    const s = await this.settings.get();
     return Promise.all(
       alerts.map(async (a) => {
         const latest = await this.prisma.referencePrice.findFirst({ where: { productId: a.productId }, orderBy: { computedAt: 'desc' } });
-        return { ...a, currentPrice: latest?.value ?? null };
+        return { ...a, currentPrice: latest ? this.settings.sellingPrice(latest.value, s) : null };
       }),
     );
   }

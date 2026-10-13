@@ -17,6 +17,8 @@ import { SAFE_USER_SELECT } from '../common/safe-user.select.js';
 import { ReferencePricesService } from '../reference-prices/reference-prices.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import { AuditService } from '../audit/audit.service.js';
+import { SettingsService } from '../settings/settings.service.js';
+import { StorageFeesService } from '../stock/storage-fees.service.js';
 import { NyoleService, type NyoleWebhookEvent } from '../nyole/nyole.service.js';
 import type { CreateOrderDto } from './dto/create-order.dto.js';
 import type { SubmitPaymentReferenceDto } from './dto/submit-payment-reference.dto.js';
@@ -51,6 +53,8 @@ export class OrdersService {
     private readonly nyole: NyoleService,
     private readonly notifications: NotificationsService,
     private readonly audit: AuditService,
+    private readonly settings: SettingsService,
+    private readonly storageFees: StorageFeesService,
   ) {}
 
   /**
@@ -63,12 +67,16 @@ export class OrdersService {
    * l'issue du paiement — docs/decisions/0007-paiement-momo-manuel.md.
    */
   async create(clientId: string, dto: CreateOrderDto) {
+    // Réglages lus avant la transaction : prix = moyenne des marchés + majoration, TVA par produit.
+    const settings = await this.settings.get();
     return this.prisma.$transaction(async (tx) => {
       let totalAmount = 0;
+      let vatTotal = 0;
       const itemsData: {
         productId: string;
         quantity: number;
         unitPrice: number;
+        vatRate: number;
         fulfillment: FulfillmentMode;
         fills: {
           source: OrderFillSource;
@@ -225,11 +233,16 @@ export class OrdersService {
           });
         }
 
-        totalAmount += reference.value * line.quantity;
+        // Le client paie le prix affiché (hors taxe) ; les fills gardent le prix moyen des marchés, base du crédit vendeur.
+        const sellPrice = this.settings.sellingPrice(reference.value, settings);
+        const vatRate = this.settings.vatRateFor(product.vatRate, settings);
+        totalAmount += sellPrice * line.quantity;
+        vatTotal += (sellPrice * line.quantity * vatRate) / 100;
         itemsData.push({
           productId: product.id,
           quantity: line.quantity,
-          unitPrice: reference.value,
+          unitPrice: sellPrice,
+          vatRate,
           fulfillment,
           fills: lineFills,
         });
@@ -240,7 +253,9 @@ export class OrdersService {
       return tx.order.create({
         data: {
           clientId,
-          totalAmount: totalAmount + delivery.fee,
+          // Total à payer = produits HT + TVA + livraison (les frais de livraison sont affichés toutes taxes comprises).
+          totalAmount: totalAmount + Math.round(vatTotal) + delivery.fee,
+          vatAmount: Math.round(vatTotal),
           deliveryMode: delivery.mode,
           deliveryFee: delivery.fee,
           deliveryZoneName: delivery.zoneName,
@@ -253,6 +268,7 @@ export class OrdersService {
               productId: item.productId,
               quantity: item.quantity,
               unitPrice: item.unitPrice,
+              vatRate: item.vatRate,
               fulfillment: item.fulfillment,
               fills: { create: item.fills },
             })),
@@ -433,6 +449,19 @@ export class OrdersService {
 
     const delivered = order.deliveryMode === DeliveryMode.LIVRAISON;
 
+    // Frais de stockage à retenir sur chaque revente : les unités vendues sont prises dans les lots les plus anciens.
+    const storageFeeByFill = new Map<string, number>();
+    const allocated = new Map<string, number>();
+    for (const item of order.items) {
+      for (const fill of item.fills) {
+        if (fill.settledAt || fill.source !== OrderFillSource.REVENTE || !fill.sellerId) continue;
+        const key = `${fill.sellerId}|${item.productId}`;
+        const skip = allocated.get(key) ?? 0;
+        storageFeeByFill.set(fill.id, await this.storageFees.feeForSale(fill.sellerId, item.productId, fill.quantity, skip));
+        allocated.set(key, skip + fill.quantity);
+      }
+    }
+
     await this.prisma.$transaction(async (tx) => {
       // En livraison, un seul code couvre toute la commande : le client le donne au livreur à la remise.
       const sharedCode = delivered ? await uniqueWithdrawalCode(tx) : null;
@@ -443,7 +472,7 @@ export class OrdersService {
 
           if (fill.sellerId && (fill.source === OrderFillSource.REVENTE || fill.source === OrderFillSource.VENDEUR)) {
             const rate = fill.source === OrderFillSource.REVENTE ? RESALE_COMMISSION_RATE : VENDOR_COMMISSION_RATE;
-            const net = fill.unitPrice * fill.quantity * (1 - rate);
+            const net = Math.max(0, fill.unitPrice * fill.quantity * (1 - rate) - (storageFeeByFill.get(fill.id) ?? 0));
             sellerNotices.push({
               sellerId: fill.sellerId,
               text: `${fill.quantity} ${item.product.unitLabel} de ${item.product.name} vendu(s) : ${Math.round(net).toLocaleString('fr-FR')} F crédités sur votre portefeuille.`,
@@ -453,11 +482,15 @@ export class OrdersService {
           if (fill.source === OrderFillSource.REVENTE && fill.sellerId) {
             const gross = fill.unitPrice * fill.quantity;
             const commission = gross * RESALE_COMMISSION_RATE;
+            const storageFee = storageFeeByFill.get(fill.id) ?? 0;
             await tx.walletTransaction.create({
               data: {
                 ownerId: fill.sellerId,
-                amount: gross - commission,
-                reason: `Vente · ${item.product.name} · ${fill.quantity} ${item.product.unitLabel} (commission ${(RESALE_COMMISSION_RATE * 100).toFixed(0)} %)`,
+                amount: Math.max(0, gross - commission - storageFee),
+                reason:
+                  `Vente · ${item.product.name} · ${fill.quantity} ${item.product.unitLabel} (commission ${(RESALE_COMMISSION_RATE * 100).toFixed(0)} %` +
+                  (storageFee > 0 ? `, frais de stockage ${storageFee.toLocaleString('fr-FR')} F` : '') +
+                  ')',
               },
             });
             await tx.stockMovement.create({
@@ -649,7 +682,7 @@ export class OrdersService {
   private async withdrawableItems(code: string) {
     return this.prisma.orderItem.findMany({
       where: { withdrawalCode: code.trim(), withdrawnAt: null, order: { status: OrderStatus.PAYEE, deliveryMode: DeliveryMode.RETRAIT } },
-      include: { product: { select: { name: true, unitLabel: true } }, order: { select: { id: true, client: { select: SAFE_USER_SELECT } } } },
+      include: { product: { select: { name: true, unitLabel: true } }, order: { select: { id: true, paidAt: true, client: { select: SAFE_USER_SELECT } } } },
     });
   }
 
@@ -661,14 +694,18 @@ export class OrdersService {
       if (delivery) throw new BadRequestException("Ce code est celui d'une livraison à domicile : confirmez-la depuis la page « Livraisons ».");
       throw new NotFoundException('Bon de retrait invalide, déjà utilisé, ou commande non payée.');
     }
-    return items.map((i) => ({
-      itemId: i.id,
-      orderId: i.order.id,
-      client: i.order.client,
-      product: i.product.name,
-      unitLabel: i.product.unitLabel,
-      quantity: i.quantity,
-    }));
+    return Promise.all(
+      items.map(async (i) => ({
+        itemId: i.id,
+        orderId: i.order.id,
+        client: i.order.client,
+        product: i.product.name,
+        unitLabel: i.product.unitLabel,
+        quantity: i.quantity,
+        // Frais de stockage à encaisser avant la remise si la conservation gratuite est dépassée.
+        storage: i.order.paidAt ? await this.storageFees.forPickup(i.order.paidAt, i.unitPrice, i.quantity) : null,
+      })),
+    );
   }
 
   /** Remet la marchandise au client : le bon est consommé, et la commande passe « Retirée » quand tout est remis. */
@@ -777,12 +814,26 @@ export class OrdersService {
     return { orderId: id, deliveredAt: now };
   }
 
-  findMine(clientId: string) {
-    return this.prisma.order.findMany({
+  /**
+   * Ajoute aux produits payés « à retirer » mais pas encore retirés la fin de la conservation gratuite et les frais
+   * de stockage dus à ce jour, pour que le client sache jusqu'à quand venir les chercher.
+   */
+  private async withStorage<T extends { status: OrderStatus; paidAt: Date | null; deliveryMode: DeliveryMode; items: Array<{ withdrawalCode: string | null; withdrawnAt: Date | null; unitPrice: number; quantity: number }> }>(order: T): Promise<T> {
+    if (order.status !== OrderStatus.PAYEE || !order.paidAt || order.deliveryMode !== DeliveryMode.RETRAIT) return order;
+    const paidAt = order.paidAt;
+    const items = await Promise.all(
+      order.items.map(async (i) => (i.withdrawalCode && !i.withdrawnAt ? { ...i, storage: await this.storageFees.forPickup(paidAt, i.unitPrice, i.quantity) } : i)),
+    );
+    return { ...order, items };
+  }
+
+  async findMine(clientId: string) {
+    const orders = await this.prisma.order.findMany({
       where: { clientId },
       include: WITH_PRODUCT,
       orderBy: { createdAt: 'desc' },
     });
+    return Promise.all(orders.map((o) => this.withStorage(o)));
   }
 
   async findOneForClient(clientId: string, id: string) {
@@ -792,6 +843,6 @@ export class OrdersService {
     });
     if (!order) throw new NotFoundException('Commande introuvable.');
     if (order.clientId !== clientId) throw new ForbiddenException('Cette commande ne vous appartient pas.');
-    return order;
+    return this.withStorage(order);
   }
 }

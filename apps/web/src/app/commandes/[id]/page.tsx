@@ -190,7 +190,26 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
                     : "Présentez ce code au magasin pour récupérer votre produit."}
                 </p>
               </div>
-            ) : item.fulfillment === "DEPOT" && order.status === "PAYEE" ? (
+            ) : null}
+
+            {item.storage && order.deliveryMode === "RETRAIT" && !item.withdrawnAt ? (
+              <div className={`mt-3 rounded-xl px-3 py-2 text-xs ${item.storage.overdue ? "bg-accent-soft text-ink" : "bg-brand-soft text-ink"}`}>
+                {item.storage.overdue ? (
+                  <>
+                    <span className="font-bold">La conservation gratuite est terminée.</span> Des frais de stockage de{" "}
+                    <strong><Money value={item.storage.feeDue} /></strong> ({item.storage.feePct} % du prix d&apos;achat
+                    {item.storage.monthly ? ", par mois entamé" : ""}) sont à régler au magasin avant le retrait.
+                  </>
+                ) : (
+                  <>
+                    À retirer <span className="font-bold">avant le {item.storage.freeUntil ? new Date(item.storage.freeUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "—"}</span> : ensuite,
+                    des frais de stockage de {item.storage.feePct} % du prix d&apos;achat s&apos;appliquent{item.storage.monthly ? " chaque mois" : ""}.
+                  </>
+                )}
+              </div>
+            ) : null}
+
+            {!item.withdrawalCode && item.fulfillment === "DEPOT" && order.status === "PAYEE" ? (
               <div className="mt-3 flex items-center justify-between border-t border-dashed border-line pt-3">
                 <span className="rounded-full bg-brand-soft px-2.5 py-1 text-xs font-semibold text-brand">
                   En dépôt
@@ -203,6 +222,37 @@ export default function OrderPage(props: PageProps<"/commandes/[id]">) {
           </li>
         ))}
       </ul>
+
+      <dl className="mt-4 grid gap-1.5 rounded-2xl border border-line bg-surface p-4 text-sm">
+        <div className="flex justify-between">
+          <dt className="text-ink-2">Produits hors taxe</dt>
+          <dd className="font-semibold tabular-nums">
+            <Money value={order.items.reduce((s, i) => s + i.unitPrice * i.quantity, 0)} />
+          </dd>
+        </div>
+        {(order.vatAmount ?? 0) > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-ink-2">TVA</dt>
+            <dd className="font-semibold tabular-nums">
+              <Money value={order.vatAmount ?? 0} />
+            </dd>
+          </div>
+        )}
+        {order.deliveryFee > 0 && (
+          <div className="flex justify-between">
+            <dt className="text-ink-2">Livraison</dt>
+            <dd className="font-semibold tabular-nums">
+              <Money value={order.deliveryFee} />
+            </dd>
+          </div>
+        )}
+        <div className="flex justify-between border-t border-line pt-2 text-base">
+          <dt className="font-bold">Total {(order.vatAmount ?? 0) > 0 ? "TTC " : ""}à payer</dt>
+          <dd className="font-display font-extrabold tabular-nums">
+            <Money value={order.totalAmount} />
+          </dd>
+        </div>
+      </dl>
 
       <div className="mt-6 flex flex-col gap-2 sm:flex-row">
         <Link href="/" className="flex-1 rounded-xl border border-line bg-surface py-3 text-center text-sm font-bold">

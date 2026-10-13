@@ -8,11 +8,13 @@ import { deletePriceAlert, getPriceAlerts, type PriceAlertRecord } from "@/lib/a
 import { formatRelativeTime } from "@/lib/format";
 import { Money } from "@/components/money";
 import { PageHero } from "@/components/page-hero";
+import { useTax } from "@/components/tax-provider";
 import { LoadError, PageLoading } from "@/components/page-state";
 
 export default function PriceAlertsPage() {
   const router = useRouter();
   const { token, ready } = useAuth();
+  const tax = useTax();
   const [alerts, setAlerts] = useState<PriceAlertRecord[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [attempt, setAttempt] = useState(0);
@@ -73,10 +75,10 @@ export default function PriceAlertsPage() {
                   </Link>
                   <p className="text-xs text-ink-2">{a.product.unitLabel}</p>
                   <p className="mt-1.5 text-sm">
-                    Seuil : <span className="font-bold"><Money value={a.targetPrice} /></span>
+                    Seuil{tax.label ? ` ${tax.label}` : ""} : <span className="font-bold"><Money value={tax.show(a.targetPrice)} /></span>
                     {a.currentPrice != null && (
                       <span className="text-ink-2">
-                        {" "}· prix actuel <Money value={a.currentPrice} />
+                        {" "}· prix actuel <Money value={tax.show(a.currentPrice)} />
                       </span>
                     )}
                   </p>

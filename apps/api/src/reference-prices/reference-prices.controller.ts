@@ -10,8 +10,8 @@ export class ReferencePricesController {
   constructor(private readonly referencePrices: ReferencePricesService) {}
 
   @Get()
-  latest(@Param('productId') productId: string) {
-    return this.referencePrices.latestForProduct(productId);
+  async latest(@Param('productId') productId: string) {
+    return this.referencePrices.toSelling(await this.referencePrices.latestForProduct(productId));
   }
 
   /** Prix par marché (public, sans données d'agent). */
@@ -21,8 +21,8 @@ export class ReferencePricesController {
   }
 
   @Get('history')
-  history(@Param('productId') productId: string, @Query('days') days?: string) {
-    return this.referencePrices.historyForProduct(productId, days ? Number(days) : undefined);
+  async history(@Param('productId') productId: string, @Query('days') days?: string) {
+    return this.referencePrices.toSellingMany(await this.referencePrices.historyForProduct(productId, days ? Number(days) : undefined));
   }
 
   /** Recalcul manuel (dépannage, back-office) — le recalcul normal se déclenche après chaque relevé. Réservé au personnel (était public). */

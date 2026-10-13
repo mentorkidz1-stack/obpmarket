@@ -9,7 +9,8 @@ function setup(alerts: Array<{ id: string; userId: string; productId: string; ta
     },
   };
   const notifications = { notify: vi.fn().mockResolvedValue(undefined) };
-  const service = new PriceAlertsService(prisma as never, notifications as never);
+  const settings = { get: vi.fn().mockResolvedValue({ markupPct: 0 }), sellingPrice: (v: number) => v };
+  const service = new PriceAlertsService(prisma as never, notifications as never, settings as never);
   return { service, prisma, notifications };
 }
 

@@ -20,6 +20,7 @@ import { PriceAlertButton } from "@/components/price-alert-button";
 import { ProductCard } from "@/components/product-card";
 import { PriceChart } from "@/components/price-chart";
 import { PriceTrend } from "@/components/price-trend";
+import { useTax } from "@/components/tax-provider";
 
 const PERIODS = [
   { label: "7 j", days: 7 },
@@ -97,6 +98,7 @@ export function ProductView({
     };
   }, [days, id]);
 
+  const tax = useTax();
   const product = initialProduct;
   const history = days === 30 ? initialHistory : fetched?.days === days ? fetched.history : initialHistory;
   const latest = history.at(-1);
@@ -131,7 +133,7 @@ export function ProductView({
     : added
       ? "Ajouté ✓"
       : latest
-        ? `Ajouter au panier · ${moneyText(latest.value * quantity)}`
+        ? `Ajouter au panier · ${moneyText(tax.show(latest.value, product) * quantity)}`
         : "Indisponible";
 
   return (
@@ -221,11 +223,11 @@ export function ProductView({
           {latest ? (
             <div className="mt-5 border-y border-line py-5">
               <p className="text-xs font-semibold uppercase tracking-wide text-ink-2">
-                Prix moyen du marché · le {product.unitLabel}
+                Prix du jour{tax.label ? ` ${tax.label}` : ""} · le {product.unitLabel}
               </p>
               <div className="mt-1 flex flex-wrap items-baseline gap-3">
                 <p className="font-display text-4xl font-extrabold tabular-nums sm:text-5xl">
-                  <Money value={latest.value} unitClassName="text-lg font-semibold text-ink-2" />
+                  <Money value={tax.show(latest.value, product)} unitClassName="text-lg font-semibold text-ink-2" />
                 </p>
                 <PriceTrend value={change7d(history)} size="md" />
               </div>
@@ -308,7 +310,7 @@ export function ProductView({
 
           {latest && (
             <div className="mt-4">
-              <PriceAlertButton productId={product.id} currentPrice={latest.value} />
+              <PriceAlertButton productId={product.id} currentPrice={tax.show(latest.value, product)} factor={tax.show(1, product)} />
             </div>
           )}
 
@@ -442,7 +444,7 @@ export function ProductView({
             ))}
           </div>
         </div>
-        <PriceChart history={history} />
+        <PriceChart history={history.map((h) => ({ ...h, value: tax.show(h.value, product) }))} />
       </section>
 
       {related.length > 0 && (

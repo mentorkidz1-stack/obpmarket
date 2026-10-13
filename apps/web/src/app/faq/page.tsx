@@ -1,27 +1,42 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { PageHero } from "@/components/page-hero";
+import { getPublicSettings, type PublicSettings } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Questions fréquentes",
   description: "Réponses aux questions les plus courantes : prix, paiement, retrait, dépôt, revente et compte vendeur.",
 };
 
-const GROUPS = [
+/** Les chiffres (TVA, durée gratuite, frais de stockage) viennent des réglages du site : ils suivent toujours ce que fixe l'administration. */
+function buildGroups(s: PublicSettings | null) {
+  const vatRate = s?.vat.enabled ? s.vat.rate : 0;
+  const free = s?.storage.freeDays ?? 30;
+  const fee = s?.storage.feePct ?? 2.5;
+  const monthly = s?.storage.monthly ?? true;
+  return [
   {
     title: "Prix et produits",
     items: [
       {
         q: "Comment le prix est-il fixé ?",
-        a: "Le prix affiché est la moyenne des relevés réalisés par nos agents sur plusieurs marchés du Bénin. Il est recalculé à chaque nouveau relevé, et vous voyez la date de la dernière mise à jour sur chaque produit.",
+        a: "Le prix affiché est établi à partir de la moyenne des relevés réalisés par nos agents sur plusieurs marchés du Bénin. Il est recalculé à chaque nouveau relevé, et vous voyez la date de la dernière mise à jour sur chaque produit.",
       },
+      ...(vatRate > 0
+        ? [
+            {
+              q: "Les prix sont-ils avec ou sans taxe ?",
+              a: `Vous choisissez : le bouton « TTC / HT » en haut du site affiche les prix avec la TVA (${vatRate} %) ou hors taxe. Le montant à payer est toujours le total toutes taxes comprises, détaillé dans votre panier. Certains produits peuvent être exonérés de TVA.`,
+            },
+          ]
+        : []),
       {
         q: "Pourquoi le prix d'un produit change-t-il ?",
         a: "Les prix des marchés évoluent avec l'offre, la saison et la demande. Le prix OBP Market suit ces variations ; la fiche produit montre son évolution sur 7, 30 ou 90 jours.",
       },
       {
         q: "Le prix de ma commande peut-il changer après l'avoir ajoutée au panier ?",
-        a: "Le panier donne une estimation au prix du marché actuel. Le montant exact est fixé au moment de la validation de la commande, puis ne bouge plus.",
+        a: "Le panier donne une estimation au prix du jour. Le montant exact, TVA comprise, est fixé au moment de la validation de la commande, puis ne bouge plus.",
       },
       {
         q: "Comment être prévenu quand un prix baisse ?",
@@ -46,7 +61,7 @@ const GROUPS = [
       },
       {
         q: "Comment récupérer ma commande ?",
-        a: "Une fois la commande payée, vous recevez un bon de retrait sur la page de la commande. Présentez ce code au magasin OBP Market pour récupérer vos produits.",
+        a: `Une fois la commande payée, vous recevez un bon de retrait sur la page de la commande. Présentez ce code au magasin OBP Market pour récupérer vos produits, dans les ${free} jours : au-delà, des frais de stockage s'appliquent.`,
       },
     ],
   },
@@ -58,8 +73,12 @@ const GROUPS = [
         a: "Pour les produits stockables, vous pouvez choisir « Je laisse en dépôt » : le produit reste stocké chez OBP Market, à votre nom. Vous le retrouvez dans « Mon stock », valorisé au prix du marché du jour.",
       },
       {
+        q: "Combien de temps puis-je garder mes produits au magasin ?",
+        a: `La conservation est gratuite pendant ${free} jours après l'achat. Ensuite, des frais de stockage de ${fee} % du prix d'achat s'appliquent${monthly ? " par mois entamé" : ""} : ils sont retenus sur le montant de la revente, ou à régler au magasin avant un retrait. Vous voyez la date limite et les frais dans « Mon stock » et sur votre commande.`,
+      },
+      {
         q: "Comment revendre un produit que j'ai en dépôt ?",
-        a: "Depuis « Mon stock », choisissez « Mettre en revente » : il est vendu au prix du marché au moment de la vente et le montant est crédité sur votre portefeuille. Vous pouvez aussi demander une offre de rachat à OBP Market (« Vente en liquidité »).",
+        a: "Depuis « Mon stock », choisissez « Mettre en revente » : il est vendu au prix du jour au moment de la vente et le montant, frais de stockage éventuels déduits, est crédité sur votre portefeuille. Vous pouvez aussi demander une offre de rachat à OBP Market (« Vente en liquidité »).",
       },
       {
         q: "Comment retirer l'argent de mon portefeuille ?",
@@ -118,8 +137,13 @@ const GROUPS = [
     ],
   },
 ];
+}
 
-export default function FaqPage() {
+export const revalidate = 60;
+
+export default async function FaqPage() {
+  const settings = await getPublicSettings().catch(() => null);
+  const GROUPS = buildGroups(settings);
   return (
     <>
       <PageHero title="Questions fréquentes" crumb="FAQ" subtitle="Vous ne trouvez pas votre réponse ? Écrivez-nous depuis la page Contact." />

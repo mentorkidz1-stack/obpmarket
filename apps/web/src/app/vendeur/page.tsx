@@ -262,7 +262,7 @@ export default function VendorPage() {
       <VendorLanding
         cta={
           <>
-            <Link href="/connexion?next=/vendeur" className="rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-[#15172b]">
+            <Link href="/connexion?next=/vendeur" className="rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-[#0a2f1d]">
               Devenir vendeur
             </Link>
             <Link href="/comment-ca-marche" className="rounded-xl border border-white/40 px-7 py-3.5 text-sm font-bold">

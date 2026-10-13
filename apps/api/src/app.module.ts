@@ -26,6 +26,7 @@ import { AuditModule } from './audit/audit.module.js';
 import { AdminModule } from './admin/admin.module.js';
 import { DepotsModule } from './depots/depots.module.js';
 import { ShopsModule } from './shops/shops.module.js';
+import { SettingsModule } from './settings/settings.module.js';
 
 @Module({
   imports: [
@@ -54,6 +55,7 @@ import { ShopsModule } from './shops/shops.module.js';
     AdminModule,
     DepotsModule,
     ShopsModule,
+    SettingsModule,
   ],
   controllers: [AppController],
   providers: [AppService],

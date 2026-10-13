@@ -6,6 +6,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { ReferencePricesService } from '../reference-prices/reference-prices.service.js';
 import { baseUrl, parsePhotoArray } from '../common/photos.js';
 import { SlidingLimiter } from '../auth/otp-limiter.js';
+import { SettingsService } from '../settings/settings.service.js';
 import type { UpdateShopDto } from './dto/shop.dto.js';
 
 const DAY_MS = 24 * 60 * 60 * 1000;
@@ -41,6 +42,7 @@ export class ShopsService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly referencePrices: ReferencePricesService,
+    private readonly settings: SettingsService,
   ) {}
 
   private activeShopWhere = { shopPublished: true, slug: { not: null }, status: VendorStatus.ACTIF } as const;
@@ -53,6 +55,7 @@ export class ShopsService {
       orderBy: { createdAt: 'desc' },
     });
 
+    const s = await this.settings.get();
     const priced = await Promise.all(
       listings.map(async (l) => {
         const reference = await this.referencePrices.latestForProduct(l.productId);
@@ -70,7 +73,7 @@ export class ShopsService {
           category: l.product.category.name,
           unitLabel: l.product.unitLabel,
           available: l.receivedQuantity,
-          price: reference.value,
+          price: this.settings.sellingPrice(reference.value, s),
           photo,
           depot: l.depot ? `${l.depot.name} · ${l.depot.city}` : null,
         };

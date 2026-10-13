@@ -7,7 +7,7 @@ export class ReferencePricesListController {
   constructor(private readonly referencePrices: ReferencePricesService) {}
 
   @Get()
-  latestForAll() {
-    return this.referencePrices.latestForAllProducts();
+  async latestForAll() {
+    return this.referencePrices.toSellingMany(await this.referencePrices.latestForAllProducts());
   }
 }

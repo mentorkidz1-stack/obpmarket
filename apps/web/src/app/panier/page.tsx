@@ -10,6 +10,8 @@ import { PageHero } from "@/components/page-hero";
 import { ProductImage } from "@/components/product-image";
 import { Money } from "@/components/money";
 import { useCatalog } from "@/lib/use-catalog";
+import { useTax } from "@/components/tax-provider";
+import { cartTotals } from "@/lib/cart-totals";
 
 export default function CartPage() {
   const router = useRouter();
@@ -20,8 +22,9 @@ export default function CartPage() {
 
   const { prices } = useCatalog();
   const total = lines.reduce((sum, l) => sum + l.quantity, 0);
-  const estimate = lines.reduce((sum, l) => sum + (prices.get(l.product.id)?.value ?? 0) * l.quantity, 0);
-  const estimateComplete = lines.every((l) => prices.has(l.product.id));
+  const tax = useTax();
+  const totals = cartTotals(lines, prices, tax.rateFor);
+  const estimateComplete = !totals.incomplete;
 
   // Remise des produits à retirer : au dépôt, ou livraison à domicile (zone choisie, frais ajoutés au total).
   const [zones, setZones] = useState<DeliveryZone[]>([]);
@@ -141,7 +144,7 @@ export default function CartPage() {
                     </button>
                   </div>
                   <p className="min-w-24 text-right font-display font-extrabold tabular-nums">
-                    {prices.has(line.product.id) ? <Money value={prices.get(line.product.id)!.value * line.quantity} unitClassName="text-xs text-ink-2" /> : "—"}
+                    {prices.has(line.product.id) ? <Money value={tax.show(prices.get(line.product.id)!.value, line.product) * line.quantity} unitClassName="text-xs text-ink-2" /> : "—"}
                   </p>
                   <button
                     type="button"
@@ -233,6 +236,18 @@ export default function CartPage() {
                 <span className="text-ink-2">Articles</span>
                 <span className="font-semibold">{total}</span>
               </div>
+              {tax.enabled && estimateComplete && (
+                <div className="mt-3 grid gap-1.5 border-b border-line pb-3 text-sm">
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2">Sous-total hors taxe</span>
+                    <span className="font-semibold"><Money value={totals.ht} unitClassName="text-xs text-ink-2" /></span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-ink-2">TVA{totals.vat > 0 && totals.ht > 0 ? ` (${Math.round((totals.vat / totals.ht) * 1000) / 10} %)` : " (produits exonérés)"}</span>
+                    <span className="font-semibold"><Money value={totals.vat} unitClassName="text-xs text-ink-2" /></span>
+                  </div>
+                </div>
+              )}
               {delivering && (
                 <div className="mt-3 flex items-center justify-between border-b border-line pb-3 text-sm">
                   <span className="text-ink-2">Livraison{zone ? ` · ${zone.name}` : ""}</span>
@@ -240,11 +255,11 @@ export default function CartPage() {
                 </div>
               )}
               <div className="mt-3 flex items-center justify-between">
-                <span className="text-sm font-semibold">{delivering ? "Total estimé, livraison comprise" : "Total estimé"}</span>
-                <span className="font-display text-2xl font-extrabold tabular-nums">{estimateComplete && (!delivering || zone) ? <Money value={estimate + fee} unitClassName="text-sm text-ink-2" /> : "—"}</span>
+                <span className="text-sm font-semibold">{delivering ? `Total à payer${tax.enabled ? " TTC" : ""}, livraison comprise` : `Total à payer${tax.enabled ? " TTC" : ""}`}</span>
+                <span className="font-display text-2xl font-extrabold tabular-nums">{estimateComplete && (!delivering || zone) ? <Money value={totals.ttc + fee} unitClassName="text-sm text-ink-2" /> : "—"}</span>
               </div>
               <p className="mt-2 text-xs leading-relaxed text-ink-2">
-                Estimation au prix du marché actuel. Le total exact est fixé au moment du paiement.
+                Estimation au prix du jour. Le total exact, TVA comprise, est fixé au moment du paiement.
               </p>
 
               {!user && (

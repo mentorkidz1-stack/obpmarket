@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { confirmWithdrawal, previewWithdrawal, type WithdrawalPreview } from "@/lib/api";
+import { formatFCFA } from "@/lib/format";
 import { BackofficePage, btnGhost, btnPrimary, inputCls, Notice, type StaffContext } from "@/components/backoffice-page";
 
 function Withdrawal({ token }: StaffContext) {
@@ -83,6 +84,15 @@ function Withdrawal({ token }: StaffContext) {
               </li>
             ))}
           </ul>
+          {items.some((i) => i.storage && i.storage.feeDue > 0) && (
+            <div className="rounded-xl border border-accent/40 bg-accent-soft px-3 py-2.5 text-sm" role="alert">
+              <p className="font-bold">Frais de stockage à encaisser avant la remise : {formatFCFA(items.reduce((s, i) => s + (i.storage?.feeDue ?? 0), 0))} F</p>
+              <p className="text-xs text-ink-2">
+                La conservation gratuite est dépassée ({items[0]?.storage?.freeDays} jours) : {items[0]?.storage?.feePct} % du prix d&apos;achat
+                {items[0]?.storage?.monthly ? ", par mois entamé" : ""}. Encaissez ce montant, puis confirmez la remise.
+              </p>
+            </div>
+          )}
           <p className="text-xs text-ink-2">Contrôlez la pièce d&apos;identité si besoin, remettez les articles, puis confirmez. Le code ne peut servir qu&apos;une fois.</p>
           <div className="flex gap-2">
             <button type="button" disabled={busy} onClick={confirm} className={btnPrimary}>

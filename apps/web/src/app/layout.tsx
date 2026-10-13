@@ -3,6 +3,8 @@ import { IBM_Plex_Mono, Plus_Jakarta_Sans } from "next/font/google";
 import { AuthProvider } from "@/components/auth-provider";
 import { CartProvider } from "@/components/cart-provider";
 import { CurrencyProvider } from "@/components/currency-provider";
+import { TaxProvider } from "@/components/tax-provider";
+import { getPublicSettings } from "@/lib/api";
 import { WishlistProvider } from "@/components/wishlist-provider";
 import { UIProvider } from "@/components/ui-provider";
 import { CartDrawer } from "@/components/cart-drawer";
@@ -45,12 +47,14 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#2b3fae" },
-    { media: "(prefers-color-scheme: dark)", color: "#0d0f1c" },
+    { media: "(prefers-color-scheme: light)", color: "#005826" },
+    { media: "(prefers-color-scheme: dark)", color: "#07140d" },
   ],
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Réglages de TVA lus côté serveur : le premier affichage montre déjà les bons prix (avec ou sans taxe).
+  const settings = await getPublicSettings().catch(() => null);
   return (
     <html lang="fr" className={`${jakarta.variable} ${plexMono.variable} h-full antialiased`}>
       <body className="min-h-full flex flex-col bg-bg text-ink">
@@ -80,6 +84,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <AuthProvider>
           <CartProvider>
             <CurrencyProvider>
+              <TaxProvider settings={settings?.vat ?? null}>
               <WishlistProvider>
                 <UIProvider>
                   <SiteHeader />
@@ -93,6 +98,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <WhatsAppButton />
                 </UIProvider>
               </WishlistProvider>
+              </TaxProvider>
             </CurrencyProvider>
           </CartProvider>
         </AuthProvider>

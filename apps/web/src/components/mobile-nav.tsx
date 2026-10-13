@@ -8,6 +8,7 @@ import { Logo } from "@/components/logo";
 import { useCatalog } from "@/lib/use-catalog";
 import { PROPERTY_TYPES } from "@/lib/property";
 import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
+import { TaxToggle } from "@/components/tax-toggle";
 
 const PAGES = [
   { href: "/boutique", label: "Boutique" },
@@ -90,6 +91,7 @@ export function MobileNav() {
         )}
 
         <div className="mt-auto border-t border-line p-5">
+          <TaxToggle className="mb-4" />
           <label className="text-[11px] font-bold uppercase tracking-[0.14em] text-ink-2" htmlFor="mobile-currency">
             Devise d&apos;affichage
           </label>

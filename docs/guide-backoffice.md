@@ -24,6 +24,9 @@ Chaque personne change son mot de passe provisoire dans **Mon compte**.
   puis cliquez « J'ai versé les fonds » avec la référence ; ou refusez avec un motif (le montant est recrédité).
 - **Demandes de liquidité**, **Clients** (export CSV, désactivation par l'administrateur).
 - **Vendeurs et annonces**, **Immobilier**, **Bannières**, **Messages**.
+- **Réglages commerciaux** (administrateur) : majoration appliquée au prix moyen des marchés (7,5 % par défaut), TVA
+  (activée ou non, taux par défaut 18 %, affichage TTC ou HT proposé à l'arrivée), durée gratuite et frais de stockage.
+  La TVA propre à un produit (exonéré ou taux particulier) se règle dans le Catalogue.
 - **Équipe et accès** (administrateur) : créer un compte, changer un rôle, désactiver, réinitialiser un
   mot de passe.
 - **Journal d'activité** (administrateur) : qui a fait quoi et quand, filtrable, export CSV.

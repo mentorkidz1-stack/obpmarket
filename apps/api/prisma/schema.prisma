@@ -316,6 +316,8 @@ model Product {
   /// Photos réelles du produit (data URI, JSON.stringify d'un tableau — même schéma que
   /// VendorListing.photos). Vide par défaut : la vignette illustrée sert alors de repli.
   photos       String   @default("[]")
+  /// Taux de TVA propre au produit, en % : nul = taux par défaut des réglages ; 0 = produit exonéré (non taxé).
+  vatRate      Float?
   createdAt    DateTime @default(now())
 
   category        Category         @relation(fields: [categoryId], references: [id])
@@ -330,6 +332,27 @@ model Product {
   priceAlerts     PriceAlert[]
 
   @@unique([name, unitLabel])
+}
+
+/// Réglages commerciaux modifiables par l'administrateur (une seule ligne, id « default »).
+/// Une ligne absente équivaut aux valeurs par défaut ci-dessous : aucun script d'initialisation n'est nécessaire.
+model ShopSettings {
+  id                  String   @id @default("default")
+  /// TVA appliquée aux produits (désactivée : tout est non taxé).
+  vatEnabled          Boolean  @default(true)
+  /// Taux de TVA par défaut, en %.
+  vatRate             Float    @default(18)
+  /// Mode d'affichage proposé au visiteur à son arrivée : « TTC » (avec taxe) ou « HT » (hors taxe).
+  vatDefaultDisplay   String   @default("TTC")
+  /// Majoration appliquée au prix moyen des marchés pour obtenir le prix affiché, en %.
+  markupPct           Float    @default(7.5)
+  /// Durée gratuite de conservation au magasin, en jours.
+  storageFreeDays     Int      @default(30)
+  /// Frais de stockage au-delà de la durée gratuite, en % du prix d'achat.
+  storageFeePct       Float    @default(2.5)
+  /// Vrai : ces frais s'appliquent chaque mois entamé après la durée gratuite ; faux : une seule fois.
+  storageFeeMonthly   Boolean  @default(true)
+  updatedAt           DateTime @updatedAt
 }
 
 /// Journal d'activité du back-office : qui a fait quoi, et quand. Réservé à l'administration.
@@ -548,6 +571,8 @@ model Order {
   deliveryMode     DeliveryMode    @default(RETRAIT)
   /// Frais de livraison figés à la commande (déjà inclus dans totalAmount) ; 0 pour un retrait.
   deliveryFee      Float           @default(0)
+  /// TVA figée à la commande : montant total de la taxe, déjà inclus dans totalAmount (0 si tout est non taxé).
+  vatAmount        Float           @default(0)
   /// Nom de la zone au moment de la commande (la zone peut être renommée ou supprimée ensuite).
   deliveryZoneName String?
   deliveryAddress  String?
@@ -583,6 +608,8 @@ model OrderItem {
   /// Prix verrouillé au moment de la commande, indépendant des variations ultérieures
   /// du prix de référence — CMD-03.
   unitPrice      Float
+  /// Taux de TVA appliqué à cette ligne au moment de la commande, en % (0 = non taxé). unitPrice est hors taxe.
+  vatRate        Float           @default(0)
   fulfillment    FulfillmentMode @default(RETRAIT)
   /// Bon de retrait à usage unique — RET-01. Généré à la confirmation du paiement.
   withdrawalCode String?

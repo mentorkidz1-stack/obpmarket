@@ -16,7 +16,7 @@ import {
 } from "@/lib/api";
 import { BackofficePage, btnGhost, btnPrimary, Empty, inputCls, Notice, type StaffContext } from "@/components/backoffice-page";
 
-const EMPTY: ProductInput = { name: "", categoryId: "", unitLabel: "kg", isPerishable: false, isStockable: false };
+const EMPTY: ProductInput = { name: "", categoryId: "", unitLabel: "kg", isPerishable: false, isStockable: false, vatRate: null };
 
 function Catalogue({ token, user }: StaffContext) {
   const [products, setProducts] = useState<Product[] | null>(null);
@@ -57,7 +57,7 @@ function Catalogue({ token, user }: StaffContext) {
 
   function startEdit(p: Product | null) {
     setEditing(p ? p.id : "new");
-    setForm(p ? { name: p.name, categoryId: p.categoryId, unitLabel: p.unitLabel, isPerishable: p.isPerishable, isStockable: p.isStockable } : { ...EMPTY, categoryId: categories[0]?.id ?? "" });
+    setForm(p ? { name: p.name, categoryId: p.categoryId, unitLabel: p.unitLabel, isPerishable: p.isPerishable, isStockable: p.isStockable, vatRate: p.vatRate ?? null } : { ...EMPTY, categoryId: categories[0]?.id ?? "" });
     setMsg(null);
   }
 
@@ -94,6 +94,34 @@ function Catalogue({ token, user }: StaffContext) {
               Unité de vente (kg, sac, pièce…)
               <input className={inputCls} value={form.unitLabel} onChange={(e) => setForm({ ...form, unitLabel: e.target.value })} />
             </label>
+          </div>
+          <div className="grid gap-3 sm:grid-cols-3">
+            <label className="grid gap-1 text-xs font-semibold text-ink-2">
+              TVA de ce produit
+              <select
+                className={inputCls}
+                value={form.vatRate == null ? "default" : form.vatRate === 0 ? "exempt" : "custom"}
+                onChange={(e) => setForm({ ...form, vatRate: e.target.value === "default" ? null : e.target.value === "exempt" ? 0 : 5 })}
+              >
+                <option value="default">Taux par défaut du site</option>
+                <option value="exempt">Exonéré (non taxé)</option>
+                <option value="custom">Taux particulier…</option>
+              </select>
+            </label>
+            {form.vatRate != null && form.vatRate !== 0 && (
+              <label className="grid gap-1 text-xs font-semibold text-ink-2">
+                Taux (%)
+                <input
+                  inputMode="decimal"
+                  className={inputCls}
+                  value={String(form.vatRate)}
+                  onChange={(e) => {
+                    const n = Number(e.target.value.replace(",", "."));
+                    setForm({ ...form, vatRate: Number.isFinite(n) ? Math.min(100, Math.max(0, n)) : 0 });
+                  }}
+                />
+              </label>
+            )}
           </div>
           <div className="flex flex-wrap gap-5 text-sm">
             <label className="flex items-center gap-2">
@@ -135,6 +163,7 @@ function Catalogue({ token, user }: StaffContext) {
                   <th className="px-3 py-2">Produit</th>
                   <th className="px-3 py-2">Catégorie</th>
                   <th className="px-3 py-2">Unité</th>
+                  <th className="px-3 py-2">TVA</th>
                   <th className="px-3 py-2">Stock</th>
                   <th className="px-3 py-2" />
                 </tr>
@@ -148,6 +177,7 @@ function Catalogue({ token, user }: StaffContext) {
                     </td>
                     <td className="px-3 py-2 text-ink-2">{p.category?.name}</td>
                     <td className="px-3 py-2 text-ink-2">{p.unitLabel}</td>
+                    <td className="px-3 py-2 text-ink-2">{p.vatRate == null ? "par défaut" : p.vatRate === 0 ? "exonéré" : `${p.vatRate} %`}</td>
                     <td className="px-3 py-2 font-mono">{p.isStockable ? p.stockQuantity : "—"}</td>
                     <td className="px-3 py-2 text-right">
                       <button type="button" onClick={() => startEdit(p)} className="mr-3 text-xs font-bold text-brand">

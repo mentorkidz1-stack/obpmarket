@@ -16,6 +16,46 @@ export interface Product {
   category: Category;
   /** JSON.stringify d'un tableau de data URI. Utiliser parseProductPhotos(). */
   photos: string;
+  /** Taux de TVA propre au produit en % : null = taux par défaut, 0 = exonéré. */
+  vatRate?: number | null;
+}
+
+/** Réglages publics : TVA et frais de stockage (la majoration est déjà incluse dans les prix). */
+export interface PublicSettings {
+  vat: { enabled: boolean; rate: number; defaultDisplay: "TTC" | "HT" };
+  storage: { freeDays: number; feePct: number; monthly: boolean };
+}
+
+export function getPublicSettings() {
+  return apiFetch<PublicSettings>("/settings/public");
+}
+
+export interface ShopSettings {
+  vatEnabled: boolean;
+  vatRate: number;
+  vatDefaultDisplay: "TTC" | "HT";
+  markupPct: number;
+  storageFreeDays: number;
+  storageFeePct: number;
+  storageFeeMonthly: boolean;
+}
+
+export function getShopSettings(token: string) {
+  return authFetch<ShopSettings>("/settings", token);
+}
+
+export function saveShopSettings(token: string, data: Partial<ShopSettings>) {
+  return authJson<ShopSettings>("/settings", token, "PATCH", data);
+}
+
+/** Conservation au magasin : fin de la durée gratuite et frais de stockage dus à ce jour. */
+export interface StorageInfo {
+  feeDue: number;
+  freeUntil: string | null;
+  overdue: boolean;
+  feePct: number;
+  freeDays: number;
+  monthly: boolean;
 }
 
 export interface Banner {
@@ -138,6 +178,13 @@ export interface ReferencePrice {
   computedAt: string;
   /** Variation sur 7 jours, en points de pourcentage — présent seulement sur la liste globale. */
   changePct7d?: number | null;
+  /** `value` est le prix affiché (hors taxe) : moyenne des marchés + majoration. `marketValue` est la moyenne brute. */
+  marketValue?: number;
+}
+
+/** Moyenne brute des relevés des marchés (sans la majoration) : à utiliser pour comparer aux relevés des agents. */
+export function marketPrice(p: Pick<ReferencePrice, "value" | "marketValue">): number {
+  return p.marketValue ?? p.value;
 }
 
 export function getProducts() {
@@ -451,6 +498,8 @@ export interface ProductInput {
   unitLabel: string;
   isPerishable: boolean;
   isStockable: boolean;
+  /** TVA du produit en % : absent ou null = taux par défaut ; 0 = exonéré. */
+  vatRate?: number | null;
 }
 
 export function createProduct(token: string, data: ProductInput) {
@@ -515,6 +564,7 @@ export interface AdminOrder {
   rejectionReason: string | null;
   deliveryMode?: DeliveryMode;
   deliveryFee?: number;
+  vatAmount?: number;
   deliveryZoneName?: string | null;
   deliveryAddress?: string | null;
   deliveryPhone?: string | null;
@@ -549,6 +599,7 @@ export interface WithdrawalPreview {
   product: string;
   unitLabel: string;
   quantity: number;
+  storage?: StorageInfo | null;
 }
 
 export function previewWithdrawal(token: string, code: string) {
@@ -840,6 +891,10 @@ export interface OrderItem {
   fulfillment: "RETRAIT" | "DEPOT";
   withdrawalCode: string | null;
   withdrawnAt: string | null;
+  /** Taux de TVA de la ligne (unitPrice est hors taxe). */
+  vatRate?: number;
+  /** Conservation au magasin d'un produit payé mais pas encore retiré. */
+  storage?: StorageInfo;
   product: Product;
 }
 
@@ -858,6 +913,8 @@ export interface Order {
   client?: AgentUser;
   deliveryMode: DeliveryMode;
   deliveryFee: number;
+  /** TVA déjà incluse dans totalAmount. */
+  vatAmount?: number;
   deliveryZoneName: string | null;
   deliveryAddress: string | null;
   deliveryPhone: string | null;
@@ -1032,6 +1089,7 @@ export interface StockHolding {
   currentValue: number | null;
   gain: number | null;
   reservedQuantity: number;
+  storage?: StorageInfo;
 }
 
 export function getMyStock(token: string) {

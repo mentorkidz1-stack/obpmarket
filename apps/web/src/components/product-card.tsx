@@ -8,6 +8,7 @@ import { useWishlist } from "@/components/wishlist-provider";
 import { Money } from "@/components/money";
 import { formatRelativeTime } from "@/lib/format";
 import type { Product, ReferencePrice } from "@/lib/api";
+import { useTax } from "@/components/tax-provider";
 
 function Heart({ product }: { product: Product }) {
   const { has, toggle } = useWishlist();
@@ -45,6 +46,7 @@ export function ProductCard({
 }) {
   const { addItem } = useCart();
   const { notify } = useUI();
+  const tax = useTax();
 
   const change = price?.changePct7d;
   const outOfStock = product.stockQuantity === 0;
@@ -78,9 +80,9 @@ export function ProductCard({
   const priceBlock = price ? (
     <>
       <p className="font-display text-xl font-extrabold tabular-nums leading-tight">
-        <Money value={price.value} unitClassName="text-xs font-semibold text-ink-2" />
+        <Money value={tax.show(price.value, product)} unitClassName="text-xs font-semibold text-ink-2" />
       </p>
-      <p className="font-mono text-[10.5px] text-ink-2">Prix du marché · {formatRelativeTime(price.computedAt)}</p>
+      <p className="font-mono text-[10.5px] text-ink-2">{tax.label ? `Prix ${tax.label}` : "Prix du jour"} · {formatRelativeTime(price.computedAt)}</p>
     </>
   ) : (
     <p className="text-sm text-ink-2">Prix bientôt disponible</p>

@@ -78,7 +78,7 @@ export default function HowItWorksPage() {
           <h2 className="font-display text-2xl font-extrabold sm:text-3xl">Prêt à commencer ?</h2>
           <p className="mx-auto mt-2 max-w-md text-sm text-app/80">Découvrez les prix du jour ou ouvrez votre espace vendeur.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
-            <Link href="/boutique" className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#15172b]">
+            <Link href="/boutique" className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0a2f1d]">
               Voir la boutique
             </Link>
             <Link href="/vendeur" className="rounded-xl border border-white/40 px-6 py-3 text-sm font-bold">

@@ -30,7 +30,10 @@ const products = (await call('GET', '/products'))[1];
 const prices = new Map((await call('GET', '/reference-prices'))[1].map((p) => [p.productId, p.value]));
 const product = products.find((p) => p.stockQuantity >= 3 && prices.has(p.id));
 if (!product) throw new Error('Aucun produit en stock avec un prix publié pour le test.');
-const unit = prices.get(product.id);
+const unit = prices.get(product.id); // prix affiché (hors taxe)
+const vatSettings = (await call('GET', '/settings/public'))[1].vat;
+const vatRate = vatSettings.enabled ? (product.vatRate ?? vatSettings.rate) : 0;
+const withVat = (quantity) => unit * quantity + Math.round((unit * quantity * vatRate) / 100);
 const stockBefore = product.stockQuantity;
 let depotId, zoneId, inactiveZoneId, orderId;
 
@@ -55,7 +58,7 @@ try {
   ok('création de la commande', r[0], 201);
   orderId = r[1]?.id;
   ok('frais de livraison figés', r[1]?.deliveryFee, 2000);
-  ok('total = articles + frais', Math.round(r[1]?.totalAmount), Math.round(unit * 2 + 2000));
+  ok('total = articles + TVA + frais', Math.round(r[1]?.totalAmount), Math.round(withVat(2) + 2000));
   ok('zone mémorisée', r[1]?.deliveryZoneName, 'Zone livraison test');
   ok('numéro par défaut = celui du compte', r[1]?.deliveryPhone, PHONE);
   ok('dépôt de la zone', r[1]?.depotId, depotId);
@@ -94,7 +97,7 @@ try {
   r = await call('POST', '/orders', client, { items: [{ productId: product.id, quantity: 1 }], depotId });
   ok('commande en retrait', r[0], 201);
   ok('frais nuls en retrait', r[1]?.deliveryFee, 0);
-  ok('total sans frais', Math.round(r[1]?.totalAmount), Math.round(unit));
+  ok('total sans frais (TVA comprise)', Math.round(r[1]?.totalAmount), Math.round(withVat(1)));
   const pickupId = r[1]?.id;
   await call('POST', `/orders/${pickupId}/confirm-payment`, admin);
   const pickup = (await call('GET', `/orders/${pickupId}`, client))[1];

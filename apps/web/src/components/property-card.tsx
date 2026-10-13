@@ -52,7 +52,7 @@ export function PropertyCard({ property: p }: { property: Property }) {
           <span className="absolute right-2.5 top-2.5 rounded-md bg-ink px-2.5 py-1 text-[11px] font-bold text-app">{statusLabel(p.status, p.kind)}</span>
         )}
         {p.featured && !unavailable && (
-          <span className="absolute right-2.5 top-2.5 rounded-md bg-white px-2.5 py-1 text-[11px] font-bold text-[#15172b]">À la une</span>
+          <span className="absolute right-2.5 top-2.5 rounded-md bg-white px-2.5 py-1 text-[11px] font-bold text-[#0a2f1d]">À la une</span>
         )}
       </Link>
 

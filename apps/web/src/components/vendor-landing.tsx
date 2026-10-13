@@ -27,10 +27,10 @@ const RULES = [
 export function VendorLanding({ cta }: { cta: ReactNode }) {
   return (
     <div className="grid gap-12">
-      <section className="relative isolate overflow-hidden rounded-3xl bg-[#15172b] text-white">
+      <section className="relative isolate overflow-hidden rounded-3xl bg-[#0a2f1d] text-white">
         <div className="absolute inset-y-0 right-0 hidden w-1/2 md:block">
           <Photo src="/promos/promo-vendeur.jpg" alt="" sizes="(max-width: 1152px) 50vw, 560px" className="opacity-80" />
-          <div className="absolute inset-0 bg-gradient-to-r from-[#15172b] via-[#15172b]/60 to-transparent" />
+          <div className="absolute inset-0 bg-gradient-to-r from-[#0a2f1d] via-[#0a2f1d]/60 to-transparent" />
         </div>
         <div className="relative max-w-xl p-7 sm:p-12">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Vendeurs partenaires</p>

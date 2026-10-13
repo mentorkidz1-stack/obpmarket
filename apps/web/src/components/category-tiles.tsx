@@ -1,4 +1,4 @@
-﻿import Link from "next/link";
+import Link from "next/link";
 import { Photo } from "@/components/photo";
 import { CATEGORY_ICON } from "@/components/product-icons";
 
@@ -17,7 +17,7 @@ const PASTEL: Record<string, { bg: string; fg: string }> = {
   "Tubercules": { bg: "#ecdfd5", fg: "#58381f" },
   "Électroménager": { bg: "#dde8f2", fg: "#27455e" },
 };
-const FALLBACK = { bg: "#e8ebfb", fg: "#2b3fae" };
+const FALLBACK = { bg: "#e3f1ea", fg: "#005826" };
 
 /** Tuiles pastel « Acheter par catégorie », avec la vraie photo d'un produit du rayon. */
 export function CategoryTiles({
@@ -75,7 +75,7 @@ export function CategoryTiles({
         {realEstate && (
           <Link
             href="/immobilier"
-            className="group relative col-span-2 min-h-40 overflow-hidden rounded-2xl bg-[#15172b] p-5 text-white transition-transform hover:-translate-y-0.5 sm:min-h-44 sm:p-6 lg:col-span-4"
+            className="group relative col-span-2 min-h-40 overflow-hidden rounded-2xl bg-[#0a2f1d] p-5 text-white transition-transform hover:-translate-y-0.5 sm:min-h-44 sm:p-6 lg:col-span-4"
           >
             <div className="relative max-w-[60%] sm:max-w-[50%]">
               <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Immobilier</p>

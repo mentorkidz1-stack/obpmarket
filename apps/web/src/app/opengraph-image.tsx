@@ -8,14 +8,14 @@ export const contentType = "image/png";
 export default function OpengraphImage() {
   return new ImageResponse(
     (
-      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "linear-gradient(135deg,#2b3fae 0%,#1b2670 100%)", color: "#fff" }}>
+      <div style={{ width: "100%", height: "100%", display: "flex", flexDirection: "column", justifyContent: "space-between", padding: 72, background: "linear-gradient(135deg,#005826 0%,#003d1b 100%)", color: "#fff" }}>
         <div style={{ display: "flex", alignItems: "center", gap: 24 }}>
           <svg width="96" height="96" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
             <rect width="48" height="48" rx="12" fill="#ffffff" />
-            <rect x="11" y="26" width="7" height="12" rx="2" fill="#2b3fae" />
-            <rect x="20.5" y="19" width="7" height="19" rx="2" fill="#2b3fae" />
-            <rect x="30" y="12" width="7" height="26" rx="2" fill="#2b3fae" />
-            <path d="M14.5 8.5v8M10.5 12.5h8" stroke="#f97316" strokeWidth="3" strokeLinecap="round" />
+            <rect x="11" y="26" width="7" height="12" rx="2" fill="#005826" />
+            <rect x="20.5" y="19" width="7" height="19" rx="2" fill="#005826" />
+            <rect x="30" y="12" width="7" height="26" rx="2" fill="#005826" />
+            <path d="M14.5 8.5v8M10.5 12.5h8" stroke="#E5161F" strokeWidth="3" strokeLinecap="round" />
           </svg>
           <div style={{ fontSize: 56, fontWeight: 800, letterSpacing: -1 }}>OBP Market</div>
         </div>

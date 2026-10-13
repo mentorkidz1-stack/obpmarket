@@ -9,6 +9,7 @@ import { Photo } from "@/components/photo";
 import { parseProductPhotos } from "@/lib/api";
 import { KIND_LABEL, typeLabel } from "@/lib/property";
 import { useCatalog } from "@/lib/use-catalog";
+import { useTax } from "@/components/tax-provider";
 
 function normalize(s: string) {
   return s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
@@ -21,6 +22,7 @@ export function SearchBox({ className = "" }: { className?: string }) {
   const [focused, setFocused] = useState(false);
   const box = useRef<HTMLFormElement>(null);
   const { products, properties, prices } = useCatalog(focused);
+  const tax = useTax();
 
   useEffect(() => {
     const onDown = (e: MouseEvent) => {
@@ -95,7 +97,7 @@ export function SearchBox({ className = "" }: { className?: string }) {
                         </div>
                         {price && (
                           <p className="flex-none font-display text-sm font-extrabold tabular-nums">
-                            <Money value={price.value} unitClassName="text-xs text-ink-2" />
+                            <Money value={tax.show(price.value, p)} unitClassName="text-xs text-ink-2" />
                           </p>
                         )}
                       </Link>

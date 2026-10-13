@@ -5,7 +5,7 @@ import Link from "next/link";
 import type { Banner } from "@/lib/api";
 import { Photo } from "@/components/photo";
 
-const ARROW = "grid size-9 place-items-center rounded-full bg-white/90 text-[#15172b] shadow transition-colors hover:bg-white";
+const ARROW = "grid size-9 place-items-center rounded-full bg-white/90 text-[#0a2f1d] shadow transition-colors hover:bg-white";
 
 export function BannerCarousel({ banners }: { banners: Banner[] }) {
   const [index, setIndex] = useState(0);
@@ -32,7 +32,7 @@ export function BannerCarousel({ banners }: { banners: Banner[] }) {
         {banner.linkUrl && (
           <Link
             href={banner.linkUrl}
-            className="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-[#15172b]"
+            className="mt-6 inline-flex w-fit items-center gap-2 rounded-lg bg-white px-5 py-2.5 text-sm font-bold text-[#0a2f1d]"
           >
             Découvrir
             <svg viewBox="0 0 24 24" className="size-4" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round">

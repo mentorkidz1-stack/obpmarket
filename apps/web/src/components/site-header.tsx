@@ -9,6 +9,7 @@ import { AccountMenu } from "@/components/account-menu";
 import { NotificationBell } from "@/components/notification-bell";
 import { SearchBox } from "@/components/search-box";
 import { CURRENCIES, useCurrency, type Currency } from "@/components/currency-provider";
+import { TaxToggle } from "@/components/tax-toggle";
 import { useUI } from "@/components/ui-provider";
 import { useWishlist } from "@/components/wishlist-provider";
 import { useCatalog } from "@/lib/use-catalog";
@@ -108,6 +109,7 @@ export function SiteHeader() {
           <div className="hidden flex-none items-center gap-4 sm:flex">
             <Link href="/comment-ca-marche" className="hover:underline">Comment ça marche</Link>
             <Link href="/contact" className="hover:underline">Contact</Link>
+            <TaxToggle tone="dark" />
             <label className="flex items-center">
               <span className="sr-only">Devise d&apos;affichage</span>
               <select
@@ -116,7 +118,7 @@ export function SiteHeader() {
                 className="cursor-pointer rounded-md border border-white/25 bg-transparent px-1.5 py-1 text-[12px] font-semibold text-app outline-none"
               >
                 {CURRENCIES.map((c) => (
-                  <option key={c.code} value={c.code} className="text-[#15172b]">
+                  <option key={c.code} value={c.code} className="text-[#0a2f1d]">
                     {c.code === "XOF" ? "FCFA" : `${c.code} · ${c.label}`}
                   </option>
                 ))}

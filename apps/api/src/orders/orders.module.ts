@@ -5,9 +5,10 @@ import { NyoleWebhookController } from './nyole-webhook.controller.js';
 import { ReferencePricesModule } from '../reference-prices/reference-prices.module.js';
 import { AuthModule } from '../auth/auth.module.js';
 import { NyoleModule } from '../nyole/nyole.module.js';
+import { StockModule } from '../stock/stock.module.js';
 
 @Module({
-  imports: [ReferencePricesModule, AuthModule, NyoleModule],
+  imports: [ReferencePricesModule, AuthModule, NyoleModule, StockModule],
   controllers: [OrdersController, NyoleWebhookController],
   providers: [OrdersService],
 })

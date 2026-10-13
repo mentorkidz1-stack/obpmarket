@@ -1,4 +1,4 @@
-import { IsBoolean, IsOptional, IsString } from 'class-validator';
+import { IsBoolean, IsNumber, IsOptional, IsString, Max, Min } from 'class-validator';
 
 export class CreateProductDto {
   @IsString()
@@ -18,4 +18,11 @@ export class CreateProductDto {
   @IsOptional()
   @IsBoolean()
   isStockable?: boolean;
+
+  /** Taux de TVA du produit en % : 0 = exonéré ; absent = taux par défaut des réglages. */
+  @IsOptional()
+  @IsNumber()
+  @Min(0)
+  @Max(100)
+  vatRate?: number;
 }

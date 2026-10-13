@@ -220,10 +220,30 @@ export default function MyStockPage() {
                   </div>
                 </div>
 
+                {h.storage && (
+                  <p className={`mt-2 rounded-lg px-2.5 py-1.5 text-xs ${h.storage.overdue ? "bg-accent-soft text-ink" : "bg-brand-soft text-ink"}`}>
+                    {h.storage.overdue ? (
+                      <>
+                        <span className="font-bold">Conservation gratuite terminée.</span> Frais de stockage à ce jour :{" "}
+                        <strong>{moneyText(h.storage.feeDue)}</strong> ({h.storage.feePct} % du prix d&apos;achat
+                        {h.storage.monthly ? ", par mois entamé" : ""}), retenus sur le montant de la revente.
+                      </>
+                    ) : (
+                      <>
+                        Conservation gratuite jusqu&apos;au{" "}
+                        <span className="font-bold">
+                          {h.storage.freeUntil ? new Date(h.storage.freeUntil).toLocaleDateString("fr-FR", { day: "numeric", month: "long", year: "numeric" }) : "—"}
+                        </span>
+                        , puis {h.storage.feePct} % du prix d&apos;achat{h.storage.monthly ? " par mois" : ""}.
+                      </>
+                    )}
+                  </p>
+                )}
+
                 {activeForThis.map((l) => (
                   <div key={l.id} className="mt-2 flex items-center justify-between rounded-lg bg-surface-2 px-2.5 py-1.5 text-xs">
                     <span>
-                      {l.quantity} {h.product.unitLabel} en revente · vendu au prix du marché au moment de la vente
+                      {l.quantity} {h.product.unitLabel} en revente · vendu au prix du jour, frais de stockage éventuels déduits
                     </span>
                     <button type="button" onClick={() => cancelListing(l.id)} disabled={busy} className="font-semibold text-down underline">
                       Annuler

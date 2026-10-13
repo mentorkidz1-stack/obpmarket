@@ -66,6 +66,7 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: "Administration",
     items: [
+      { href: "/backoffice/reglages", label: "Réglages commerciaux", roles: ["ADMIN"] },
       { href: "/backoffice/equipe", label: "Équipe et accès", roles: ["ADMIN"] },
       { href: "/backoffice/journal", label: "Journal d'activité", roles: ["ADMIN"] },
     ],

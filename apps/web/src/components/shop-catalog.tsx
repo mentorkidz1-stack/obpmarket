@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { ProductCard } from "@/components/product-card";
 import { useCurrency } from "@/components/currency-provider";
+import { useTax } from "@/components/tax-provider";
 import type { Product, ReferencePrice } from "@/lib/api";
 
 type Sort = "nom" | "prix-asc" | "prix-desc" | "hausse" | "baisse";
@@ -43,6 +44,7 @@ export function ShopCatalog({
   initial: CatalogInitial;
 }) {
   const { currency } = useCurrency();
+  const tax = useTax();
   const [query, setQuery] = useState(initial.q ?? "");
   const [category, setCategory] = useState<string | null>(initial.categorie ?? null);
   const [sort, setSort] = useState<Sort>(SORTS.some((s) => s.value === initial.tri) ? (initial.tri as Sort) : "nom");
@@ -83,13 +85,17 @@ export function ShopCatalog({
       if (inStock && p.stockQuantity === 0) return false;
       if (type === "frais" && !p.isPerishable) return false;
       if (type === "stockable" && !p.isStockable) return false;
-      const price = prices.get(p.id)?.value;
+      const shown = prices.get(p.id)?.value;
+      const price = shown == null ? undefined : tax.show(shown, p);
       if ((lo != null || hi != null) && price == null) return false;
       if (lo != null && price! < lo) return false;
       if (hi != null && price! > hi) return false;
       return true;
     });
-    const priceOf = (p: Product) => prices.get(p.id)?.value ?? Number.POSITIVE_INFINITY;
+    const priceOf = (p: Product) => {
+      const v = prices.get(p.id)?.value;
+      return v == null ? Number.POSITIVE_INFINITY : tax.show(v, p);
+    };
     const changeOf = (p: Product) => prices.get(p.id)?.changePct7d ?? 0;
     return list.sort((a, b) => {
       switch (sort) {
@@ -105,7 +111,7 @@ export function ShopCatalog({
           return a.name.localeCompare(b.name, "fr");
       }
     });
-  }, [products, prices, category, query, inStock, type, min, max, sort]);
+  }, [products, prices, category, query, inStock, type, min, max, sort, tax]);
 
   // L'adresse reflète les filtres : on peut partager ou recharger une recherche.
   useEffect(() => {
@@ -170,7 +176,7 @@ export function ShopCatalog({
       </div>
 
       <div>
-        <p className={title}>Prix du marché (FCFA)</p>
+        <p className={title}>Prix {tax.label || "du jour"} (FCFA)</p>
         <div className="mt-2 flex items-center gap-2">
           <input inputMode="numeric" value={min} onChange={(e) => setMin(e.target.value.replace(/\D/g, ""))} placeholder={bounds ? String(bounds.lo) : "Min"} aria-label="Prix minimum" className={input} />
           <span className="text-ink-2">–</span>

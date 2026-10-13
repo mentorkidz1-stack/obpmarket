@@ -4,6 +4,7 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { PRICING_CONFIG } from '../config/pricing-config.token.js';
 import type { PricingConfig } from '../config/pricing.config.js';
 import { PriceAlertsService } from '../price-alerts/price-alerts.service.js';
+import { SettingsService } from '../settings/settings.service.js';
 
 export interface RecomputeResult {
   published: boolean;
@@ -19,6 +20,7 @@ export class ReferencePricesService {
     private readonly prisma: PrismaService,
     @Inject(PRICING_CONFIG) private readonly config: PricingConfig,
     private readonly priceAlerts: PriceAlertsService,
+    private readonly settings: SettingsService,
   ) {}
 
   /**
@@ -58,9 +60,26 @@ export class ReferencePricesService {
     });
 
     // Prévient les clients dont l'alerte de prix est atteinte. Sans conséquence sur le calcul s'il échoue.
-    await this.priceAlerts.check(productId, value).catch(() => 0);
+    // Le seuil du client est comparé au prix qu'il voit (prix moyen + majoration).
+    const shown = this.settings.sellingPrice(value, await this.settings.get());
+    await this.priceAlerts.check(productId, shown).catch(() => 0);
 
     return { published: true, readingsCount: readings.length, marketsCount, value };
+  }
+
+  /**
+   * Prix tel que le client le voit : le prix moyen des marchés majoré du pourcentage réglé (7,5 % par défaut).
+   * alue devient le prix affiché (hors taxe) ; marketValue garde la moyenne brute des relevés.
+   */
+  async toSelling<T extends { value: number }>(row: T | null): Promise<(T & { marketValue: number }) | null> {
+    if (!row) return null;
+    const s = await this.settings.get();
+    return { ...row, marketValue: row.value, value: this.settings.sellingPrice(row.value, s) };
+  }
+
+  async toSellingMany<T extends { value: number }>(rows: T[]): Promise<Array<T & { marketValue: number }>> {
+    const s = await this.settings.get();
+    return rows.map((row) => ({ ...row, marketValue: row.value, value: this.settings.sellingPrice(row.value, s) }));
   }
 
   latestForProduct(productId: string) {
