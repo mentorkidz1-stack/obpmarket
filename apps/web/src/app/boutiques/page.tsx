@@ -15,14 +15,14 @@ export default async function ShopsPage() {
 
   return (
     <>
-      <PageHero title="Boutiques vendeurs" crumb="Boutiques" subtitle="Les vendeurs partenaires vérifiés par OBP Market. Chaque boutique a son lien à partager." />
+      <PageHero title="Boutiques vendeurs" crumb="Boutiques" subtitle="Les vendeurs partenaires choisis par OBP Market. Chaque boutique a son lien à partager." />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         {shops.length === 0 ? (
           <div className="mx-auto max-w-md rounded-2xl border border-line bg-surface p-10 text-center">
             <p className="font-display text-lg font-extrabold">Les premières boutiques arrivent</p>
-            <p className="mt-1 text-sm text-ink-2">Vous produisez ou vendez ? Ouvrez votre boutique et partagez-la à vos clients.</p>
-            <Link href="/vendeur" className="mt-5 inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
-              Devenir vendeur
+            <p className="mt-1 text-sm text-ink-2">Les vendeurs partenaires d&apos;OBP Market ouvriront bientôt leur boutique ici.</p>
+            <Link href="/boutique" className="mt-5 inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
+              Voir la boutique
             </Link>
           </div>
         ) : (

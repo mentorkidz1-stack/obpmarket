@@ -58,6 +58,7 @@ export const NAV_GROUPS: NavGroup[] = [
     label: "Contenu",
     items: [
       { href: "/backoffice/vendeurs", label: "Vendeurs et annonces", roles: MOD },
+      { href: "/backoffice/invitations", label: "Invitations vendeurs", roles: MOD },
       { href: "/backoffice/immobilier", label: "Immobilier", roles: MOD },
       { href: "/backoffice/bannieres", label: "Bannières", roles: MOD },
       { href: "/backoffice/messages", label: "Messages", roles: MOD },

@@ -13,7 +13,7 @@ const CARDS = [
   { href: "/notifications", title: "Notifications", text: "Vos alertes, ventes et suivis de commande.", icon: <><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z" /><path d="M10 19a2 2 0 0 0 4 0" /></> },
   { href: "/alertes", title: "Alertes de prix", text: "Soyez prévenu quand un prix baisse.", icon: <><path d="M4 17l5-5 4 4 7-8" /><path d="M15 8h5v5" /></> },
   { href: "/favoris", title: "Mes favoris", text: "Les produits que vous suivez.", icon: <path d="M12 20.5s-7.5-4.6-7.5-10A4.3 4.3 0 0 1 12 7.6a4.3 4.3 0 0 1 7.5 2.9c0 5.4-7.5 10-7.5 10z" /> },
-  { href: "/vendeur", title: "Espace vendeur", text: "Publiez vos annonces et suivez leur validation.", icon: <><path d="M4 9l1.5-4.5h13L20 9" /><path d="M4 9v10.5h16V9M4 9c0 1.7 1.4 2.8 2.7 2.8S9.3 10.7 9.3 9c0 1.7 1.2 2.8 2.7 2.8s2.7-1.1 2.7-2.8c0 1.7 1.3 2.8 2.7 2.8S20 10.7 20 9" /></> },
+  { href: "/vendeur", title: "Espace vendeur", text: "Pour les vendeurs partenaires invités par OBP Market : annonces, boutique et ventes.", icon: <><path d="M4 9l1.5-4.5h13L20 9" /><path d="M4 9v10.5h16V9M4 9c0 1.7 1.4 2.8 2.7 2.8S9.3 10.7 9.3 9c0 1.7 1.2 2.8 2.7 2.8s2.7-1.1 2.7-2.8c0 1.7 1.3 2.8 2.7 2.8S20 10.7 20 9" /></> },
   { href: "/contact", title: "Aide et contact", text: "Une question ? Notre équipe vous répond.", icon: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.6 2.6 0 1 1 3.7 2.4c-.8.4-1.2 1-1.2 1.8M12 17h.01" /></> },
 ];
 

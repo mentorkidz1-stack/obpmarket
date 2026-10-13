@@ -24,7 +24,6 @@ const COLUMNS = [
       { href: "/mon-stock", label: "Mon stock" },
       { href: "/portefeuille", label: "Portefeuille" },
       { href: "/boutiques", label: "Boutiques vendeurs" },
-  { href: "/vendeur", label: "Devenir vendeur" },
     ],
   },
   {

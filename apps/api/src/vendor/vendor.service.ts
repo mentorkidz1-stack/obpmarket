@@ -8,6 +8,7 @@ import type { CreateVendorProfileDto } from './dto/create-vendor-profile.dto.js'
 import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js';
 import type { ReviewDto } from './dto/review.dto.js';
 import { DepotsService } from '../depots/depots.service.js';
+import { VendorInvitesService } from './vendor-invites.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import type { UpdateVendorListingDto, UpdateVendorProfileDto } from './dto/update-vendor-listing.dto.js';
 
@@ -27,24 +28,44 @@ export class VendorService {
     private readonly referencePrices: ReferencePricesService,
     private readonly notifications: NotificationsService,
     private readonly depots: DepotsService,
+    private readonly invites: VendorInvitesService,
   ) {}
 
   // ---------- Compte vendeur (VEN-01 à VEN-03) ----------
 
+  /**
+   * Ouvre un compte vendeur — uniquement avec le lien d'invitation envoyé par OBP Market. L'invitation vaut validation
+   * (le partenariat est déjà conclu) : le compte est actif tout de suite, et le lien ne sert qu'une fois.
+   */
   async becomeVendor(userId: string, dto: CreateVendorProfileDto) {
-    const existing = await this.prisma.vendorProfile.findUnique({ where: { userId } });
-    if (existing) {
-      // Une demande refusée peut être redéposée, corrigée ; tout autre état est déjà un compte.
-      if (existing.status !== VendorStatus.REFUSE) throw new ConflictException('Vous avez déjà un compte vendeur.');
-      return this.prisma.vendorProfile.update({
-        where: { id: existing.id },
-        data: { type: dto.type, zone: dto.zone, paymentInfo: dto.paymentInfo, status: VendorStatus.EN_ATTENTE, rejectionReason: null, reviewedAt: null },
-      });
-    }
+    const [user, existing] = await Promise.all([
+      this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { phone: true, fullName: true } }),
+      this.prisma.vendorProfile.findUnique({ where: { userId } }),
+    ]);
+    // Un compte actif, en attente ou suspendu existe déjà ; seul un compte refusé peut être rouvert avec une invitation.
+    if (existing && existing.status !== VendorStatus.REFUSE) throw new ConflictException('Vous avez déjà un compte vendeur.');
 
-    return this.prisma.vendorProfile.create({
-      data: { userId, type: dto.type, zone: dto.zone, paymentInfo: dto.paymentInfo },
+    const invite = await this.invites.assertUsable(dto.inviteToken, user.phone);
+    const data = { type: dto.type, zone: dto.zone.trim(), paymentInfo: dto.paymentInfo.trim(), status: VendorStatus.ACTIF, rejectionReason: null, reviewedAt: new Date() };
+
+    const profile = await this.prisma.$transaction(async (tx) => {
+      const claimed = await tx.vendorInvite.updateMany({
+        where: { id: invite.id, usedAt: null, revokedAt: null },
+        data: { usedAt: new Date(), usedById: userId },
+      });
+      if (claimed.count === 0) throw new ConflictException('Cette invitation vient d\'être utilisée.');
+      return existing
+        ? tx.vendorProfile.update({ where: { id: existing.id }, data })
+        : tx.vendorProfile.create({ data: { userId, ...data } });
     });
+
+    // Prévient la personne qui a créé l'invitation.
+    await this.notifications.notify(invite.createdById, {
+      title: 'Invitation vendeur utilisée',
+      body: `${user.fullName !== 'Nouveau client' ? user.fullName : user.phone} a ouvert son compte vendeur (${invite.note}).`,
+      href: '/backoffice/invitations',
+    });
+    return profile;
   }
 
   /** Le vendeur met à jour sa zone et ses coordonnées de paiement (sans repasser par la validation). */

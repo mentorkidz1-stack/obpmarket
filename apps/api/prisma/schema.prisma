@@ -189,6 +189,8 @@ model User {
   confirmedOrders   Order[]            @relation("OrderConfirmedBy")
   payoutRequests    PayoutRequest[]    @relation("PayoutOwner")
   processedPayouts  PayoutRequest[]    @relation("PayoutProcessedBy")
+  vendorInvitesCreated VendorInvite[]  @relation("InviteCreatedBy")
+  vendorInvitesUsed    VendorInvite[]  @relation("InviteUsedBy")
 }
 
 /// Magasin ou dépôt OBP où la marchandise est reçue, stockée et remise (retrait ou départ de livraison).
@@ -742,6 +744,31 @@ model VendorProfile {
   user     User              @relation(fields: [userId], references: [id])
   listings VendorListing[]
   stats    VendorDailyStat[]
+}
+
+/// Invitation privée à devenir vendeur partenaire. L'inscription libre n'existe pas : OBP conclut un partenariat avec la
+/// personne, puis lui envoie ce lien en message direct. Le jeton est secret, à usage unique et expire.
+model VendorInvite {
+  id          String       @id @default(cuid())
+  token       String       @unique
+  /// Mémo interne : pour qui, dans quel cadre (jamais montré à l'invité).
+  note        String
+  /// Si renseigné, seul ce numéro de téléphone peut utiliser l'invitation.
+  phone       String?
+  /// Type de compte et zone proposés (pré-remplis, modifiables par l'invité).
+  type        VendorType?
+  zone        String?
+  createdById String
+  createdAt   DateTime     @default(now())
+  expiresAt   DateTime
+  usedAt      DateTime?
+  usedById    String?
+  revokedAt   DateTime?
+
+  createdBy User  @relation("InviteCreatedBy", fields: [createdById], references: [id])
+  usedBy    User? @relation("InviteUsedBy", fields: [usedById], references: [id])
+
+  @@index([createdAt])
 }
 
 /// Compteurs quotidiens de la vitrine d'un vendeur : visites, partages, demandes de contact WhatsApp.

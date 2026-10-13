@@ -115,10 +115,22 @@ test.describe("Immobilier", () => {
 });
 
 test.describe("Vendeurs", () => {
-  test("un visiteur voit la présentation du programme", async ({ page }) => {
+  test("un visiteur voit un programme sur invitation, sans inscription libre", async ({ page }) => {
     await page.goto("/vendeur");
-    await expect(page.getByRole("heading", { name: "Vendez vos produits avec OBP Market" })).toBeVisible();
-    await expect(page.locator("main").getByRole("link", { name: "Devenir vendeur" }).first()).toHaveAttribute("href", /connexion\?next=\/vendeur/);
+    await expect(page.getByRole("heading", { name: "Le programme vendeurs partenaires" })).toBeVisible();
+    await expect(page.getByText("sur invitation").first()).toBeVisible();
+    // Plus aucune incitation à « devenir vendeur » : ni en haut du site, ni dans le pied de page.
+    await expect(page.getByRole("link", { name: /Devenir vendeur|Devenez vendeur/ })).toHaveCount(0);
+  });
+
+  test("un lien d'invitation inconnu est signalé clairement", async ({ page }) => {
+    await page.goto("/vendeur/invitation/jeton-inconnu-0123456789");
+    await expect(page.getByRole("heading", { name: "Invitation indisponible" })).toBeVisible({ timeout: 30_000 });
+  });
+
+  test("l'accueil ne propose plus de devenir vendeur", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("link", { name: /Devenir vendeur|Devenez vendeur/ })).toHaveCount(0);
   });
 });
 

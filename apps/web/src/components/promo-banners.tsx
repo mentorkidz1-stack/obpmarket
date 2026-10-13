@@ -5,10 +5,10 @@ const CARDS = [
   {
     image: "/promos/promo-vendeur.jpg",
     position: "center 30%",
-    title: "Vendez vos produits",
-    text: "Ouvrez votre boutique partenaire : nous modérons vos annonces et réceptionnons votre stock.",
-    cta: "Devenir vendeur",
-    href: "/vendeur",
+    title: "Retrait ou livraison",
+    text: "Retirez vos produits au magasin, ou faites-vous livrer à domicile dans votre zone.",
+    cta: "Voir la boutique",
+    href: "/boutique",
   },
   {
     image: "/promos/promo-depot.jpg",

@@ -1,6 +1,23 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { PrismaClient } from '@prisma/client';
 
+/**
+ * Quand beaucoup de requêtes arrivent en même temps sur une base distante un peu lente, le pool de connexions se
+ * remplit et les requêtes en trop échouaient au bout de 10 s (erreur 500). On leur laisse 30 s, sauf si l'adresse de la
+ * base fixe déjà ces réglages.
+ */
+function withPoolDefaults(url: string | undefined): string | undefined {
+  if (!url) return url;
+  try {
+    const u = new URL(url);
+    if (!u.searchParams.has('pool_timeout')) u.searchParams.set('pool_timeout', '30');
+    if (!u.searchParams.has('connect_timeout')) u.searchParams.set('connect_timeout', '20');
+    return u.toString();
+  } catch {
+    return url;
+  }
+}
+
 const CONNECT_ATTEMPTS = 6;
 const RETRY_DELAY_MS = 4000;
 
@@ -13,7 +30,7 @@ export class PrismaService extends PrismaClient implements OnModuleInit, OnModul
    * elles échouaient en erreur 500 alors que tout allait bien. On leur laisse jusqu'à 30 s.
    */
   constructor() {
-    super({ transactionOptions: { maxWait: 10_000, timeout: 30_000 } });
+    super({ datasourceUrl: withPoolDefaults(process.env.DATABASE_URL), transactionOptions: { maxWait: 10_000, timeout: 30_000 } });
   }
 
   /**

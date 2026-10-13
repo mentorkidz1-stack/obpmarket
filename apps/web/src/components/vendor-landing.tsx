@@ -10,7 +10,7 @@ const BENEFITS = [
 ];
 
 const STEPS = [
-  { title: "Demandez votre compte vendeur", text: "Particulier, professionnel ou coopérative : quelques informations suffisent. Réponse sous 24 à 48 h." },
+  { title: "Recevez votre invitation", text: "Après un partenariat avec OBP Market, vous recevez un lien privé par message : il ouvre votre espace vendeur." },
   { title: "Publiez votre annonce", text: "Choisissez le produit, la quantité, votre prix, et ajoutez au moins 2 photos." },
   { title: "OBP Market valide et réceptionne", text: "Nous vérifions l'annonce, puis vous déposez le stock au magasin. Elle est mise en vente à réception." },
   { title: "Vous êtes payé", text: "À chaque vente confirmée, votre portefeuille est crédité. Vous retirez quand vous voulez." },
@@ -23,7 +23,7 @@ const RULES = [
   "Le stock doit être déposé au magasin OBP Market : l'annonce n'est achetable qu'à réception.",
 ];
 
-/** Page de présentation « Devenir vendeur » : ouverte aux visiteurs non connectés. */
+/** Présentation du programme vendeurs partenaires (sur invitation) : ouverte aux visiteurs non connectés. */
 export function VendorLanding({ cta }: { cta: ReactNode }) {
   return (
     <div className="grid gap-12">
@@ -34,9 +34,9 @@ export function VendorLanding({ cta }: { cta: ReactNode }) {
         </div>
         <div className="relative max-w-xl p-7 sm:p-12">
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Vendeurs partenaires</p>
-          <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight sm:text-5xl">Vendez vos produits avec OBP Market</h1>
+          <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight sm:text-5xl">Le programme vendeurs partenaires</h1>
           <p className="mt-4 text-white/80">
-            Publiez votre stock, nous le vérifions, le réceptionnons et le vendons au juste prix. Vous êtes payé dès que l&apos;acheteur a réglé.
+            Un programme sur invitation : OBP Market choisit ses partenaires, vérifie leurs annonces, réceptionne le stock et le vend au juste prix. Vous êtes payé dès que l&apos;acheteur a réglé.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">{cta}</div>
         </div>
@@ -87,8 +87,8 @@ export function VendorLanding({ cta }: { cta: ReactNode }) {
           </ul>
         </div>
         <div className="rounded-2xl border border-line bg-surface p-6">
-          <p className="font-display text-lg font-extrabold">Une question avant de vous lancer ?</p>
-          <p className="mt-1 text-sm text-ink-2">Consultez la FAQ ou écrivez-nous : nous vous répondons rapidement.</p>
+          <p className="font-display text-lg font-extrabold">Vous souhaitez devenir partenaire ?</p>
+          <p className="mt-1 text-sm text-ink-2">Écrivez-nous en présentant votre activité : si un partenariat est conclu, nous vous envoyons votre lien d&apos;invitation.</p>
           <div className="mt-4 flex flex-wrap gap-2.5">
             <Link href="/faq" className="rounded-xl border border-line px-5 py-2.5 text-sm font-bold hover:bg-surface-2">
               Questions fréquentes

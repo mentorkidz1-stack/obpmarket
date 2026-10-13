@@ -23,6 +23,9 @@ Chaque personne change son mot de passe provisoire dans **Mon compte**.
 - **Retraits à verser** : demandes de retrait des vendeurs. Envoyez l'argent par Mobile Money au numéro indiqué,
   puis cliquez « J'ai versé les fonds » avec la référence ; ou refusez avec un motif (le montant est recrédité).
 - **Demandes de liquidité**, **Clients** (export CSV, désactivation par l'administrateur).
+- **Invitations vendeurs** : le compte vendeur ne s'ouvre que sur invitation. Créez une invitation (mémo, et téléphone si
+  vous voulez la réserver à un numéro), puis envoyez le lien en message direct avec « Envoyer par WhatsApp » ou
+  « Copier le lien ». Le lien est à usage unique et expire ; vous pouvez l'annuler tant qu'il n'est pas utilisé.
 - **Vendeurs et annonces**, **Immobilier**, **Bannières**, **Messages**.
 - **Réglages commerciaux** (administrateur) : majoration appliquée au prix moyen des marchés (7,5 % par défaut), TVA
   (activée ou non, taux par défaut 18 %, affichage TTC ou HT proposé à l'arrivée), durée gratuite et frais de stockage.

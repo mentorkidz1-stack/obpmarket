@@ -26,7 +26,7 @@ const SECTIONS = [
   },
   {
     title: "6. Vendeurs partenaires",
-    text: "Les vendeurs sont validés par OBP Market. Chaque annonce est vérifiée avant sa mise en vente et le stock est réceptionné au magasin. Les ventes sont créditées au vendeur après confirmation du paiement de l'acheteur.",
+    text: "Les vendeurs sont des partenaires choisis par OBP Market, qui les invite à ouvrir leur compte. Chaque annonce est vérifiée avant sa mise en vente et le stock est réceptionné au magasin. Les ventes sont créditées au vendeur après confirmation du paiement de l'acheteur.",
   },
   {
     title: "7. Compte",

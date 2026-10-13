@@ -47,9 +47,10 @@ const orderIds = [];
 
 try {
   console.log('--- Vendeur et annonce');
-  profileId = (await call('POST', '/vendor-profile', S, { type: 'PROFESSIONNEL', zone: 'Cotonou', paymentInfo: 'MTN MoMo 0190000000' }))[1].id;
-  ok('vitrine refusée avant validation du compte', (await call('PUT', '/shops/mine', S, { shopName: 'Chez Test Vendeur' }))[0], 403);
-  await call('POST', `/vendor-profile/${profileId}/approve`, admin);
+  ok('vitrine refusée sans compte vendeur', (await call('PUT', '/shops/mine', S, { shopName: 'Chez Test Vendeur' }))[0], 403);
+  // Le compte vendeur s'ouvre uniquement avec une invitation envoyée par OBP.
+  const invite = (await call('POST', '/vendor-invites', admin, { note: 'Test vitrines', phone: SELLER }))[1];
+  profileId = (await call('POST', '/vendor-profile', S, { type: 'PROFESSIONNEL', zone: 'Cotonou', paymentInfo: 'MTN MoMo 0190000000', inviteToken: invite.token }))[1].id;
   listingId = (await call('POST', '/vendor-listings', S, { productId: product.id, quantity: 10, unitPrice: ref, photos }))[1].id;
   await call('POST', `/vendor-listings/${listingId}/approve`, admin);
   const depots = (await call('GET', '/depots'))[1];

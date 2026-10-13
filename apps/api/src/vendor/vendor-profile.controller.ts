@@ -18,8 +18,10 @@ export class VendorProfileController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  becomeVendor(@Req() req: AuthenticatedRequest, @Body() dto: CreateVendorProfileDto) {
-    return this.vendor.becomeVendor(req.userId!, dto);
+  async becomeVendor(@Req() req: AuthenticatedRequest, @Body() dto: CreateVendorProfileDto) {
+    const profile = await this.vendor.becomeVendor(req.userId!, dto);
+    await this.audit.log(req, 'Compte vendeur ouvert sur invitation', `Vendeur ${profile.id.slice(0, 8)}`, dto.zone);
+    return profile;
   }
 
   @Get('mine')

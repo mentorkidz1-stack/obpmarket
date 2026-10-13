@@ -12,7 +12,10 @@ export default defineConfig({
   timeout: 60_000,
   expect: { timeout: 15_000 },
   fullyParallel: true,
-  retries: 1,
+  // La base de données est distante et lente depuis un poste de développement : peu de tests en parallèle,
+  // et une nouvelle tentative en cas d'erreur passagère.
+  retries: 2,
+  workers: 2,
   reporter: [["list"]],
   use: {
     baseURL: "http://localhost:3000",

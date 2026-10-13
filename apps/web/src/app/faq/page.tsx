@@ -108,11 +108,11 @@ function buildGroups(s: PublicSettings | null) {
     ],
   },
   {
-    title: "Devenir vendeur",
+    title: "Vendeurs partenaires",
     items: [
       {
-        q: "Comment devenir vendeur ?",
-        a: "Depuis l'Espace vendeur, envoyez votre demande (particulier, professionnel ou coopérative). Elle est validée par OBP Market sous 24 à 48 h. Vous gardez votre compte acheteur, votre stock et votre portefeuille.",
+        q: "Comment devenir vendeur partenaire ?",
+        a: "Le programme est ouvert sur invitation : OBP Market choisit ses partenaires. Écrivez-nous depuis la page Contact en présentant votre activité. Si un partenariat est conclu, vous recevez un lien privé par message : il suffit de l'ouvrir pour activer votre espace vendeur. Vous gardez votre compte acheteur, votre stock et votre portefeuille.",
       },
       {
         q: "Comment publier une annonce ?",
@@ -123,8 +123,8 @@ function buildGroups(s: PublicSettings | null) {
         a: "Ouvrez votre Espace vendeur : le motif indiqué par OBP Market s'affiche sous l'annonce. Cliquez sur « Corriger », modifiez le prix, la quantité ou les photos, puis renvoyez-la : elle repart en vérification.",
       },
       {
-        q: "Ma demande de compte vendeur a été refusée. Puis-je la refaire ?",
-        a: "Oui. Depuis l'Espace vendeur, « Refaire une demande » vous permet de corriger vos informations et de les renvoyer.",
+        q: "Mon lien d'invitation ne fonctionne pas, que faire ?",
+        a: "Le lien est personnel, à usage unique et valable quelques jours. S'il a expiré, ou si vous êtes connecté avec un autre numéro que celui invité, contactez OBP Market : nous vous en envoyons un nouveau.",
       },
       {
         q: "Et si je dépose moins de stock que prévu ?",

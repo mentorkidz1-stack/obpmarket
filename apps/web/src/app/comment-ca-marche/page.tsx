@@ -40,9 +40,9 @@ const BLOCKS = [
   {
     image: "/promos/promo-vendeur.jpg",
     kicker: "Vendre",
-    title: "Devenez vendeur partenaire",
+    title: "Les vendeurs partenaires",
     text: [
-      "Producteurs, commerçants et coopératives peuvent publier leurs produits. Chaque annonce est vérifiée par l'équipe OBP Market, qui réceptionne le stock avant la mise en vente.",
+      "OBP Market choisit ses vendeurs : producteurs, commerçants et coopératives rejoignent la plateforme sur invitation, après un partenariat. Chaque annonce est vérifiée par l'équipe OBP Market, qui réceptionne le stock avant la mise en vente.",
       "Vos ventes sont créditées sur votre portefeuille après confirmation du paiement de l'acheteur, puis retirables vers Mobile Money.",
     ],
   },
@@ -76,13 +76,13 @@ export default function HowItWorksPage() {
 
         <section className="mt-16 rounded-3xl bg-ink px-6 py-10 text-center text-app sm:px-12">
           <h2 className="font-display text-2xl font-extrabold sm:text-3xl">Prêt à commencer ?</h2>
-          <p className="mx-auto mt-2 max-w-md text-sm text-app/80">Découvrez les prix du jour ou ouvrez votre espace vendeur.</p>
+          <p className="mx-auto mt-2 max-w-md text-sm text-app/80">Découvrez les prix du jour, ou parlez-nous de votre activité pour devenir partenaire.</p>
           <div className="mt-6 flex flex-wrap justify-center gap-3">
             <Link href="/boutique" className="rounded-xl bg-white px-6 py-3 text-sm font-bold text-[#0a2f1d]">
               Voir la boutique
             </Link>
-            <Link href="/vendeur" className="rounded-xl border border-white/40 px-6 py-3 text-sm font-bold">
-              Devenir vendeur
+            <Link href="/contact" className="rounded-xl border border-white/40 px-6 py-3 text-sm font-bold">
+              Nous contacter
             </Link>
           </div>
         </section>

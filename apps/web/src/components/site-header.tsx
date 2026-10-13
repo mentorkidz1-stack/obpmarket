@@ -101,10 +101,7 @@ export function SiteHeader() {
       <div className="bg-ink px-4 py-2 text-[12px] font-semibold text-app sm:px-6">
         <div className="mx-auto flex max-w-6xl items-center justify-between gap-3">
           <p className="min-w-0 flex-1 text-center sm:text-left">
-            Paiement sécurisé par Mobile Money et carte bancaire ·{" "}
-            <Link href="/vendeur" className="underline underline-offset-2">
-              Devenez vendeur sur OBP Market
-            </Link>
+            Paiement sécurisé par Mobile Money et carte bancaire · retrait au magasin ou livraison à domicile
           </p>
           <div className="hidden flex-none items-center gap-4 sm:flex">
             <Link href="/comment-ca-marche" className="hover:underline">Comment ça marche</Link>
@@ -176,7 +173,6 @@ export function SiteHeader() {
             <NavLink href="/immobilier">Immobilier</NavLink>
             <NavLink href="/mon-stock">Mon stock</NavLink>
             <NavLink href="/commandes">Mes commandes</NavLink>
-            <NavLink href="/vendeur">Devenir vendeur</NavLink>
             <NavLink href="/faq">FAQ</NavLink>
           </div>
         </nav>

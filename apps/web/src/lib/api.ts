@@ -337,8 +337,51 @@ export interface VendorListingRecord {
   priceOutOfBand?: boolean;
 }
 
-export function becomeVendor(token: string, type: VendorType, zone: string, paymentInfo: string) {
-  return authJson<VendorProfileRecord>("/vendor-profile", token, "POST", { type, zone, paymentInfo });
+/** Ouvre le compte vendeur : uniquement avec le jeton du lien d'invitation envoyé par OBP Market. */
+export function becomeVendor(token: string, type: VendorType, zone: string, paymentInfo: string, inviteToken: string) {
+  return authJson<VendorProfileRecord>("/vendor-profile", token, "POST", { type, zone, paymentInfo, inviteToken });
+}
+
+// ---- Invitations vendeurs ----
+
+export type VendorInviteState = "ACTIVE" | "USED" | "EXPIRED" | "REVOKED";
+
+export type VendorInviteCheck =
+  | { valid: true; type: VendorType | null; zone: string | null; phoneRestricted: boolean; expiresAt: string }
+  | { valid: false; reason: "UNKNOWN" | "USED" | "EXPIRED" | "REVOKED" };
+
+export interface VendorInviteRecord {
+  id: string;
+  token: string;
+  note: string;
+  phone: string | null;
+  type: VendorType | null;
+  zone: string | null;
+  createdAt: string;
+  expiresAt: string;
+  usedAt: string | null;
+  revokedAt: string | null;
+  state: VendorInviteState;
+  /** À ajouter à l'adresse du site pour obtenir le lien à envoyer. */
+  path: string;
+  createdBy?: string;
+  usedBy?: { fullName: string; phone: string } | null;
+}
+
+export function checkVendorInvite(inviteToken: string) {
+  return apiFetch<VendorInviteCheck>(`/vendor-invites/check/${encodeURIComponent(inviteToken)}`);
+}
+
+export function getVendorInvites(token: string) {
+  return authFetch<VendorInviteRecord[]>("/vendor-invites", token);
+}
+
+export function createVendorInvite(token: string, data: { note: string; phone?: string; type?: VendorType; zone?: string; validDays?: number }) {
+  return authJson<VendorInviteRecord>("/vendor-invites", token, "POST", data);
+}
+
+export function revokeVendorInvite(token: string, id: string) {
+  return authJson<VendorInviteRecord>(`/vendor-invites/${id}/revoke`, token, "POST");
 }
 
 export function getMyVendorProfile(token: string) {

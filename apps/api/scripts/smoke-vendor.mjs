@@ -20,16 +20,28 @@ const stockable = products.find((p) => p.isStockable && !p.isPerishable);
 const perishable = products.find((p) => p.isPerishable);
 const photos = ["data:image/jpeg;base64,/9j/AAAA", "data:image/jpeg;base64,/9j/BBBB"];
 
-let r = await call("POST", "/vendor-profile", V, { type: "PROFESSIONNEL", zone: "Cotonou", paymentInfo: "MTN MoMo 0190000000" });
-ok("demande de compte vendeur", r[0], 201);
-const profileId = r[1].id;
-ok("doublon refusé", (await call("POST", "/vendor-profile", V, { type: "PARTICULIER", zone: "x", paymentInfo: "y" }))[0], 409);
-ok("annonce avant validation refusée", (await call("POST", "/vendor-listings", V, { productId: stockable.id, quantity: 5, unitPrice: 1000, photos }))[0], 403);
+const NEW_PROFILE = { type: "PROFESSIONNEL", zone: "Cotonou", paymentInfo: "MTN MoMo 0190000000" };
+ok("inscription sans invitation refusée", (await call("POST", "/vendor-profile", V, NEW_PROFILE))[0], 400);
+ok("inscription avec un faux jeton refusée", (await call("POST", "/vendor-profile", V, { ...NEW_PROFILE, inviteToken: "jeton-inventé-0123456789" }))[0], 403);
+ok("création d'une invitation réservée à un client refusée", (await call("POST", "/vendor-invites", V, { note: "x" }))[0], 403);
+const other = (await call("POST", "/vendor-invites", staff, { note: "Test autre numéro", phone: "+22990001111" }))[1];
+ok("invitation réservée à un autre numéro refusée", (await call("POST", "/vendor-profile", V, { ...NEW_PROFILE, inviteToken: other.token }))[0], 403);
+const invite = (await call("POST", "/vendor-invites", staff, { note: "Test vendeur", phone: PHONE, type: "PROFESSIONNEL", zone: "Cotonou" }))[1];
+ok("création de l'invitation", typeof invite?.token, "string");
+const check = (await call("GET", `/vendor-invites/check/${invite.token}`))[1];
+ok("le lien est vérifiable publiquement", check?.valid, true);
+ok("le mémo interne n'est pas exposé", check?.note, undefined);
 
-ok("refus du compte", (await call("POST", `/vendor-profile/${profileId}/reject`, staff, { reason: "Pièce manquante" }))[0], 201);
-r = await call("POST", "/vendor-profile", V, { type: "PROFESSIONNEL", zone: "Cotonou et Calavi", paymentInfo: "MTN MoMo 0190000000" });
-ok("demande redéposée après refus", r[1]?.status, "EN_ATTENTE");
-ok("approbation", (await call("POST", `/vendor-profile/${profileId}/approve`, staff))[0], 201);
+let r = await call("POST", "/vendor-profile", V, { ...NEW_PROFILE, inviteToken: invite.token });
+ok("ouverture du compte avec l'invitation", r[0], 201);
+ok("le compte est actif tout de suite", r[1]?.status, "ACTIF");
+const profileId = r[1].id;
+ok("invitation à usage unique", (await call("POST", "/vendor-profile", V, { ...NEW_PROFILE, inviteToken: invite.token }))[0], 409);
+ok("invitation utilisée signalée", (await call("GET", `/vendor-invites/check/${invite.token}`))[1]?.reason, "USED");
+const revoked = (await call("POST", "/vendor-invites", staff, { note: "Test annulée" }))[1];
+await call("POST", `/vendor-invites/${revoked.id}/revoke`, staff);
+ok("invitation annulée signalée", (await call("GET", `/vendor-invites/check/${revoked.token}`))[1]?.reason, "REVOKED");
+await call("POST", `/vendor-invites/${other.id}/revoke`, staff);
 ok("modification du profil", (await call("PATCH", "/vendor-profile/mine", V, { zone: "Bénin" }))[1]?.zone, "Bénin");
 
 ok("1 seule photo refusée", (await call("POST", "/vendor-listings", V, { productId: stockable.id, quantity: 5, unitPrice: 1000, photos: [photos[0]] }))[0], 400);

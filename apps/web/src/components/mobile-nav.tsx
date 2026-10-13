@@ -17,7 +17,6 @@ const PAGES = [
   { href: "/mon-stock", label: "Mon stock" },
   { href: "/commandes", label: "Mes commandes" },
   { href: "/favoris", label: "Mes favoris" },
-  { href: "/vendeur", label: "Devenir vendeur" },
   { href: "/faq", label: "Questions fréquentes" },
   { href: "/contact", label: "Contact" },
 ];

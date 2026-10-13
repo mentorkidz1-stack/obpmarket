@@ -4,7 +4,6 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useAuth } from "@/components/auth-provider";
 import {
-  becomeVendor,
   cancelVendorListing,
   getMyVendorListings,
   getMyVendorProfile,
@@ -46,68 +45,6 @@ const LISTING_STATUS_TONE: Record<VendorListingStatus, string> = {
 };
 
 const field = "w-full rounded-xl border border-line bg-surface px-3 py-2.5 text-sm outline-none focus:border-brand";
-
-function VendorForm({ token, initial, onDone, submitLabel }: { token: string; initial?: VendorProfileRecord; onDone: () => void; submitLabel: string }) {
-  const [type, setType] = useState<VendorType>(initial?.type ?? "PROFESSIONNEL");
-  const [zone, setZone] = useState(initial?.zone ?? "Cotonou et environs");
-  const [paymentInfo, setPaymentInfo] = useState(initial?.paymentInfo ?? "");
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-
-  async function submit() {
-    if (!paymentInfo.trim()) {
-      setError("Indiquez comment recevoir vos ventes (ex. MTN MoMo).");
-      return;
-    }
-    setBusy(true);
-    setError(null);
-    try {
-      await becomeVendor(token, type, zone, paymentInfo);
-      onDone();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Échec de la demande.");
-    } finally {
-      setBusy(false);
-    }
-  }
-
-  return (
-    <div className="grid gap-4">
-      <div className="grid gap-2">
-        <span className="text-xs font-semibold text-ink-2">Type de compte</span>
-        {(Object.keys(TYPE_LABEL) as VendorType[]).map((t) => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setType(t)}
-            aria-pressed={type === t}
-            className={`rounded-xl border-2 p-3 text-left text-sm ${type === t ? "border-brand bg-brand-soft" : "border-line bg-surface"}`}
-          >
-            <span className="block font-bold">{TYPE_LABEL[t].title}</span>
-            <span className="text-xs text-ink-2">{TYPE_LABEL[t].desc}</span>
-          </button>
-        ))}
-      </div>
-
-      <label className="grid gap-1.5 text-xs font-semibold text-ink-2">
-        Zone d&apos;activité
-        <input value={zone} onChange={(e) => setZone(e.target.value)} className={field} />
-      </label>
-
-      <label className="grid gap-1.5 text-xs font-semibold text-ink-2">
-        Recevoir mes ventes sur
-        <input placeholder="MTN MoMo · 01 xx xx xx xx" value={paymentInfo} onChange={(e) => setPaymentInfo(e.target.value)} className={field} />
-      </label>
-
-      {error && <p className="rounded-xl border border-down/30 bg-down/10 px-3 py-2 text-sm text-down">{error}</p>}
-
-      <button type="button" disabled={busy} onClick={submit} className="rounded-xl bg-brand py-3.5 text-sm font-bold text-on-brand disabled:opacity-60">
-        {busy ? "Envoi…" : submitLabel}
-      </button>
-      <p className="text-center text-[11px] text-ink-2">Validation par OBP Market sous 24 à 48 h.</p>
-    </div>
-  );
-}
 
 function ProfileCard({ token, profile, onSaved }: { token: string; profile: VendorProfileRecord; onSaved: () => void }) {
   const [editing, setEditing] = useState(false);
@@ -206,7 +143,6 @@ export default function VendorPage() {
   const { token, ready } = useAuth();
   const [profile, setProfile] = useState<VendorProfileRecord | null | undefined>(undefined);
   const [listings, setListings] = useState<VendorListingRecord[] | null>(null);
-  const [reapply, setReapply] = useState(false);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -256,17 +192,17 @@ export default function VendorPage() {
 
   const shell = (children: React.ReactNode) => <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-8 sm:px-6">{children}</main>;
 
-  // Visiteur non connecté : présentation du programme, avec connexion puis retour ici.
+  // Visiteur non connecté : le programme est sur invitation ; les vendeurs déjà partenaires se connectent ici.
   if (!token) {
     return shell(
       <VendorLanding
         cta={
           <>
             <Link href="/connexion?next=/vendeur" className="rounded-xl bg-white px-7 py-3.5 text-sm font-bold text-[#0a2f1d]">
-              Devenir vendeur
+              Me connecter
             </Link>
-            <Link href="/comment-ca-marche" className="rounded-xl border border-white/40 px-7 py-3.5 text-sm font-bold">
-              Comment ça marche
+            <Link href="/contact" className="rounded-xl border border-white/40 px-7 py-3.5 text-sm font-bold">
+              Nous contacter
             </Link>
           </>
         }
@@ -274,22 +210,24 @@ export default function VendorPage() {
     );
   }
 
-  // Connecté, pas encore vendeur (ou demande refusée à redéposer).
-  if (!profile || (profile.status === "REFUSE" && reapply)) {
+  // Connecté sans compte vendeur : on ne s'inscrit pas librement, on reçoit une invitation d'OBP Market.
+  if (!profile) {
     return shell(
       <div className="grid gap-10">
-        <div className="mx-auto w-full max-w-xl rounded-3xl border border-line bg-surface p-6 sm:p-8">
-          <h1 className="font-display text-2xl font-extrabold">{profile ? "Refaire ma demande" : "Devenir vendeur"}</h1>
-          <p className="mt-1 mb-5 text-sm text-ink-2">
-            Vous gardez votre compte acheteur, votre stock et votre portefeuille. Une fois validé par OBP Market, vous pourrez publier des annonces.
+        <div className="mx-auto w-full max-w-xl rounded-3xl border border-line bg-surface p-6 text-center sm:p-8">
+          <h1 className="font-display text-2xl font-extrabold">Le compte vendeur s&apos;ouvre sur invitation</h1>
+          <p className="mt-2 text-sm leading-relaxed text-ink-2">
+            OBP Market choisit ses vendeurs partenaires. Une fois votre partenariat conclu, vous recevez un lien privé par message : il suffit de
+            l&apos;ouvrir pour activer votre espace vendeur. Vous gardez votre compte acheteur, votre stock et votre portefeuille.
           </p>
-          <VendorForm token={token} initial={profile ?? undefined} submitLabel={profile ? "Renvoyer ma demande" : "Envoyer ma demande"} onDone={() => { setReapply(false); reload(token); }} />
+          <Link href="/contact" className="mt-5 inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
+            Parler à OBP Market
+          </Link>
         </div>
         <VendorLanding cta={null} />
       </div>,
     );
   }
-
   if (profile.status === "EN_ATTENTE") {
     return shell(
       <div className="mx-auto max-w-xl rounded-3xl border border-line bg-surface p-8 text-center">
@@ -313,13 +251,10 @@ export default function VendorPage() {
   if (profile.status === "REFUSE") {
     return shell(
       <div className="mx-auto max-w-xl rounded-3xl border border-down/30 bg-surface p-8 text-center">
-        <h1 className="font-display text-2xl font-extrabold">Demande non retenue</h1>
+        <h1 className="font-display text-2xl font-extrabold">Compte vendeur non retenu</h1>
         <p className="mt-2 text-sm leading-relaxed text-ink-2">{profile.rejectionReason || "Votre demande n'a pas pu être validée pour le moment."}</p>
         <div className="mt-5 flex flex-wrap justify-center gap-3">
-          <button type="button" onClick={() => setReapply(true)} className="rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
-            Refaire une demande
-          </button>
-          <Link href="/contact" className="rounded-xl border border-line px-6 py-3 text-sm font-bold hover:bg-surface-2">
+          <Link href="/contact" className="rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
             Nous contacter
           </Link>
         </div>
