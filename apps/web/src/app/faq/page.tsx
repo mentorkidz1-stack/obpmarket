@@ -16,15 +16,11 @@ function buildGroups(s: PublicSettings | null) {
   const monthly = s?.storage.monthly ?? true;
   return [
   {
-    title: "Prix et produits",
+    title: "Les produits",
     items: [
       {
         q: "Qui vend les produits ?",
         a: "Les produits sont vendus par OBP Market et par des vendeurs partenaires (producteurs, commerçants, coopératives) choisis et vérifiés par OBP Market. Dans tous les cas, vous payez sur le site et vous récupérez votre commande auprès d'OBP Market.",
-      },
-      {
-        q: "Comment le prix est-il fixé ?",
-        a: "Le prix de chaque produit est fixé par OBP Market, avec un objectif simple : des prix faciles et accessibles pour tous. Il est affiché clairement sur la fiche du produit, avec son évolution sur 7, 30 ou 90 jours.",
       },
       ...(vatRate > 0
         ? [
@@ -34,10 +30,6 @@ function buildGroups(s: PublicSettings | null) {
             },
           ]
         : []),
-      {
-        q: "Pourquoi le prix d'un produit change-t-il ?",
-        a: "Comme dans tout commerce, nos prix s'ajustent avec les approvisionnements, la saison et la demande. La fiche produit montre son évolution sur 7, 30 ou 90 jours.",
-      },
       {
         q: "Le prix de ma commande peut-il changer après l'avoir ajoutée au panier ?",
         a: "Le panier donne une estimation au prix du jour. Le montant exact, TVA comprise, est fixé au moment de la validation de la commande, puis ne bouge plus.",
