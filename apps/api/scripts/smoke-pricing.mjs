@@ -65,17 +65,27 @@ try {
   console.log('--- Prix affiché = prix moyen + 7,5 %');
   const list = (await call('GET', '/reference-prices'))[1];
   const row = list.find((p) => p.productId === product.id);
-  ok('marketValue conservée', typeof row.marketValue, 'number');
-  ok('value = moyenne des marchés × 1,075', row.value, Math.round(row.marketValue * 1.075));
+  // La méthode de calcul ne doit pas fuiter dans l'API publique ; le personnel et les agents voient la moyenne brute.
+  ok('API publique : pas de moyenne des marchés', 'marketValue' in row, false);
+  ok('API publique : pas de nombre de relevés', 'readingsCount' in row, false);
+  ok('API publique : pas de nombre de marchés', 'marketsCount' in row, false);
+  ok('moyenne brute refusée au public', (await call('GET', '/reference-prices/market'))[0], 401);
+  ok('moyenne brute refusée à un client', (await call('GET', '/reference-prices/market', B))[0], 403);
+  ok('prix par marché refusé au public', (await call('GET', `/products/${product.id}/reference-price/markets`))[0], 401);
+  const market = (await call('GET', '/reference-prices/market', admin))[1].find((p) => p.productId === product.id);
+  ok('personnel : moyenne brute et relevés visibles', typeof market.readingsCount, 'number');
+  ok('value = moyenne des marchés × 1,075', row.value, Math.round(market.value * 1.075));
+  const histo = (await call('GET', `/products/${product.id}/reference-price/history?days=30`))[1];
+  ok('historique public : pas de détail de calcul', histo.some((h) => 'readingsCount' in h || 'marketValue' in h), false);
   const single = (await call('GET', `/products/${product.id}/reference-price`))[1];
   ok('fiche produit : même prix affiché', single.value, row.value);
   await call('PATCH', '/settings', admin, { markupPct: 10 });
   const at10 = (await call('GET', '/reference-prices'))[1].find((p) => p.productId === product.id);
-  ok('majoration réglable (10 %)', at10.value, Math.round(at10.marketValue * 1.1));
+  ok('majoration réglable (10 %)', at10.value, Math.round(market.value * 1.1));
   await call('PATCH', '/settings', admin, { markupPct: 7.5 });
 
   console.log('--- TVA sur la commande');
-  const unit = Math.round(row.marketValue * 1.075);
+  const unit = Math.round(market.value * 1.075);
   r = await call('POST', '/orders', B, { items: [{ productId: product.id, quantity: 2 }] });
   ok('commande créée', r[0], 201);
   orderIds.push(r[1]?.id);
@@ -135,7 +145,7 @@ try {
   await call('POST', `/orders/${sale[1].id}/confirm-payment`, admin);
   const wallet = (await call('GET', '/wallet/mine', sellerLogin.accessToken))[1];
   const credit = wallet.transactions.find((t) => t.amount > 0);
-  const gross = row.marketValue * 2;
+  const gross = market.value * 2;
   // 2 unités du lot de 45 jours : 2 × 20 000 × 2,5 % = 1 000 F ; commission de revente 5 %.
   ok('crédit du vendeur = brut − commission − frais de stockage', Math.round(credit?.amount ?? -1), Math.round(gross - gross * 0.05 - 1000));
   ok('le motif mentionne les frais de stockage', /frais de stockage/.test(credit?.reason ?? ''), true);

@@ -1,7 +1,6 @@
-import { getBanners, getLatestReferencePrices, getMarkets, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
+import { getBanners, getLatestReferencePrices, getProducts, getProperties, parseProductPhotos } from "@/lib/api";
 import { HomeFeed } from "@/components/home-feed";
 import { PROPERTY_TYPES } from "@/lib/property";
-import { formatRelativeTime } from "@/lib/format";
 import { buildHomeFeed } from "@/lib/home-feed";
 import { HowItWorks } from "@/components/how-it-works";
 import { BannerCarousel } from "@/components/banner-carousel";
@@ -9,19 +8,17 @@ import { CategorySidebar } from "@/components/category-sidebar";
 import { CategoryTiles, type CategoryCount } from "@/components/category-tiles";
 import { PriceMovers } from "@/components/price-movers";
 import { PromoBanners } from "@/components/promo-banners";
-import { MarketStrip } from "@/components/market-strip";
 import { TrustStrip } from "@/components/trust-strip";
 
 // Page régénérée au plus toutes les 30 s : servie instantanément depuis le CDN, sans attendre l'API.
 export const revalidate = 30;
 
 export default async function Home() {
-  let products, prices, markets, banners, properties;
+  let products, prices, banners, properties;
   try {
-    [products, prices, markets, banners, properties] = await Promise.all([
+    [products, prices, banners, properties] = await Promise.all([
       getProducts(),
       getLatestReferencePrices(),
-      getMarkets(),
       getBanners(),
       getProperties().catch(() => []),
     ]);
@@ -37,10 +34,6 @@ export default async function Home() {
   }
 
   const priceByProduct = new Map(prices.map((p) => [p.productId, p]));
-  const lastUpdate = prices
-    .map((p) => p.computedAt)
-    .sort()
-    .at(-1);
 
   const categoryCounts = new Map<string, CategoryCount>();
   for (const p of products) {
@@ -60,7 +53,6 @@ export default async function Home() {
   const stats = [
     { label: "Produits", value: products.length },
     { label: "Biens immobiliers", value: properties.length },
-    { label: "Marchés suivis", value: markets.length },
     { label: "Catégories", value: categories.length },
   ];
 
@@ -82,22 +74,14 @@ export default async function Home() {
       <section className={`flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between ${banners.length > 0 ? "mt-8" : "pt-6"}`}>
         <div>
           <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-[30px]">
-            Produits du marché et immobilier, au juste prix.
+            Vos produits du quotidien et l&apos;immobilier, à prix accessibles.
           </h1>
           <p className="mt-1 max-w-xl text-sm text-ink-2">
-            Prix moyens relevés par nos agents sur les marchés du Bénin, et parcelles, maisons et chambres proposés par OBP Market.
+            Produits agricoles, vivriers et électroménagers vendus par OBP Market et ses partenaires, avec retrait au magasin ou livraison. Parcelles, maisons et chambres proposées par OBP.
           </p>
-          {lastUpdate && (
-            <div className="mt-2 flex items-center gap-2 text-[13px] text-ink-2">
-              <span className="size-2 rounded-full bg-accent shadow-[0_0_0_4px_var(--color-accent-soft)]" />
-              <span>
-                Prix mis à jour <span className="font-semibold text-ink">{formatRelativeTime(lastUpdate)}</span>
-              </span>
-            </div>
-          )}
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:flex sm:gap-3">
           {stats.map((s) => (
             <div key={s.label} className="rounded-2xl border border-line bg-surface px-3 py-2.5 text-center sm:min-w-24">
               <p className="font-display text-xl font-extrabold tabular-nums sm:text-2xl">{s.value}</p>
@@ -129,7 +113,6 @@ export default async function Home() {
 
           <PromoBanners />
           <TrustStrip />
-          <MarketStrip markets={markets} />
         </>
       )}
     </main>

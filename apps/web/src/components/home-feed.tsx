@@ -3,7 +3,7 @@ import { ProductCard } from "@/components/product-card";
 import { PropertyCard } from "@/components/property-card";
 import type { FeedItem } from "@/lib/home-feed";
 
-/** « À la une » : produits du marché et biens immobiliers dans une même grille. */
+/** « À la une » : produits et biens immobiliers dans une même grille. */
 export function HomeFeed({ items, productCount, propertyCount }: { items: FeedItem[]; productCount: number; propertyCount: number }) {
   if (items.length === 0) return null;
 
@@ -12,7 +12,7 @@ export function HomeFeed({ items, productCount, propertyCount }: { items: FeedIt
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h2 className="font-display text-xl font-extrabold sm:text-2xl">À la une</h2>
-          <p className="mt-0.5 text-sm text-ink-2">Produits au prix du marché, parcelles, maisons et chambres, au même endroit.</p>
+          <p className="mt-0.5 text-sm text-ink-2">Nos produits, ceux de nos partenaires, parcelles, maisons et chambres : tout au même endroit.</p>
         </div>
         <div className="flex gap-4 text-sm font-semibold text-brand">
           <Link href="/boutique">Les {productCount} produits →</Link>

@@ -3,7 +3,7 @@ import type { ReactNode } from "react";
 import { Photo } from "@/components/photo";
 
 const BENEFITS = [
-  { title: "Un prix de référence honnête", text: "Votre produit est comparé au prix moyen relevé sur les marchés : les acheteurs vous font confiance." },
+  { title: "Une vitrine de confiance", text: "Vos produits sont présentés aux côtés de ceux d'OBP Market, vérifiés par notre équipe : les acheteurs vous font confiance." },
   { title: "OBP Market s'occupe de la vente", text: "Nous vérifions l'annonce, réceptionnons le stock au magasin et encaissons l'acheteur à votre place." },
   { title: "Payé sur votre portefeuille", text: "Dès que le paiement de l'acheteur est confirmé, votre gain est crédité. Retrait vers Mobile Money." },
   { title: "Un compte, tous vos usages", text: "Vous gardez votre compte acheteur, votre stock en dépôt et votre portefeuille." },
@@ -19,7 +19,7 @@ const STEPS = [
 const RULES = [
   "Produits stockables non périssables (céréales, huiles, tubercules séchés, électroménager…).",
   "Au moins 2 photos nettes du produit réel, jusqu'à 6.",
-  "Un prix proche du prix du marché : l'annonce hors de ±10 % est examinée de plus près.",
+  "Un prix cohérent : une annonce trop éloignée du prix de référence indiqué dans le formulaire est examinée de plus près.",
   "Le stock doit être déposé au magasin OBP Market : l'annonce n'est achetable qu'à réception.",
 ];
 
@@ -36,7 +36,7 @@ export function VendorLanding({ cta }: { cta: ReactNode }) {
           <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-white/60">Vendeurs partenaires</p>
           <h1 className="mt-2 font-display text-3xl font-extrabold leading-tight sm:text-5xl">Le programme vendeurs partenaires</h1>
           <p className="mt-4 text-white/80">
-            Un programme sur invitation : OBP Market choisit ses partenaires, vérifie leurs annonces, réceptionne le stock et le vend au juste prix. Vous êtes payé dès que l&apos;acheteur a réglé.
+            Un programme sur invitation : OBP Market choisit ses partenaires, vérifie leurs annonces, réceptionne le stock et le vend pour vous. Vous êtes payé dès que l&apos;acheteur a réglé.
           </p>
           <div className="mt-7 flex flex-wrap items-center gap-3">{cta}</div>
         </div>

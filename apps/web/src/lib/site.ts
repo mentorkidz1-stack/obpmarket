@@ -6,9 +6,9 @@
 export const SITE = {
   name: "OBP Market",
   url: (process.env.NEXT_PUBLIC_SITE_URL ?? "https://obpmarket.vercel.app").replace(/\/$/, ""),
-  tagline: "Le juste prix, du marché à l'immobilier.",
+  tagline: "Des prix accessibles, pour tous.",
   description:
-    "OBP Market : prix moyen en temps réel des produits agricoles, vivriers et électroménagers au Bénin, et parcelles, maisons, chambres et guest houses proposés par OBP Market.",
+    "OBP Market : produits agricoles, vivriers et électroménagers à prix accessibles, vendus par OBP et ses partenaires, avec retrait au magasin ou livraison au Bénin. Parcelles, maisons, chambres et guest houses proposés par OBP.",
   company: {
     legalName: process.env.NEXT_PUBLIC_COMPANY_NAME ?? "ONE BUILD PLUS GROUPE",
     shortName: "OBP",

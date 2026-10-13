@@ -14,7 +14,6 @@ import {
   type Product,
   type ReferencePrice,
   type VendorListingRecord,
-  marketPrice,
 } from "@/lib/api";
 import { resizeImageFile } from "@/lib/image";
 import { formatFCFA } from "@/lib/format";
@@ -74,7 +73,7 @@ export function VendorListingForm({ listingId }: { listingId?: string }) {
         } else if (stockable[0]) {
           setProductId(stockable[0].id);
           const ref = refs.find((r) => r.productId === stockable[0].id);
-          if (ref) setPriceInput(String(Math.round(marketPrice(ref))));
+          if (ref) setPriceInput(String(Math.round(ref.value)));
         }
       },
     );
@@ -86,7 +85,7 @@ export function VendorListingForm({ listingId }: { listingId?: string }) {
   const deviation = useMemo(() => {
     const price = Number(priceInput);
     if (!reference || !price) return null;
-    return (price - marketPrice(reference)) / marketPrice(reference);
+    return (price - reference.value) / reference.value;
   }, [priceInput, reference]);
   const outOfBand = deviation != null && Math.abs(deviation) > PRICE_BAND;
 
@@ -185,7 +184,7 @@ export function VendorListingForm({ listingId }: { listingId?: string }) {
             onChange={(e) => {
               setProductId(e.target.value);
               const ref = prices.get(e.target.value);
-              if (ref) setPriceInput(String(Math.round(marketPrice(ref))));
+              if (ref) setPriceInput(String(Math.round(ref.value)));
             }}
             className="rounded-xl border border-line bg-surface px-3 py-2.5 text-sm outline-none focus:border-brand disabled:opacity-70"
           >
@@ -232,7 +231,7 @@ export function VendorListingForm({ listingId }: { listingId?: string }) {
           </div>
           {reference ? (
             <p className={`mt-1.5 text-xs ${outOfBand ? "font-semibold text-down" : "text-ink-2"}`}>
-              Prix du marché : {formatFCFA(marketPrice(reference))} F
+              Prix de référence : {formatFCFA(reference.value)} F
               {deviation != null && ` · écart ${deviation >= 0 ? "+" : ""}${(deviation * 100).toFixed(1)} %`}
               {outOfBand && ` · en dehors de ±${PRICE_BAND * 100} % du marché, l'annonce sera examinée de plus près`}
             </p>

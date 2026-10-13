@@ -14,8 +14,10 @@ export class ReferencePricesController {
     return this.referencePrices.toSelling(await this.referencePrices.latestForProduct(productId));
   }
 
-  /** Prix par marché (public, sans données d'agent). */
+  /** Prix relevé dans chaque marché : réservé au personnel (le public ne voit que le prix affiché). */
   @Get('markets')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(Role.GESTIONNAIRE_PRIX, Role.GESTIONNAIRE_LIQUIDITE, Role.ADMIN)
   markets(@Param('productId') productId: string) {
     return this.referencePrices.marketsForProduct(productId);
   }

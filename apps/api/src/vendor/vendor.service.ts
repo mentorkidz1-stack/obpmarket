@@ -9,6 +9,7 @@ import type { CreateVendorListingDto } from './dto/create-vendor-listing.dto.js'
 import type { ReviewDto } from './dto/review.dto.js';
 import { DepotsService } from '../depots/depots.service.js';
 import { VendorInvitesService } from './vendor-invites.service.js';
+import { SettingsService } from '../settings/settings.service.js';
 import { NotificationsService } from '../notifications/notifications.service.js';
 import type { UpdateVendorListingDto, UpdateVendorProfileDto } from './dto/update-vendor-listing.dto.js';
 
@@ -29,6 +30,7 @@ export class VendorService {
     private readonly notifications: NotificationsService,
     private readonly depots: DepotsService,
     private readonly invites: VendorInvitesService,
+    private readonly settings: SettingsService,
   ) {}
 
   // ---------- Compte vendeur (VEN-01 à VEN-03) ----------
@@ -246,10 +248,13 @@ export class VendorService {
       orderBy: { createdAt: 'asc' },
     });
 
-    // RG-16 : signale au modérateur les annonces dont le prix sort de la fourchette.
+    // RG-16 : signale au modérateur les annonces dont le prix sort de la fourchette. La référence est le prix affiché
+    // au public : le vendeur le voit sur le site, et sa fourchette ne dépend pas d'une moyenne qu'il ne connaît pas.
+    const s = await this.settings.get();
     return Promise.all(
       listings.map(async (l) => {
-        const reference = await this.referencePrices.latestForProduct(l.productId);
+        const row = await this.referencePrices.latestForProduct(l.productId);
+        const reference = row ? { value: this.settings.sellingPrice(row.value, s) } : null;
         const deviation = reference ? (l.unitPrice - reference.value) / reference.value : null;
         return {
           ...l,

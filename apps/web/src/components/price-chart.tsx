@@ -19,7 +19,7 @@ export function PriceChart({ history }: { history: ReferencePrice[] }) {
   if (data.length === 1) {
     return (
       <p className="py-8 text-center text-sm text-ink-2">
-        Un seul relevé pour l&apos;instant : <Money value={data[0].v} />.
+        Prix actuel : <Money value={data[0].v} />. L&apos;évolution s&apos;affichera au fil des jours.
       </p>
     );
   }
@@ -56,7 +56,7 @@ export function PriceChart({ history }: { history: ReferencePrice[] }) {
 
   return (
     <div>
-      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Évolution du prix moyen dans le temps">
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full" role="img" aria-label="Évolution du prix dans le temps">
         {ticks.map((tv, i) => (
           <g key={i}>
             <line x1={PAD_L} x2={W - PAD_R} y1={y(tv)} y2={y(tv)} stroke="var(--color-line)" strokeWidth="1" />

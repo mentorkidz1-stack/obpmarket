@@ -2,8 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  getLatestReferencePrices,
-  marketPrice,
+  getMarketReferencePrices,
   getMyMarkets,
   getProducts,
   submitPriceReading,
@@ -41,7 +40,7 @@ export function FieldApp({ token, agent, onLogout }: { token: string; agent: Aut
   const [sessionCount, setSessionCount] = useState(0);
 
   useEffect(() => {
-    Promise.all([getProducts(), getMyMarkets(token), getLatestReferencePrices()])
+    Promise.all([getProducts(), getMyMarkets(token), getMarketReferencePrices(token)])
       .then(([products, markets, prices]) => {
         if (markets.length === 0) {
           setState({ status: "error", message: "Aucun marché ne vous est affecté pour l'instant. Contactez le gestionnaire des prix." });
@@ -64,7 +63,7 @@ export function FieldApp({ token, agent, onLogout }: { token: string; agent: Aut
   const deviation = useMemo(() => {
     const price = Number(priceInput);
     if (!reference || !price || !Number.isFinite(price)) return null;
-    return ((price - marketPrice(reference)) / marketPrice(reference)) * 100;
+    return ((price - reference.value) / reference.value) * 100;
   }, [priceInput, reference]);
 
   function locate() {
@@ -243,7 +242,7 @@ export function FieldApp({ token, agent, onLogout }: { token: string; agent: Aut
         {reference ? (
           <>
             <span className="rounded-full bg-surface-2 px-2.5 py-1 font-mono text-ink-2">
-              Moyenne : {formatFCFA(marketPrice(reference))} F · {formatRelativeTime(reference.computedAt)}
+              Moyenne : {formatFCFA(reference.value)} F · {formatRelativeTime(reference.computedAt)}
             </span>
             {deviation !== null && (
               <span

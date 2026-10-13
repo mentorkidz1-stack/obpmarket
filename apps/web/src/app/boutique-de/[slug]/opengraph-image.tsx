@@ -27,7 +27,7 @@ export default async function ShopOpengraphImage(props: { params: Promise<{ slug
             <div style={{ display: "flex", fontSize: 34, opacity: 0.88 }}>{lines}</div>
           </div>
         </div>
-        <div style={{ display: "flex", fontSize: 30, opacity: 0.85 }}>Produits au prix du marché · paiement sécurisé · retrait ou livraison</div>
+        <div style={{ display: "flex", fontSize: 30, opacity: 0.85 }}>Des prix accessibles · paiement sécurisé · retrait ou livraison</div>
       </div>
     ),
     size,

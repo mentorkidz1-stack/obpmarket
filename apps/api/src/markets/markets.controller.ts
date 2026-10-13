@@ -13,9 +13,11 @@ const MANAGE = [Role.GESTIONNAIRE_PRIX, Role.ADMIN];
 export class MarketsController {
   constructor(private readonly markets: MarketsService) {}
 
-  // ---- Public : nom, ville et position des marchés suivis ----
+  // ---- Réservé au personnel : la liste des marchés relevés ne fait pas partie des données publiques ----
 
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...MANAGE)
   findAll() {
     return this.markets.findAll();
   }
@@ -59,6 +61,8 @@ export class MarketsController {
   }
 
   @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles(...MANAGE)
   findOne(@Param('id') id: string) {
     return this.markets.findOne(id);
   }

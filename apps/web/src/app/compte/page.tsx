@@ -8,7 +8,7 @@ import { PageHero } from "@/components/page-hero";
 
 const CARDS = [
   { href: "/commandes", title: "Mes commandes", text: "Suivez vos paiements et retrouvez vos bons de retrait.", icon: <><rect x="4" y="3.5" width="16" height="17" rx="2.2" /><path d="M8 8.5h8M8 12.5h8M8 16.5h5" /></> },
-  { href: "/mon-stock", title: "Mon stock", text: "Vos produits en dépôt, valorisés au prix du marché.", icon: <><path d="M3.5 8.5L12 4l8.5 4.5v8L12 21l-8.5-4.5z" /><path d="M3.5 8.5L12 13l8.5-4.5M12 13v8" /></> },
+  { href: "/mon-stock", title: "Mon stock", text: "Vos produits en dépôt, avec leur valeur du jour.", icon: <><path d="M3.5 8.5L12 4l8.5 4.5v8L12 21l-8.5-4.5z" /><path d="M3.5 8.5L12 13l8.5-4.5M12 13v8" /></> },
   { href: "/portefeuille", title: "Portefeuille", text: "Votre solde et vos retraits vers Mobile Money.", icon: <><rect x="3" y="6" width="18" height="13" rx="2.2" /><path d="M3 10h18M16.5 14.5h.01" /></> },
   { href: "/notifications", title: "Notifications", text: "Vos alertes, ventes et suivis de commande.", icon: <><path d="M6 9a6 6 0 1 1 12 0c0 5 2 6.5 2 6.5H4S6 14 6 9z" /><path d="M10 19a2 2 0 0 0 4 0" /></> },
   { href: "/alertes", title: "Alertes de prix", text: "Soyez prévenu quand un prix baisse.", icon: <><path d="M4 17l5-5 4 4 7-8" /><path d="M15 8h5v5" /></> },

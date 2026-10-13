@@ -2,23 +2,23 @@ import Link from "next/link";
 
 const STEPS = [
   {
-    title: "Nos agents relèvent les prix",
-    text: "Sur les marchés du Bénin, des agents notent chaque jour le prix réel des produits.",
-    icon: <><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" /><circle cx="12" cy="9.5" r="2.4" /></>,
+    title: "Vous choisissez",
+    text: "Parcourez les produits d'OBP Market et de ses vendeurs partenaires, à des prix accessibles.",
+    icon: <><circle cx="11" cy="11" r="6.5" /><path d="M16 16l4.5 4.5" /></>,
   },
   {
-    title: "OBP calcule le prix moyen",
-    text: "Les relevés sont croisés pour obtenir un prix de référence juste, mis à jour en continu.",
-    icon: <><path d="M4 19V9M10 19V5M16 19v-8M22 19H2" /></>,
+    title: "Vous commandez",
+    text: "Ajoutez au panier et payez en toute sécurité par Mobile Money ou carte bancaire.",
+    icon: <><path d="M4 5h2l1.8 9h9.4l1.8-6.5H7" /><circle cx="9.5" cy="18.5" r="1.3" /><circle cx="16.5" cy="18.5" r="1.3" /></>,
   },
   {
-    title: "Vous achetez, retirez ou déposez",
-    text: "Payez par Mobile Money ou carte, puis retirez au magasin ou laissez le produit en dépôt à votre nom.",
+    title: "Vous retirez ou vous êtes livré",
+    text: "Récupérez votre commande au magasin avec votre bon de retrait, ou faites-vous livrer à domicile. Vous pouvez aussi la laisser en dépôt à votre nom.",
     icon: <><rect x="3" y="7" width="18" height="13" rx="2" /><path d="M3 11h18M8 3.5v4M16 3.5v4" /></>,
   },
   {
     title: "Revendez quand vous voulez",
-    text: "Remettez votre stock en vente au prix du marché, ou demandez une offre de rachat à OBP.",
+    text: "Remettez les produits que vous avez en dépôt en vente, ou demandez une offre de rachat à OBP.",
     icon: <><path d="M7 7h11l-3-3M17 17H6l3 3" /></>,
   },
 ];
@@ -28,7 +28,7 @@ export function HowItWorks() {
     <section className="mt-10 rounded-3xl bg-brand-soft px-5 py-9 sm:px-9 sm:py-11">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">Simple et transparent</p>
+          <p className="text-[11px] font-bold uppercase tracking-[0.18em] text-brand">Simple et rapide</p>
           <h2 className="mt-1 font-display text-2xl font-extrabold sm:text-3xl">Comment ça marche</h2>
         </div>
         <Link href="/comment-ca-marche" className="text-sm font-bold text-brand">

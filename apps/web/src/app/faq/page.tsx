@@ -5,7 +5,7 @@ import { getPublicSettings, type PublicSettings } from "@/lib/api";
 
 export const metadata: Metadata = {
   title: "Questions fréquentes",
-  description: "Réponses aux questions les plus courantes : prix, paiement, retrait, dépôt, revente et compte vendeur.",
+  description: "Réponses aux questions les plus courantes : produits, paiement, retrait et livraison, dépôt, revente et compte vendeur.",
 };
 
 /** Les chiffres (TVA, durée gratuite, frais de stockage) viennent des réglages du site : ils suivent toujours ce que fixe l'administration. */
@@ -19,8 +19,12 @@ function buildGroups(s: PublicSettings | null) {
     title: "Prix et produits",
     items: [
       {
+        q: "Qui vend les produits ?",
+        a: "Les produits sont vendus par OBP Market et par des vendeurs partenaires (producteurs, commerçants, coopératives) choisis et vérifiés par OBP Market. Dans tous les cas, vous payez sur le site et vous récupérez votre commande auprès d'OBP Market.",
+      },
+      {
         q: "Comment le prix est-il fixé ?",
-        a: "Le prix affiché est établi à partir de la moyenne des relevés réalisés par nos agents sur plusieurs marchés du Bénin. Il est recalculé à chaque nouveau relevé, et vous voyez la date de la dernière mise à jour sur chaque produit.",
+        a: "Le prix de chaque produit est fixé par OBP Market, avec un objectif simple : des prix faciles et accessibles pour tous. Il est affiché clairement sur la fiche du produit, avec son évolution sur 7, 30 ou 90 jours.",
       },
       ...(vatRate > 0
         ? [
@@ -32,7 +36,7 @@ function buildGroups(s: PublicSettings | null) {
         : []),
       {
         q: "Pourquoi le prix d'un produit change-t-il ?",
-        a: "Les prix des marchés évoluent avec l'offre, la saison et la demande. Le prix OBP Market suit ces variations ; la fiche produit montre son évolution sur 7, 30 ou 90 jours.",
+        a: "Comme dans tout commerce, nos prix s'ajustent avec les approvisionnements, la saison et la demande. La fiche produit montre son évolution sur 7, 30 ou 90 jours.",
       },
       {
         q: "Le prix de ma commande peut-il changer après l'avoir ajoutée au panier ?",
@@ -40,7 +44,7 @@ function buildGroups(s: PublicSettings | null) {
       },
       {
         q: "Comment être prévenu quand un prix baisse ?",
-        a: "Sur la fiche d'un produit, cliquez sur « Me prévenir si le prix baisse » et indiquez le prix visé. Dès que le prix du marché passe sous ce seuil, vous recevez une notification dans votre compte (et sur WhatsApp si vous l'avez activé). L'alerte s'arrête ensuite ; vous pouvez en créer une nouvelle.",
+        a: "Sur la fiche d'un produit, cliquez sur « Me prévenir si le prix baisse » et indiquez le prix visé. Dès que le prix du produit passe sous ce seuil, vous recevez une notification dans votre compte (et sur WhatsApp si vous l'avez activé). L'alerte s'arrête ensuite ; vous pouvez en créer une nouvelle.",
       },
       {
         q: "Puis-je voir les prix dans une autre devise ?",
@@ -70,7 +74,7 @@ function buildGroups(s: PublicSettings | null) {
     items: [
       {
         q: "Qu'est-ce que le dépôt ?",
-        a: "Pour les produits stockables, vous pouvez choisir « Je laisse en dépôt » : le produit reste stocké chez OBP Market, à votre nom. Vous le retrouvez dans « Mon stock », valorisé au prix du marché du jour.",
+        a: "Pour les produits stockables, vous pouvez choisir « Je laisse en dépôt » : le produit reste stocké chez OBP Market, à votre nom. Vous le retrouvez dans « Mon stock », avec sa valeur du jour.",
       },
       {
         q: "Combien de temps puis-je garder mes produits au magasin ?",
@@ -116,7 +120,7 @@ function buildGroups(s: PublicSettings | null) {
       },
       {
         q: "Comment publier une annonce ?",
-        a: "Choisissez le produit, la quantité, votre prix et ajoutez au moins 2 photos. L'équipe OBP Market vérifie l'annonce ; elle est signalée au modérateur si votre prix s'écarte trop du prix du marché. L'annonce est mise en vente après réception du stock au magasin.",
+        a: "Choisissez le produit, la quantité, votre prix et ajoutez au moins 2 photos. L'équipe OBP Market vérifie l'annonce ; elle est examinée de plus près si votre prix s'écarte trop du prix de référence indiqué dans le formulaire. L'annonce est mise en vente après réception du stock au magasin.",
       },
       {
         q: "Mon annonce est « À corriger », que faire ?",

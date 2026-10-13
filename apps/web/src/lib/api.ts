@@ -172,19 +172,13 @@ export interface ReferencePrice {
   id: string;
   productId: string;
   value: number;
-  readingsCount: number;
-  marketsCount: number;
-  windowHours: number;
+  /** Détail du calcul : réservé au personnel et aux agents (absent de l'API publique). */
+  readingsCount?: number;
+  marketsCount?: number;
+  windowHours?: number;
   computedAt: string;
   /** Variation sur 7 jours, en points de pourcentage — présent seulement sur la liste globale. */
   changePct7d?: number | null;
-  /** `value` est le prix affiché (hors taxe) : moyenne des marchés + majoration. `marketValue` est la moyenne brute. */
-  marketValue?: number;
-}
-
-/** Moyenne brute des relevés des marchés (sans la majoration) : à utiliser pour comparer aux relevés des agents. */
-export function marketPrice(p: Pick<ReferencePrice, "value" | "marketValue">): number {
-  return p.marketValue ?? p.value;
 }
 
 export function getProducts() {
@@ -197,6 +191,14 @@ export function getProduct(id: string) {
 
 export function updateProductPhotos(token: string, id: string, photos: string[]): Promise<Product> {
   return authJson<Product>(`/products/${id}/photos`, token, "PATCH", { photos });
+}
+
+/**
+ * Moyenne brute des relevés, par produit : réservée aux agents de terrain et au personnel. Le site public ne reçoit
+ * que le prix affiché, jamais la moyenne ni le nombre de relevés.
+ */
+export function getMarketReferencePrices(token: string) {
+  return authFetch<ReferencePrice[]>("/reference-prices/market", token);
 }
 
 export function getLatestReferencePrices() {
@@ -263,9 +265,6 @@ export async function staffLogin(email: string, password: string): Promise<{ acc
   return res.json();
 }
 
-export function getMarkets() {
-  return apiFetch<Market[]>("/markets");
-}
 
 /** Agents de terrain (back-office : affectation aux marchés). */
 export function getAgents(token: string) {
@@ -778,20 +777,6 @@ export function savePriceAlert(token: string, productId: string, targetPrice: nu
 
 export function deletePriceAlert(token: string, id: string) {
   return authFetch<{ deleted: boolean }>(`/price-alerts/${id}`, token, { method: "DELETE" });
-}
-
-export interface MarketPrice {
-  marketId: string;
-  name: string;
-  city: string;
-  price: number;
-  recordedAt: string;
-  readings: number;
-}
-
-/** Prix relevé dans chaque marché pour le dernier prix de référence (public, sans données d'agent). */
-export function getMarketPrices(productId: string) {
-  return apiFetch<MarketPrice[]>(`/products/${productId}/reference-price/markets`);
 }
 
 export interface ContactMessageRecord {

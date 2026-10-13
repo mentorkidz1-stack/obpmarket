@@ -5,7 +5,7 @@ import { PageHero } from "@/components/page-hero";
 
 export const metadata: Metadata = {
   title: "Boutiques vendeurs",
-  description: "Les vendeurs partenaires d'OBP Market : produits au prix du marché, paiement sécurisé, retrait ou livraison.",
+  description: "Les vendeurs partenaires d'OBP Market : des produits à prix accessibles, paiement sécurisé, retrait ou livraison.",
 };
 
 const TYPE_LABEL = { PARTICULIER: "Particulier", PROFESSIONNEL: "Professionnel", COOPERATIVE: "Coopérative" } as const;

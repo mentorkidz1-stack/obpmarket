@@ -20,7 +20,7 @@ export async function generateMetadata(props: PageProps<"/boutique-de/[slug]">):
   const { slug } = await props.params;
   const shop = await load(slug);
   if (!shop) return { title: "Boutique introuvable" };
-  const description = shop.description?.slice(0, 160) || `${shop.name} : produits au prix du marché, vendus et livrés par ${SITE.name}.`;
+  const description = shop.description?.slice(0, 160) || `${shop.name} : produits à prix accessibles, vendus et livrés par ${SITE.name}.`;
   return {
     title: `${shop.name} · boutique vendeur`,
     description,
@@ -57,7 +57,7 @@ export default async function ShopPage(props: PageProps<"/boutique-de/[slug]">) 
         {shop.listings.length === 0 ? (
           <div className="mx-auto max-w-md rounded-2xl border border-line bg-surface p-10 text-center">
             <p className="font-display text-lg font-extrabold">Aucun produit en vente pour le moment</p>
-            <p className="mt-1 text-sm text-ink-2">Cette boutique renouvelle son stock régulièrement. Découvrez en attendant tous les produits au prix du marché.</p>
+            <p className="mt-1 text-sm text-ink-2">Cette boutique renouvelle son stock régulièrement. Découvrez en attendant tous les produits d&apos;OBP Market.</p>
             <Link href="/boutique" className="mt-5 inline-block rounded-xl bg-brand px-6 py-3 text-sm font-bold text-on-brand">
               Voir la boutique
             </Link>
@@ -72,8 +72,8 @@ export default async function ShopPage(props: PageProps<"/boutique-de/[slug]">) 
 
         <section className="mt-10 grid gap-3 rounded-2xl border border-line bg-surface p-5 text-sm sm:grid-cols-3">
           <div>
-            <p className="font-display font-bold">Prix du marché</p>
-            <p className="text-ink-2">Vous payez le prix moyen relevé sur les marchés le jour de votre commande.</p>
+            <p className="font-display font-bold">Prix clairs</p>
+            <p className="text-ink-2">Le prix affiché est le prix que vous payez le jour de votre commande, taxes comprises ou non selon votre affichage.</p>
           </div>
           <div>
             <p className="font-display font-bold">Paiement sécurisé</p>

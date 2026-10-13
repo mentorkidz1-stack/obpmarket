@@ -32,7 +32,7 @@ const plexMono = IBM_Plex_Mono({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE.url),
-  title: { default: `${SITE.name} — Prix du marché`, template: `%s · ${SITE.name}` },
+  title: { default: `${SITE.name} — Des prix accessibles`, template: `%s · ${SITE.name}` },
   description: SITE.description,
   applicationName: SITE.name,
   openGraph: {

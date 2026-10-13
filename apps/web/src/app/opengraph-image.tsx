@@ -20,8 +20,8 @@ export default function OpengraphImage() {
           <div style={{ fontSize: 56, fontWeight: 800, letterSpacing: -1 }}>OBP Market</div>
         </div>
         <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <div style={{ fontSize: 76, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2 }}>Le juste prix, du marché à l&apos;immobilier.</div>
-          <div style={{ fontSize: 34, opacity: 0.85 }}>Produits au prix du marché · Parcelles · Maisons · Chambres — Bénin</div>
+          <div style={{ fontSize: 76, fontWeight: 800, lineHeight: 1.05, letterSpacing: -2 }}>Des prix accessibles, pour tous.</div>
+          <div style={{ fontSize: 34, opacity: 0.85 }}>Produits du quotidien · Parcelles · Maisons · Chambres — Bénin</div>
         </div>
       </div>
     ),

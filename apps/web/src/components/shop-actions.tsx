@@ -40,7 +40,7 @@ function WhatsAppIcon() {
 export function ShopShare({ slug, name, text, className = "" }: { slug: string; name: string; text?: string; className?: string }) {
   const { notify } = useUI();
   const url = shopUrl(slug);
-  const message = text ?? `Découvrez ma boutique « ${name} » sur ${SITE.name} : produits au prix du marché.`;
+  const message = text ?? `Découvrez ma boutique « ${name} » sur ${SITE.name} : des produits à prix accessibles.`;
 
   function count() {
     void recordShopEvent(slug, "PARTAGE");

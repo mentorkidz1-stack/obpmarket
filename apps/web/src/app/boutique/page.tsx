@@ -5,7 +5,7 @@ import { ShopCatalog } from "@/components/shop-catalog";
 
 export const metadata: Metadata = {
   title: "Boutique",
-  description: "Tous les produits au prix moyen du marché : céréales, huiles, légumes, tubercules et électroménager au Bénin.",
+  description: "Tous les produits OBP Market à prix accessibles : céréales, huiles, légumes, tubercules et électroménager au Bénin.",
 };
 
 const first = (v: string | string[] | undefined) => (typeof v === "string" ? v : undefined);
@@ -38,7 +38,7 @@ export default async function ShopPage(props: PageProps<"/boutique">) {
 
   return (
     <>
-      <PageHero title="Boutique" crumb="Boutique" subtitle="Chaque prix est la moyenne des relevés faits par nos agents sur les marchés du Bénin." />
+      <PageHero title="Boutique" crumb="Boutique" subtitle="Des produits du quotidien à prix accessibles, avec retrait au magasin ou livraison." />
       <main className="mx-auto w-full max-w-6xl flex-1 px-4 py-8 sm:px-6">
         <ShopCatalog key={JSON.stringify(initial)} products={products} prices={priceByProduct} initial={initial} />
       </main>

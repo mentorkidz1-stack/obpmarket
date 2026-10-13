@@ -18,7 +18,8 @@ ok("créer un utilisateur ADMIN sans connexion", (await call("POST", "/users", n
 ok("lister les utilisateurs sans connexion", (await call("GET", "/users", null))[0], 401);
 ok("créer un produit sans connexion", (await call("POST", "/products", null, { name: "x", categoryId: "x", unitLabel: "x" }))[0], 401);
 ok("créer une catégorie sans connexion", (await call("POST", "/products/categories", null, { name: "x" }))[0], 401);
-ok("créer un marché sans connexion", (await call("POST", "/markets", null, { name: "x", city: "x", latitude: 6, longitude: 2 }))[0], 401);
+ok("liste des marchés relevés refusée au public", (await call("GET", "/markets", null))[0], 401);
+ok("créer un marché sans connexion",(await call("POST", "/markets", null, { name: "x", city: "x", latitude: 6, longitude: 2 }))[0], 401);
 ok("affecter un agent sans connexion", (await call("POST", "/markets/a/agents/b", null))[0], 401);
 ok("recalcul de prix sans connexion", (await call("POST", "/products/x/reference-price/recompute", null))[0], 401);
 ok("relevé de prix sans connexion", (await call("POST", "/price-readings", null, { productId: "x", marketId: "x", price: 1 }))[0], 401);

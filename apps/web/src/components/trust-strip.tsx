@@ -1,8 +1,8 @@
 const ITEMS = [
   {
     icon: <path d="M12 2.5l2.3 5.6 6 .5-4.6 4 1.4 5.9L12 15.7l-5.1 2.8 1.4-5.9-4.6-4 6-.5z" />,
-    title: "Prix juste",
-    text: "Calculé sur les relevés terrain",
+    title: "Prix accessibles",
+    text: "Des produits pour tous les budgets",
   },
   {
     icon: (

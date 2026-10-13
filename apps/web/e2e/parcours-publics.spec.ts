@@ -34,6 +34,16 @@ test.describe("Accueil", () => {
     await expect(page.getByRole("link", { name: /Maïs blanc/ }).first()).toBeVisible();
   });
 
+  test("aucune page publique ne dévoile la méthode de calcul du prix", async ({ page }) => {
+    for (const path of ["/", "/boutique", "/comment-ca-marche", "/faq", "/conditions"]) {
+      await page.goto(path);
+      const body = (await page.locator("body").innerText()).toLowerCase();
+      for (const mot of ["relevés", "marchés suivis", "prix moyen", "nos agents", "juste prix", "prix du marché"]) {
+        expect(body, `« ${mot} » sur ${path}`).not.toContain(mot);
+      }
+    }
+  });
+
   test("le lien d'accès rapide au contenu existe", async ({ page }) => {
     await page.goto("/");
     await page.keyboard.press("Tab");
@@ -72,12 +82,16 @@ test.describe("Boutique", () => {
 });
 
 test.describe("Fiche produit", () => {
-  test("montre le prix par marché et propose l'alerte de prix", async ({ page }) => {
+  test("montre le prix de vente sans révéler son calcul et propose l'alerte de prix", async ({ page }) => {
     await page.goto("/boutique");
     await page.getByRole("link", { name: /Gari/ }).first().click();
     await expect(page).toHaveURL(/\/produits\//);
-    await expect(page.getByRole("heading", { name: "Prix relevé dans chaque marché" })).toBeVisible();
-    await expect(page.getByText("Le moins cher")).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Évolution du prix" })).toBeVisible();
+    // La méthode de calcul du prix n'est jamais présentée au public : ni marchés, ni relevés, ni moyenne.
+    const body = (await page.locator("body").innerText()).toLowerCase();
+    for (const mot of ["relevé", "marchés", "prix moyen", "nos agents", "prix du marché"]) {
+      expect(body, `« ${mot} » ne doit pas apparaître sur la fiche produit`).not.toContain(mot);
+    }
     // Hors connexion, l'alerte renvoie vers la connexion en gardant la page de retour.
     await expect(page.getByRole("link", { name: "Me prévenir si le prix baisse" })).toHaveAttribute("href", /connexion\?next=/);
   });

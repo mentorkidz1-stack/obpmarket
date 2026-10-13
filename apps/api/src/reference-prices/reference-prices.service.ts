@@ -4,7 +4,24 @@ import { PrismaService } from '../prisma/prisma.service.js';
 import { PRICING_CONFIG } from '../config/pricing-config.token.js';
 import type { PricingConfig } from '../config/pricing.config.js';
 import { PriceAlertsService } from '../price-alerts/price-alerts.service.js';
-import { SettingsService } from '../settings/settings.service.js';
+import { SettingsService, type ShopSettingsValues } from '../settings/settings.service.js';
+
+interface PublicPriceRow {
+  id: string;
+  productId: string;
+  value: number;
+  computedAt: Date;
+  changePct7d?: number | null;
+}
+
+/** Prix tel que le client le voit : le prix affiché (hors taxe) et sa date. */
+export interface PublicPrice {
+  id: string;
+  productId: string;
+  value: number;
+  computedAt: Date;
+  changePct7d?: number | null;
+}
 
 export interface RecomputeResult {
   published: boolean;
@@ -71,15 +88,25 @@ export class ReferencePricesService {
    * Prix tel que le client le voit : le prix moyen des marchés majoré du pourcentage réglé (7,5 % par défaut).
    * alue devient le prix affiché (hors taxe) ; marketValue garde la moyenne brute des relevés.
    */
-  async toSelling<T extends { value: number }>(row: T | null): Promise<(T & { marketValue: number }) | null> {
+  async toSelling<T extends PublicPriceRow>(row: T | null): Promise<PublicPrice | null> {
     if (!row) return null;
     const s = await this.settings.get();
-    return { ...row, marketValue: row.value, value: this.settings.sellingPrice(row.value, s) };
+    return this.publicRow(row, s);
   }
 
-  async toSellingMany<T extends { value: number }>(rows: T[]): Promise<Array<T & { marketValue: number }>> {
+  async toSellingMany<T extends PublicPriceRow>(rows: T[]): Promise<PublicPrice[]> {
     const s = await this.settings.get();
-    return rows.map((row) => ({ ...row, marketValue: row.value, value: this.settings.sellingPrice(row.value, s) }));
+    return rows.map((row) => this.publicRow(row, s));
+  }
+
+  /**
+   * Ce que le site public peut voir d'un prix : le prix affiché et sa date, rien d'autre. La moyenne des marchés, le
+   * nombre de relevés et de marchés servent à fixer le prix : ils restent réservés au personnel et aux agents.
+   */
+  private publicRow(row: PublicPriceRow, s: ShopSettingsValues): PublicPrice {
+    const out: PublicPrice = { id: row.id, productId: row.productId, value: this.settings.sellingPrice(row.value, s), computedAt: row.computedAt };
+    if (row.changePct7d !== undefined) out.changePct7d = row.changePct7d;
+    return out;
   }
 
   latestForProduct(productId: string) {

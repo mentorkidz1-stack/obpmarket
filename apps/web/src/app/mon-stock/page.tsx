@@ -130,7 +130,7 @@ export default function MyStockPage() {
 
   return (
     <>
-    <PageHero title="Mon stock" crumb="Mon stock" subtitle="Vos produits déposés chez OBP, valorisés au prix du marché d'aujourd'hui." />
+    <PageHero title="Mon stock" crumb="Mon stock" subtitle="Vos produits déposés chez OBP, avec leur valeur d'aujourd'hui." />
     <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:px-6">
       <div className="rounded-2xl bg-brand p-6 text-on-brand">
         <p className="text-xs font-semibold uppercase tracking-wide opacity-80">Valeur de mon stock</p>

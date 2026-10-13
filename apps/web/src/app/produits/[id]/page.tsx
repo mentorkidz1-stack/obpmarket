@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import {
   getLatestReferencePrices,
-  getMarketPrices,
   getProduct,
   getProducts,
   getReferencePriceHistory,
@@ -27,7 +26,7 @@ export async function generateMetadata(props: PageProps<"/produits/[id]">): Prom
   const photo = parseProductPhotos(product)[0];
   return {
     title: product.name,
-    description: `${product.name} (${product.unitLabel}) au prix moyen du marché au Bénin, calculé sur les relevés de terrain d'OBP Market.`,
+    description: `${product.name} (${product.unitLabel}) à prix accessible chez OBP Market, avec retrait au magasin ou livraison au Bénin.`,
     openGraph: photo && !photo.startsWith("data:") ? { images: [photo] } : undefined,
   };
 }
@@ -36,12 +35,11 @@ export default async function ProductPage(props: PageProps<"/produits/[id]">) {
   const { id } = await props.params;
 
   // Tout est chargé côté serveur, en parallèle : la fiche s'affiche complète, sans écran de chargement.
-  const [product, history, all, prices, marketPrices] = await Promise.all([
+  const [product, history, all, prices] = await Promise.all([
     loadProduct(id),
     getReferencePriceHistory(id, 30).catch(() => []),
     getProducts().catch(() => [] as Product[]),
     getLatestReferencePrices().catch(() => []),
-    getMarketPrices(id).catch(() => []),
   ]);
   if (!product) notFound();
 
@@ -59,7 +57,7 @@ export default async function ProductPage(props: PageProps<"/produits/[id]">) {
     "@context": "https://schema.org",
     "@type": "Product",
     name: product.name,
-    description: `${product.name} (${product.unitLabel}) au prix moyen du marché au Bénin.`,
+    description: `${product.name} (${product.unitLabel}) vendu par OBP Market au Bénin.`,
     category: product.category.name,
     image: photos,
     brand: { "@type": "Brand", name: SITE.name },
@@ -79,7 +77,7 @@ export default async function ProductPage(props: PageProps<"/produits/[id]">) {
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }} />
-      <ProductView id={id} initialProduct={product} initialHistory={history} related={related} marketPrices={marketPrices} />
+      <ProductView id={id} initialProduct={product} initialHistory={history} related={related} />
     </>
   );
 }

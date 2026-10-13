@@ -34,6 +34,12 @@ Chaque personne change son mot de passe provisoire dans **Mon compte**.
   mot de passe.
 - **Journal d'activité** (administrateur) : qui a fait quoi et quand, filtrable, export CSV.
 
+## Confidentialité de la méthode de prix
+
+Le public ne voit que le prix de vente. La moyenne des relevés, le nombre de relevés et de marchés, et la liste des marchés
+suivis restent réservés au personnel et aux agents : ne les citez pas dans une bannière, un message ou une publication.
+Les textes du site présentent OBP Market comme une boutique à prix accessibles.
+
 ## Parcours à tester
 
 1. Administrateur : tableau de bord → Équipe (créer un compte de test) → se connecter avec ce compte.

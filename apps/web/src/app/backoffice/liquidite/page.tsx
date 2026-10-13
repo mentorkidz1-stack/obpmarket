@@ -2,12 +2,11 @@
 
 import { useEffect, useState } from "react";
 import {
-  getLatestReferencePrices,
+  getMarketReferencePrices,
   getPendingLiquidityRequests,
   offerLiquidity,
   type LiquidityRequestRecord,
   type ReferencePrice,
-  marketPrice,
 } from "@/lib/api";
 import { formatFCFA, formatRelativeTime } from "@/lib/format";
 import { useStaffSession } from "@/lib/staff-session";
@@ -24,7 +23,7 @@ export default function LiquidityQueuePage() {
 
   useEffect(() => {
     if (!token) return;
-    Promise.all([getPendingLiquidityRequests(token), getLatestReferencePrices()]).then(([reqs, refs]) => {
+    Promise.all([getPendingLiquidityRequests(token), getMarketReferencePrices(token)]).then(([reqs, refs]) => {
       setRequests(reqs);
       setPrices(new Map(refs.map((r) => [r.productId, r])));
       const first = reqs.find((r) => r.status === "EN_ATTENTE") ?? reqs[0];
@@ -132,7 +131,7 @@ export default function LiquidityQueuePage() {
 
                 <dl className="grid grid-cols-2 gap-x-4 gap-y-1.5 text-sm">
                   <dt className="text-ink-2">Prix du marché</dt>
-                  <dd>{reference ? `${formatFCFA(marketPrice(reference))} F` : "—"}</dd>
+                  <dd>{reference ? `${formatFCFA(reference.value)} F` : "—"}</dd>
                 </dl>
 
                 <div className="grid gap-2">
@@ -152,7 +151,7 @@ export default function LiquidityQueuePage() {
                   {reference && unitPrice && (
                     <p className="text-xs text-ink-2">
                       Total à payer : {formatFCFA(Number(unitPrice) * selected.quantity)} F · écart avec le marché{" "}
-                      {(((Number(unitPrice) - marketPrice(reference)) / marketPrice(reference)) * 100).toFixed(1)} %
+                      {(((Number(unitPrice) - reference.value) / reference.value) * 100).toFixed(1)} %
                     </p>
                   )}
                 </div>

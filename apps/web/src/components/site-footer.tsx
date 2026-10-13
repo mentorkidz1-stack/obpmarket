@@ -54,7 +54,7 @@ export function SiteFooter() {
             <span className="font-display text-xl font-extrabold">OBP Market</span>
           </div>
           <p className="mt-4 max-w-xs text-sm leading-relaxed text-app/70">
-            Le prix moyen des marchés du Bénin, calculé à partir de relevés de terrain, pour acheter, déposer et revendre au prix juste — et des biens immobiliers proposés par OBP.
+            Des produits du quotidien à prix accessibles, vendus par OBP et ses partenaires, avec retrait au magasin ou livraison — et des biens immobiliers proposés par OBP.
           </p>
           {(SITE.whatsapp || SITE.phone || SITE.email || SITE.address) && (
             <ul className="mt-5 grid gap-1.5 text-sm">

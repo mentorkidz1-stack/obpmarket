@@ -55,8 +55,8 @@ export default function LoginPage() {
           <Photo src="/promos/hero-2.jpg" alt="" sizes="440px" />
           <div className="absolute inset-0 bg-gradient-to-t from-[#0b0d20]/90 via-[#0b0d20]/30 to-transparent" />
           <div className="relative flex h-full flex-col justify-end p-8 text-white">
-            <p className="font-display text-2xl font-extrabold leading-tight">Le prix juste, directement du marché.</p>
-            <p className="mt-2 text-sm text-white/85">Achetez, déposez et revendez vos produits en toute confiance.</p>
+            <p className="font-display text-2xl font-extrabold leading-tight">Des prix accessibles, pour tous.</p>
+            <p className="mt-2 text-sm text-white/85">Achetez, retirez ou faites-vous livrer, en toute confiance.</p>
           </div>
         </div>
 

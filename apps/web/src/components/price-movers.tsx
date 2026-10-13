@@ -7,7 +7,7 @@ export interface MoverItem {
   price: ReferencePrice;
 }
 
-/** Les produits dont le prix du marché a le plus varié sur 7 jours — données réelles du calcul de prix. */
+/** Les produits dont le prix a le plus varié sur 7 jours. */
 export function PriceMovers({ items }: { items: MoverItem[] }) {
   const withChange = items.filter((i) => i.price.changePct7d != null);
   if (withChange.length < 2) return null;
@@ -20,8 +20,8 @@ export function PriceMovers({ items }: { items: MoverItem[] }) {
     <section className="mt-10">
       <div className="flex items-baseline justify-between gap-3">
         <div>
-          <h2 className="font-display text-xl font-extrabold">Variations de prix · 7 jours</h2>
-          <p className="mt-0.5 text-sm text-ink-2">Les produits dont le prix du marché a le plus bougé cette semaine.</p>
+          <h2 className="font-display text-xl font-extrabold">Les prix de la semaine</h2>
+          <p className="mt-0.5 text-sm text-ink-2">Les produits dont le prix a le plus changé ces 7 derniers jours.</p>
         </div>
         <Link href="/boutique?tri=hausse" className="flex-none text-sm font-semibold text-brand">
           Tout voir

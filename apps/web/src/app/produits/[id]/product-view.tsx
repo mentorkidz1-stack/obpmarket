@@ -5,7 +5,6 @@ import Link from "next/link";
 import {
   getReferencePriceHistory,
   parseProductPhotos,
-  type MarketPrice,
   type Product,
   type ReferencePrice,
 } from "@/lib/api";
@@ -29,7 +28,7 @@ const PERIODS = [
 ];
 
 const GUARANTEES = [
-  { title: "Prix juste", text: "Calculé sur les relevés terrain de nos agents" },
+  { title: "Prix accessible", text: "Des produits de qualité à un prix facile" },
   { title: "Paiement sécurisé", text: "Mobile Money ou carte bancaire" },
   { title: "Retrait ou dépôt", text: "Au magasin, ou stocké à votre nom" },
 ];
@@ -53,13 +52,11 @@ export function ProductView({
   initialProduct,
   initialHistory,
   related,
-  marketPrices,
 }: {
   id: string;
   initialProduct: Product;
   initialHistory: ReferencePrice[];
   related: Array<{ product: Product; price?: ReferencePrice }>;
-  marketPrices: MarketPrice[];
 }) {
   const [fetched, setFetched] = useState<{ days: number; history: ReferencePrice[] } | null>(null);
   const [quantity, setQuantity] = useState(1);
@@ -232,8 +229,7 @@ export function ProductView({
                 <PriceTrend value={change7d(history)} size="md" />
               </div>
               <p className="mt-2 text-xs text-ink-2">
-                {latest.marketsCount} marché{latest.marketsCount > 1 ? "s" : ""} · {latest.readingsCount} relevé
-                {latest.readingsCount > 1 ? "s" : ""} · {formatRelativeTime(latest.computedAt)}
+                Prix mis à jour {formatRelativeTime(latest.computedAt)}
               </p>
               <p className={`mt-3 flex items-center gap-2 text-sm font-semibold ${outOfStock ? "text-down" : "text-up"}`}>
                 <span className={`size-2 rounded-full ${outOfStock ? "bg-down" : "bg-up"}`} />
@@ -338,7 +334,7 @@ export function ProductView({
             [
               { v: "infos", l: "Informations" },
               { v: "retrait", l: "Retrait et dépôt" },
-              { v: "prix", l: "Comment le prix est fixé" },
+              { v: "prix", l: "Prix et paiement" },
             ] as const
           ).map((t) => (
             <button
@@ -377,7 +373,7 @@ export function ProductView({
               </p>
               {product.isStockable && !product.isPerishable ? (
                 <p>
-                  <span className="font-bold text-ink">Je laisse en dépôt :</span> le produit reste stocké à votre nom. Vous le retrouvez dans « Mon stock », où vous pouvez le remettre en vente au prix du marché ou demander une offre de rachat à OBP.
+                  <span className="font-bold text-ink">Je laisse en dépôt :</span> le produit reste stocké à votre nom. Vous le retrouvez dans « Mon stock », où vous pouvez le remettre en vente ou demander une offre de rachat à OBP.
                 </p>
               ) : (
                 <p>Ce produit n&apos;est pas proposé en dépôt : il est à retirer au magasin.</p>
@@ -386,45 +382,11 @@ export function ProductView({
           )}
           {tab === "prix" && (
             <p>
-              Le prix affiché est la moyenne des relevés réalisés par les agents OBP Market sur plusieurs marchés du Bénin. Il est recalculé à chaque nouveau relevé : le montant exact de votre commande est fixé au moment du paiement, au prix du marché du jour.
+              Le prix affiché est le prix de vente OBP Market du jour. Il peut évoluer d&apos;un jour à l&apos;autre : le montant de votre commande est celui qui s&apos;affiche au moment du paiement, que vous réglez par Mobile Money ou par carte bancaire.
             </p>
           )}
         </div>
       </section>
-
-      {marketPrices.length > 0 && (
-        <section className="mt-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
-          <h2 className="font-display text-lg font-extrabold">Prix relevé dans chaque marché</h2>
-          <p className="mt-0.5 text-sm text-ink-2">Le prix moyen est calculé à partir de ces relevés de terrain.</p>
-          <ul className="mt-4 grid gap-3">
-            {marketPrices.map((m, i) => {
-              const max = Math.max(...marketPrices.map((x) => x.price));
-              const cheapest = marketPrices.length > 1 && i === 0;
-              const priciest = marketPrices.length > 1 && i === marketPrices.length - 1;
-              return (
-                <li key={m.marketId}>
-                  <div className="flex items-baseline justify-between gap-3 text-sm">
-                    <p className="min-w-0 truncate font-semibold">
-                      {m.name} <span className="font-normal text-ink-2">· {m.city}</span>
-                      {cheapest && <span className="ml-2 rounded bg-up/10 px-1.5 py-0.5 text-[10px] font-bold text-up">Le moins cher</span>}
-                      {priciest && <span className="ml-2 rounded bg-accent-soft px-1.5 py-0.5 text-[10px] font-bold text-accent">Le plus cher</span>}
-                    </p>
-                    <p className="flex-none font-display font-extrabold tabular-nums">
-                      <Money value={m.price} unitClassName="text-xs text-ink-2" />
-                    </p>
-                  </div>
-                  <div className="mt-1.5 h-2 overflow-hidden rounded-full bg-surface-2">
-                    <div className="h-full rounded-full bg-brand" style={{ width: `${Math.max(8, (m.price / max) * 100)}%` }} />
-                  </div>
-                  <p className="mt-1 text-[11px] text-ink-2">
-                    {m.readings} relevé{m.readings > 1 ? "s" : ""} · {formatRelativeTime(m.recordedAt)}
-                  </p>
-                </li>
-              );
-            })}
-          </ul>
-        </section>
-      )}
 
       <section className="mt-6 rounded-2xl border border-line bg-surface p-4 sm:p-6">
         <div className="mb-3 flex items-center justify-between gap-3">
